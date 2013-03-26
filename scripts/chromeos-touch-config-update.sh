@@ -32,8 +32,6 @@ die() {
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-set -e
-
 get_device_config_csum() {
   # Convert to lowercase.
   echo "$(cat "$1/config_csum")" | tr [:upper:] [:lower:]
@@ -58,6 +56,10 @@ update_config() {
   if [ "${device_config_csum}" != "${file_config_csum}" ] ||
      [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
     printf 1 > "${touch_device_path}/update_config"
+    local ret=$?
+    if [ ${ret} -ne 0 ]; then
+      die "Config update failed. ret=${ret}"
+    fi
 
     # Sleep for a while to allow the device config checksum gets updated.
     # No latency concern here since config update happens rarely -- not
@@ -71,7 +73,7 @@ update_config() {
         exit 0
       fi
     done
-    die "Config update failed"
+    die "Config update failed. config_sum mismatched after update."
   else
     log_msg "Config is up-to-date, no need to update"
   fi
