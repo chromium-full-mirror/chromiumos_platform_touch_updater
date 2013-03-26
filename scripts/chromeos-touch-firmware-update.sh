@@ -32,8 +32,6 @@ die() {
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-set -e
-
 update_firmware() {
   local i
   local ret
