@@ -95,10 +95,10 @@ main() {
   fi
 
   case "${touch_device_name}" in
-  *ts*)
+  *ts*|ATML0001*)
     config_file_name="${ts_diamond_config_file_name}"
     ;;
-  *tp*)
+  *tp*|ATML0000*)
     config_file_name="${tp_config_file_name}"
     ;;
   *)
