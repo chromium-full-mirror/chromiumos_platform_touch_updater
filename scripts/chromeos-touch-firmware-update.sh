@@ -127,7 +127,8 @@ main() {
 
   if [ -n "${active_product_id}" ] &&
      [ "${product_id}" != "${active_product_id}" ] &&
-     [ "${active_product_id}" != "0.0" ]; then
+     [ "${active_product_id}" != "0.0" ] &&
+     [ "${active_product_id}" != "CYTRA-119001-TD" ]; then
     log_msg "Hardware product id : ${active_product_id}"
     log_msg "Updater product id  : ${product_id}"
     die "Touch firmware updater: Product ID mismatch!"
