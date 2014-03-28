@@ -59,6 +59,10 @@ get_active_firmware_version() {
   echo "$(cat "${touch_device_path}/${fw_version_sysfs_prop}")"
 }
 
+hex_to_decimal() {
+  printf "%d" "0x""$1"
+}
+
 main() {
   local trackpad_device_name="${FLAGS_device}"
   local touch_device_path=""
@@ -110,7 +114,7 @@ main() {
   fw_version_major=${fw_version%%.*}
   minor_build=${fw_version#${fw_version_major}.}
   fw_version_minor=${minor_build%.*}
-  fw_version_BUILD=${minor_build#*.}
+  fw_version_build=${minor_build#*.}
   if [ -e "${touch_device_path}/product_id" ]; then
     active_product_id=$(cat ${touch_device_path}/product_id)
   elif [ -e "${touch_device_path}/hw_version" ]; then
@@ -137,7 +141,8 @@ main() {
   active_fw_version_major=${active_fw_version%%.*}
   minor_build=${active_fw_version#$active_fw_version_major.}
   active_fw_version_minor=${minor_build%.*}
-  active_fw_version_build=${minor_build#*.}
+  build_hex=${minor_build#*.}
+  active_fw_version_build="$(hex_to_decimal "${build_hex}")"
 
   log_msg "Product ID : ${product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
@@ -145,11 +150,15 @@ main() {
 
   if [ "${active_fw_version_major}" -lt "${fw_version_major}" ] ||
      ([ "${active_fw_version_major}" -eq "${fw_version_major}" ] &&
-      [ "${active_fw_version_minor}" -lt "${fw_version_minor}" ]); then
+      [ "${active_fw_version_minor}" -lt "${fw_version_minor}" ]) ||
+     ([ "${active_fw_version_major}" -eq "${fw_version_major}" ] &&
+      [ "${active_fw_version_minor}" -eq "${fw_version_minor}" ] &&
+      [ "${active_fw_version_build}" -lt "${fw_version_build}" ]); then
     log_msg "Update needed."
     update_needed=${FLAGS_TRUE}
   elif [ "${active_fw_version_major}" -eq "${fw_version_major}" ] &&
-       [ "${active_fw_version_minor}" -eq "${fw_version_minor}" ]; then
+       [ "${active_fw_version_minor}" -eq "${fw_version_minor}" ] &&
+       [ "${active_fw_version_build}" -eq "${fw_version_build}" ]; then
     log_msg "Firmware up to date."
   elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
     log_msg "Recovery firmware update. Rolling back to ${fw_version}."
@@ -178,11 +187,13 @@ main() {
     active_fw_version_major=${active_fw_version%%.*}
     minor_build=${active_fw_version#$active_fw_version_major.}
     active_fw_version_minor=${minor_build%.*}
-    active_fw_version_build=${minor_build#*.}
+    build_hex=${minor_build#*.}
+    active_fw_version_build="$(hex_to_decimal "${build_hex}")"
 
     if [ "${active_fw_version_major}" -ne "${fw_version_major}" ] ||
-       [ "${active_fw_version_minor}" -ne "${fw_version_minor}" ]; then
-      die "Firmware update failed."
+       [ "${active_fw_version_minor}" -ne "${fw_version_minor}" ] ||
+       [ "${active_fw_version_build}" -ne "${fw_version_build}" ]; then
+      die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
   fi
