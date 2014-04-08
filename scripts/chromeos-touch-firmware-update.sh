@@ -115,6 +115,10 @@ main() {
   minor_build=${fw_version#${fw_version_major}.}
   fw_version_minor=${minor_build%.*}
   fw_version_build=${minor_build#*.}
+  # no build number
+  if [ "${minor_build}" = "${fw_version_build}" ]; then
+    fw_version_build=0
+  fi
   if [ -e "${touch_device_path}/product_id" ]; then
     active_product_id=$(cat ${touch_device_path}/product_id)
   elif [ -e "${touch_device_path}/hw_version" ]; then
@@ -142,6 +146,10 @@ main() {
   minor_build=${active_fw_version#$active_fw_version_major.}
   active_fw_version_minor=${minor_build%.*}
   build_hex=${minor_build#*.}
+  # no build number
+  if [ "${minor_build}" = "${build_hex}" ]; then
+    build_hex=0
+  fi
   active_fw_version_build="$(hex_to_decimal "${build_hex}")"
 
   log_msg "Product ID : ${product_id}"
