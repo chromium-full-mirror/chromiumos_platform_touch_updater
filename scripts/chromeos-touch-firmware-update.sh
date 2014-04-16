@@ -197,6 +197,10 @@ main() {
     minor_build=${active_fw_version#$active_fw_version_major.}
     active_fw_version_minor=${minor_build%.*}
     build_hex=${minor_build#*.}
+    # no build number
+    if [ "${minor_build}" = "${build_hex}" ]; then
+      build_hex=0
+    fi
     active_fw_version_build="$(hex_to_decimal "${build_hex}")"
 
     if [ "${active_fw_version_major}" -ne "${fw_version_major}" ] ||
