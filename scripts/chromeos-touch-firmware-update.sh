@@ -128,14 +128,16 @@ main() {
   fi
 
   if [ -z "${active_product_id}" ] ||
-     [ "${active_product_id}" = "0.0" ]; then
+     [ "${active_product_id}" = "0.0" ] ||
+     [ "${active_product_id}" = "1.0" ] ||
+     [ "${active_product_id}" = "255.0" ]; then
     log_msg "Touch device in non operational state. Updating."
     update_needed=${FLAGS_TRUE}
   fi
 
   if [ -n "${active_product_id}" ] &&
+     [ ${update_needed} -eq ${FLAGS_FALSE} ] &&
      [ "${product_id}" != "${active_product_id}" ] &&
-     [ "${active_product_id}" != "0.0" ] &&
      [ "${active_product_id}" != "CYTRA-119001-TD" ]; then
     log_msg "Hardware product id : ${active_product_id}"
     log_msg "Updater product id  : ${product_id}"
