@@ -43,6 +43,31 @@ get_file_config_csum() {
   sed -n 4p "$1" | tr -cd "[:print:]" | tr [:upper:] [:lower:]
 }
 
+get_config_file_name() {
+  local config_file_mapping="$1"
+  local touch_device_path="$2"
+  if [ ! -e "${touch_device_path}/T19_status" ]; then
+    die "No T19_Status for ${touch_device_path}"
+    return
+  fi
+  # Only support 2 different configs for now.
+  read T19_status1 config1 T19_status2 config2 < "${config_file_mapping}"
+  # T19 status report is async, so lets try a few times.
+  printf "1" > "${touch_device_path}/T19_status"
+  for i in $(seq 5); do
+    local T19="$(cat "${touch_device_path}/T19_status")"
+    if [ "${T19}" = "${T19_status1}" ]; then
+      echo "${config1}"
+      return
+    elif [ "${T19}" = "${T19_status2}" ]; then
+      echo "${config2}"
+      return
+    fi
+    sleep 1
+  done
+  die "No matching config found"
+}
+
 update_config() {
   local touch_device_path="$1"
   local config_file_path="$2"
@@ -83,8 +108,9 @@ main() {
   local touch_device_name="${FLAGS_device}"
   local touch_device_path=""
   local config_file_name=""
+  local ts_config_mapping="/opt/google/touch/config/ts_config_mapping"
   local tp_config_file_name="maxtouch-tp.cfg"
-  local ts_diamond_config_file_name="maxtouch-ts.cfg"
+  local ts_config_file_name="maxtouch-ts.cfg"
   local config_link_path=""
   local config_file_path=""
 
@@ -96,7 +122,13 @@ main() {
 
   case "${touch_device_name}" in
   *ts*|ATML0001*)
-    config_file_name="${ts_diamond_config_file_name}"
+    if [ -e "${ts_config_mapping}" ]; then
+      config_file_name="$(get_config_file_name "${ts_config_mapping}" \
+                                               "${touch_device_path}")"
+      log_msg "Using ts_config_mapping to find config file ${config_file_name}"
+    else
+      config_file_name="${ts_config_file_name}"
+    fi
     ;;
   *tp*|ATML0000*)
     config_file_name="${tp_config_file_name}"
