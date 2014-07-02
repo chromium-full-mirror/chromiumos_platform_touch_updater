@@ -114,7 +114,7 @@ main() {
   fw_version_major=${fw_version%%.*}
   minor_build=${fw_version#${fw_version_major}.}
   fw_version_minor=${minor_build%.*}
-  fw_version_build="$(hex_to_decimal "${minor_build#*.}")"
+  fw_version_build=${minor_build#*.}
   # no build number
   if [ "${minor_build}" = "${fw_version_build}" ]; then
     fw_version_build=0
