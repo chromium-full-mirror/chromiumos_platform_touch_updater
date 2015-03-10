@@ -63,6 +63,29 @@ hex_to_decimal() {
   printf "%d" "0x""$1"
 }
 
+find_fw_link_path() {
+  # Given a hardware version (or product ID depending on the device)
+  # determine which fw symlink in /lib/firmware it should try to load
+  hw_version="$1"
+  fw_link_name="${FLAGS_firmware_name:-${FLAGS_device}}"
+  fw_link_name_extension="`expr "$fw_link_name" : ".*\(\..*\)"`"
+  fw_link_name_base="${fw_link_name%$fw_link_name_extension}"
+
+  case ${fw_link_name_base} in
+  /*) fw_link_path="${fw_link_name_base}" ;;
+  *)  fw_link_path="/lib/firmware/${fw_link_name_base}" ;;
+  esac
+
+  specific_fw_link_path="${fw_link_path}_${hw_version}${fw_link_name_extension}"
+  generic_fw_link_path="${fw_link_path}${fw_link_name_extension}"
+
+  if [ -e "${specific_fw_link_path}" ]; then
+    echo "${specific_fw_link_path}"
+  else
+    echo "${generic_fw_link_path}"
+  fi
+}
+
 main() {
   local trackpad_device_name="${FLAGS_device}"
   local touch_device_path=""
@@ -93,12 +116,16 @@ main() {
     die "${trackpad_device_name} not found on system. Aborting update."
   fi
 
-  fw_link_name=${FLAGS_firmware_name:-${trackpad_device_name}.bin}
-  case ${fw_link_name} in
-  /*) fw_link_path=${fw_link_name} ;;
-  *)  fw_link_path="/lib/firmware/${fw_link_name}" ;;
-  esac
+  if [ -e "${touch_device_path}/product_id" ]; then
+    active_product_id=$(cat ${touch_device_path}/product_id)
+  elif [ -e "${touch_device_path}/hw_version" ]; then
+    active_product_id=$(cat ${touch_device_path}/hw_version)
+  else
+    die "No product_id/hw_version found in ${touch_device_path}."
+  fi
 
+  fw_link_path="$(find_fw_link_path ${active_product_id})"
+  log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink -f "${fw_link_path}")"
 
 
@@ -118,13 +145,6 @@ main() {
   # no build number
   if [ "${minor_build}" = "${fw_version_build}" ]; then
     fw_version_build=0
-  fi
-  if [ -e "${touch_device_path}/product_id" ]; then
-    active_product_id=$(cat ${touch_device_path}/product_id)
-  elif [ -e "${touch_device_path}/hw_version" ]; then
-    active_product_id=$(cat ${touch_device_path}/hw_version)
-  else
-    die "No product_id/hw_version found in ${touch_device_path}."
   fi
 
   if [ -z "${active_product_id}" ] ||
