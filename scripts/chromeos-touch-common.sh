@@ -30,3 +30,23 @@ find_i2c_device_by_name() {
   done
   echo "${path}"
 }
+
+find_i2c_hid_device() {
+  local dev=""
+  local path=""
+  local vid="${1%_*}"
+  local pid="${1#*_}"
+
+  for dev in "${I2C_DEVICES_PATH}"/*/name; do
+    local dev_name="$(cat "${dev}")"
+    if [ "hid" = "${dev_name}" ]; then
+      local hid_path=$(echo ${dev%name}/*:${vid}:${pid}.*)
+      if [ -d "${hid_path}" ]; then
+        local hidraw_sysfs_path=$(echo ${hid_path}/hidraw/hidraw*)
+        path="/dev/${hidraw_sysfs_path##*/}"
+        break
+      fi
+    fi
+  done
+  echo "${path}"
+}
