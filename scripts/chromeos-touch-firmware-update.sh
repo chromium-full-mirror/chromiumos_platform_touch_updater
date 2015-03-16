@@ -18,6 +18,9 @@ DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_string 'firmware_name' '' "firmware name (in /lib/firmware)" 'n'
 
+RMI4UPDATE="/usr/sbin/rmi4update"
+SYNAPTICS_VENDOR_ID="06CB"
+
 log_msg() {
   logger -t "chromeos-touch-firmware-update[${PPID}]-${FLAGS_device}" "$@"
   echo "$@"
@@ -35,8 +38,23 @@ eval set -- "${FLAGS_ARGV}"
 update_firmware() {
   local i
   local ret
+  local use_rmi4update=0
+
+  if [ "${1%%[0-9]*}" = "/dev/hidraw" ] && [ "${2%%_*}" = "hid-${SYNAPTICS_VENDOR_ID}" ] && \
+    [ -x "${RMI4UPDATE}" ]; then
+    use_rmi4update=1
+  fi
+
   for i in $(seq 5); do
-    printf 1 > "$1/update_fw"
+    if [ ${use_rmi4update} -eq 1 ]; then
+      local opts=" -d $1 $3"
+      if [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
+        opts=" -f ${opts}"
+      fi
+      ${RMI4UPDATE} ${opts}
+    else
+      printf 1 > "$1/update_fw"
+    fi
     ret=$?
     if [ ${ret} -eq 0 ]; then
       return 0
@@ -53,6 +71,9 @@ get_active_firmware_version() {
     fw_version_sysfs_prop="firmware_version"
   elif [ -e "${touch_device_path}/fw_version" ]; then
     fw_version_sysfs_prop="fw_version"
+  elif [ "${2%%_*}" = "hid-${SYNAPTICS_VENDOR_ID}" ] && [ -x "${RMI4UPDATE}" ]; then
+    ${RMI4UPDATE} -p -d "${touch_device_path}"
+    return 0
   else
     die "No firmware version sysfs in ${touch_device_path}."
   fi
@@ -110,13 +131,19 @@ main() {
     die "Please specify a device using -d"
   fi
 
-  touch_device_path="$(find_i2c_device_by_name "${trackpad_device_name}" \
-                       "update_fw")"
+  if [ "${trackpad_device_name%%-*}" = "hid" ]; then
+    touch_device_path="$(find_i2c_hid_device ${trackpad_device_name##*-})"
+  else
+    touch_device_path="$(find_i2c_device_by_name "${trackpad_device_name}" \
+                         "update_fw")"
+  fi
   if [ -z "${touch_device_path}" ]; then
     die "${trackpad_device_name} not found on system. Aborting update."
   fi
 
-  if [ -e "${touch_device_path}/product_id" ]; then
+  if [ "${trackpad_device_name%%-*}" = "hid" ]; then
+    active_product_id="${trackpad_device_name##*_}"
+  elif [ -e "${touch_device_path}/product_id" ]; then
     active_product_id=$(cat ${touch_device_path}/product_id)
   elif [ -e "${touch_device_path}/hw_version" ]; then
     active_product_id=$(cat ${touch_device_path}/hw_version)
@@ -167,7 +194,8 @@ main() {
     die "Touch firmware updater: Product ID mismatch!"
   fi
 
-  active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
+  active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
+                     "${trackpad_device_name}")"
   active_fw_version_major=${active_fw_version%%.*}
   minor_build=${active_fw_version#$active_fw_version_major.}
   active_fw_version_minor=${minor_build%.*}
@@ -215,9 +243,10 @@ main() {
       fi
     fi
 
-    update_firmware "${touch_device_path}"
+    update_firmware "${touch_device_path}" "${trackpad_device_name}" "${fw_path}"
 
-    active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
+    active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
+                        "${trackpad_device_name}")"
     active_fw_version_major=${active_fw_version%%.*}
     minor_build=${active_fw_version#$active_fw_version_major.}
     active_fw_version_minor=${minor_build%.*}
