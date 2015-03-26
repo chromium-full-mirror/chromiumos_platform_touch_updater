@@ -39,7 +39,7 @@ find_i2c_hid_device() {
 
   for dev in "${I2C_DEVICES_PATH}"/*/name; do
     local dev_name="$(cat "${dev}")"
-    if [ "hid" = "${dev_name}" ]; then
+    if [ "hid-over-i2c" = "${dev_name}" ]; then
       local hid_path=$(echo ${dev%name}/*:${vid}:${pid}.*)
       if [ -d "${hid_path}" ]; then
         local hidraw_sysfs_path=$(echo ${hid_path}/hidraw/hidraw*)
