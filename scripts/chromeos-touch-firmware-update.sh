@@ -88,7 +88,7 @@ find_fw_link_path() {
   # Given a hardware version (or product ID depending on the device)
   # determine which fw symlink in /lib/firmware it should try to load
   hw_version="$1"
-  fw_link_name="${FLAGS_firmware_name:-${FLAGS_device}}"
+  fw_link_name="$2"
   fw_link_name_extension="`expr "$fw_link_name" : ".*\(\..*\)"`"
   fw_link_name_base="${fw_link_name%$fw_link_name_extension}"
 
@@ -151,7 +151,8 @@ main() {
     die "No product_id/hw_version found in ${touch_device_path}."
   fi
 
-  fw_link_path="$(find_fw_link_path ${active_product_id})"
+  fw_link_name="${FLAGS_firmware_name:-${FLAGS_device}}"
+  fw_link_path="$(find_fw_link_path ${active_product_id} ${fw_link_name})"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink -f "${fw_link_path}")"
 
