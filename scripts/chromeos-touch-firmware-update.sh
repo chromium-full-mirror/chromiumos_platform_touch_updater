@@ -126,6 +126,7 @@ main() {
   local fw_version=""
   local fw_version_major=""
   local fw_version_minor=""
+  local board=`grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}'`
 
   if [ -z "${FLAGS_device}" ]; then
     die "Please specify a device using -d"
@@ -226,6 +227,14 @@ main() {
   elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
     log_msg "Recovery firmware update. Rolling back to ${fw_version}."
     update_needed=${FLAGS_TRUE}
+  fi
+
+  # Prevent Squawks user on 5.0 FW from running FW update because it may brick
+  # the device.
+  if [ "${board}" = "squawks" ] &&
+     [ "${active_fw_version}" = "5.0" ]; then
+    log_msg "Skipping FW update for Squawks 5.0 FW users."
+    update_needed=${FLAGS_FALSE}
   fi
 
   if [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
