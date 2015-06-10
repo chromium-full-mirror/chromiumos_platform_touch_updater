@@ -46,6 +46,7 @@ get_file_config_csum() {
 get_config_file_name() {
   local config_file_mapping="$1"
   local touch_device_path="$2"
+  local board=`grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}'`
   if [ ! -e "${touch_device_path}/T19_status" ]; then
     die "No T19_Status for ${touch_device_path}"
     return
@@ -56,10 +57,23 @@ get_config_file_name() {
   printf "1" > "${touch_device_path}/T19_status"
   for i in $(seq 5); do
     local T19="$(cat "${touch_device_path}/T19_status")"
-    if [ "${T19}" = "${T19_status1}" ]; then
+    local T19_decimal=""
+    local mask="$((0xff))"
+    local sensor_identifier=""
+    local status1_sensor=""
+    local status2_sensor=""
+    case "${board}" in clapper|clapper-*)
+      mask="$((0x03))"
+      ;;
+    esac
+    T19_decimal="$((0x${T19}))"
+    sensor_identifier="$(($T19_decimal & $mask))"
+    status1_sensor="$(($((0x$T19_status1)) & $mask))"
+    status2_sensor="$(($((0x$T19_status2)) & $mask))"
+    if [ "${sensor_identifier}" = "${status1_sensor}" ]; then
       echo "${config1}"
       return
-    elif [ "${T19}" = "${T19_status2}" ]; then
+    elif [ "${sensor_identifier}" = "${status2_sensor}" ]; then
       echo "${config2}"
       return
     fi
