@@ -252,7 +252,7 @@ main() {
 
   # Prevent Squawks user on 5.0 FW from running FW update because it may brick
   # the device.
-  if [ "${board}" = "squawks" ] &&
+  if [ -n "$(echo ${board} | grep "^squawks")" ] &&
      [ "${active_fw_version}" = "5.0" ]; then
     log_msg "Skipping FW update for Squawks 5.0 FW users."
     update_needed=${FLAGS_FALSE}
