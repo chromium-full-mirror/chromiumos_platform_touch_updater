@@ -35,6 +35,27 @@ die() {
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
+rebind_driver() {
+  # Unbind and then bind the driver for this touchpad incase the recent FW
+  # update changed the way it talks to the OS.
+  local touch_device_path="$1"
+  local bus_id="$(basename ${touch_device_path})"
+  local driver_path="$(readlink -f ${touch_device_path}/driver)"
+
+  log_msg "Attempting to re-bind device '${bus_id}' to driver '${driver_path}'"
+  echo "${bus_id}" > "${driver_path}/unbind"
+  if [ "$?" != "0" ]; then
+    log_msg "Unable to unbind."
+  else
+    echo "${bus_id}" > "${driver_path}/bind"
+    if [ "$?" != "0" ]; then
+      log_msg "Unable to bind the device back to the driver."
+    else
+      log_msg "Success."
+    fi
+  fi
+}
+
 update_firmware() {
   local i
   local ret
@@ -264,6 +285,8 @@ main() {
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+
+    rebind_driver "${touch_device_path}"
   fi
 
   exit 0
