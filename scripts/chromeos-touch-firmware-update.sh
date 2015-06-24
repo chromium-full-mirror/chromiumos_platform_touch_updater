@@ -47,10 +47,7 @@ update_firmware() {
 
   for i in $(seq 5); do
     if [ ${use_rmi4update} -eq 1 ]; then
-      local opts=" -d $1 $3"
-      if [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
-        opts=" -f ${opts}"
-      fi
+      local opts=" -f -d $1 $3"
       ${RMI4UPDATE} ${opts}
     else
       printf 1 > "$1/update_fw"
