@@ -18,16 +18,6 @@
 DEFINE_boolean 'force' ${FLAGS_FALSE} "Force update" 'f'
 DEFINE_string 'device' 'atmel_mxt_ts' "device name" 'd'
 
-log_msg() {
-  logger -t "chromeos-touch-config-update[${PPID}]-${FLAGS_device}" "$@"
-  echo "$@"
-}
-
-die() {
-  log_msg "error: $*"
-  exit 1
-}
-
 # Parse command line
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
@@ -129,7 +119,7 @@ main() {
   local config_file_path=""
 
   touch_device_path="$(find_i2c_device_by_name "${touch_device_name}" \
-                       "update_config")"
+                       "update_config config_csum")"
   if [ -z "${touch_device_path}" ]; then
     die "${touch_device_name} not found on system."
   fi
@@ -139,7 +129,7 @@ main() {
     if [ -e "${ts_config_mapping}" ]; then
       config_file_name="$(get_config_file_name "${ts_config_mapping}" \
                                                "${touch_device_path}")"
-      log_msg "Using ts_config_mapping to find config file ${config_file_name}"
+      log_msg "Using ts_config_mapping to find config '${config_file_name}'"
     else
       config_file_name="${ts_config_file_name}"
     fi
@@ -169,10 +159,6 @@ main() {
   if [ "$(cat "${touch_device_path}/config_file")" != "${config_file_name}" ]
   then
     die "Can't set config file name to ${config_file_name}"
-  fi
-
-  if [ ! -e "${touch_device_path}/config_csum" ]; then
-    die "Can't find the current config checksum in ${touch_device_path}."
   fi
 
   update_config "${touch_device_path}" "${config_file_path}"
