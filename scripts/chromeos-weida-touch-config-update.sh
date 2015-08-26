@@ -17,8 +17,7 @@
 
 WEIDA_CONFIG_LINK_PATH="/lib/firmware/wdt87xx_cfg.bin"
 
-DEFINE_boolean 'force' ${FLAGS_FALSE} "Force update" 'f'
-DEFINE_string 'device' 'WDHT0001:00' "device name" 'd'
+DEFINE_string "device" "WDHT0001:00" "device name" "d"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -50,12 +49,7 @@ update_config() {
   log_msg "Device config checksum : ${device_config_csum}"
   log_msg "New config checksum : ${file_config_csum}"
 
-  if [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
-     log_msg "Forcing update."
-  fi
-
-  if [ "${device_config_csum}" != "${file_config_csum}" ] ||
-     [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
+  if [ "${device_config_csum}" != "${file_config_csum}" ]; then
     printf 1 > "${touch_device_path}/update_config"
 
     local ret=$?

@@ -15,8 +15,6 @@
 
 DEFINE_boolean 'force' ${FLAGS_FALSE} "Force update" 'f'
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
-DEFINE_boolean 'hex_version_numbers' ${FLAGS_FALSE} \
-               "Interpret version numbers as hex" 'x'
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_string 'firmware_name' '' "firmware name (in /lib/firmware)" 'n'
 
@@ -27,27 +25,6 @@ SYNAPTICS_VENDOR_ID="06CB"
 # Parse command line
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
-
-rebind_driver() {
-  # Unbind and then bind the driver for this touchpad incase the recent FW
-  # update changed the way it talks to the OS.
-  local touch_device_path="$1"
-  local bus_id="$(basename ${touch_device_path})"
-  local driver_path="$(readlink -f ${touch_device_path}/driver)"
-
-  log_msg "Attempting to re-bind '${bus_id}' to driver '${driver_path}'"
-  echo "${bus_id}" > "${driver_path}/unbind"
-  if [ "$?" != "0" ]; then
-    log_msg "Unable to unbind."
-  else
-    echo "${bus_id}" > "${driver_path}/bind"
-    if [ "$?" != "0" ]; then
-      log_msg "Unable to bind the device back to the driver."
-    else
-      log_msg "Success."
-    fi
-  fi
-}
 
 update_firmware() {
   local i
@@ -155,11 +132,6 @@ main() {
 
   if [ "${trackpad_device_name%%-*}" = "hid" ]; then
     active_product_id="${trackpad_device_name##*_}"
-  elif [ "$(echo ${trackpad_device_name} | cut -c 1-4)" = "WDHT" ]; then
-    input_path="${touch_device_path}/input/input*"
-    vend_id="$(cat ${input_path}/id/vendor)"
-    prod_id="$(cat ${input_path}/id/product)"
-    active_product_id="${vend_id}${prod_id}"
   elif [ -e "${touch_device_path}/product_id" ]; then
     active_product_id=$(cat ${touch_device_path}/product_id)
   elif [ -e "${touch_device_path}/hw_version" ]; then
@@ -225,12 +197,6 @@ main() {
   fi
   active_fw_version_build="$(hex_to_decimal "${build_hex}")"
 
-  if [ "$FLAGS_hex_version_numbers" -eq "${FLAGS_TRUE}" ]; then
-    active_fw_version_major="$(hex_to_decimal "${active_fw_version_major}")"
-    fw_version_major="$(hex_to_decimal "${fw_version_major}")"
-    active_fw_version_minor="$(hex_to_decimal "${active_fw_version_minor}")"
-    fw_version_minor="$(hex_to_decimal "${fw_version_minor}")"
-  fi
   log_msg "Product ID : ${product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
@@ -289,11 +255,6 @@ main() {
       build_hex=0
     fi
     active_fw_version_build="$(hex_to_decimal "${build_hex}")"
-
-    if [ "$FLAGS_hex_version_numbers" -eq "${FLAGS_TRUE}" ]; then
-      active_fw_version_major="$(hex_to_decimal "${active_fw_version_major}")"
-      active_fw_version_minor="$(hex_to_decimal "${active_fw_version_minor}")"
-    fi
 
     if [ "${active_fw_version_major}" -ne "${fw_version_major}" ] ||
        [ "${active_fw_version_minor}" -ne "${fw_version_minor}" ] ||
