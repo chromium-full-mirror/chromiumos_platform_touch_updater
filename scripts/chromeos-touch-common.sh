@@ -56,6 +56,50 @@ find_i2c_hid_device() {
   echo "${path}"
 }
 
+standard_update_firmware() {
+  # Update a touch device by piping a "1" into a sysfs entry called update_fw
+  # This is a common method for triggering a FW update, and it used by several
+  # different touch vendors.
+  local touch_device_path="$1"
+  local i=""
+  local ret=""
+
+  for i in $(seq 5); do
+    printf 1 > "${touch_device_path}/update_fw"
+    ret=$?
+    if [ ${ret} -eq 0 ]; then
+      return 0
+    fi
+    log_msg "update_firmware try #${i} failed... retrying."
+  done
+  die "Error updating touch firmware. ${ret}"
+}
+
+rebind_driver() {
+  # Unbind and then bind the driver for this touchpad incase the recent FW
+  # update changed the way it talks to the OS.
+  local touch_device_path="$1"
+  local bus_id="$(basename ${touch_device_path})"
+  local driver_path="$(readlink -f ${touch_device_path}/driver)"
+
+  log_msg "Attempting to re-bind '${bus_id}' to driver '${driver_path}'"
+  echo "${bus_id}" > "${driver_path}/unbind"
+  if [ "$?" -ne "0" ]; then
+    log_msg "Unable to unbind."
+  else
+    echo "${bus_id}" > "${driver_path}/bind"
+    if [ "$?" -ne "0" ]; then
+      log_msg "Unable to bind the device back to the driver."
+    else
+      log_msg "Success."
+    fi
+  fi
+}
+
+hex_to_decimal() {
+  printf "%d" "0x""$1"
+}
+
 log_msg() {
   local script_filename="$(basename $0)"
   logger -t "${script_filename%.*}[${PPID}]-${FLAGS_device}" "$@"
