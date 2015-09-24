@@ -56,6 +56,32 @@ find_i2c_hid_device() {
   echo "${path}"
 }
 
+find_fw_link_path() {
+  # Given a hardware version (or product ID depending on the device)
+  # determine which fw symlink in /lib/firmware it should try to load
+  local hw_version="$1"
+  local fw_link_name="$2"
+  local specific_fw_link_path=""
+  local generic_fw_link_path=""
+  local fw_link_name_extension="`expr "$fw_link_name" : ".*\(\..*\)"`"
+  local fw_link_name_base="${fw_link_name%$fw_link_name_extension}"
+
+  case ${fw_link_name_base} in
+  /*) fw_link_path="${fw_link_name_base}" ;;
+  *)  fw_link_path="/lib/firmware/${fw_link_name_base}" ;;
+  esac
+
+  specific_fw_link_path="${fw_link_path}_${hw_version}${fw_link_name_extension}"
+  generic_fw_link_path="${fw_link_path}${fw_link_name_extension}"
+
+  if [ -e "${specific_fw_link_path}" ]; then
+    echo "${specific_fw_link_path}"
+  else
+    echo "${generic_fw_link_path}"
+  fi
+}
+
+
 standard_update_firmware() {
   # Update a touch device by piping a "1" into a sysfs entry called update_fw
   # This is a common method for triggering a FW update, and it used by several

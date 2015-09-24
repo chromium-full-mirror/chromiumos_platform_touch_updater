@@ -18,9 +18,6 @@ DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_string 'firmware_name' '' "firmware name (in /lib/firmware)" 'n'
 
-RMI4UPDATE="/usr/sbin/rmi4update"
-SYNAPTICS_VENDOR_ID="06CB"
-
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -29,20 +26,10 @@ eval set -- "${FLAGS_ARGV}"
 update_firmware() {
   local i
   local ret
-  local use_rmi4update=0
-
-  if [ "${1%%[0-9]*}" = "/dev/hidraw" ] && [ "${2%%_*}" = "hid-${SYNAPTICS_VENDOR_ID}" ] && \
-    [ -x "${RMI4UPDATE}" ]; then
-    use_rmi4update=1
-  fi
 
   for i in $(seq 5); do
-    if [ ${use_rmi4update} -eq 1 ]; then
-      local opts=" -f -d $1 $3"
-      ${RMI4UPDATE} ${opts}
-    else
-      printf 1 > "$1/update_fw"
-    fi
+    printf 1 > "$1/update_fw"
+
     ret=$?
     if [ ${ret} -eq 0 ]; then
       return 0
@@ -59,9 +46,6 @@ get_active_firmware_version() {
     fw_version_sysfs_prop="firmware_version"
   elif [ -e "${touch_device_path}/fw_version" ]; then
     fw_version_sysfs_prop="fw_version"
-  elif [ "${2%%_*}" = "hid-${SYNAPTICS_VENDOR_ID}" ] && [ -x "${RMI4UPDATE}" ]; then
-    ${RMI4UPDATE} -p -d "${touch_device_path}"
-    return 0
   else
     die "No firmware version sysfs in ${touch_device_path}."
   fi
@@ -70,29 +54,6 @@ get_active_firmware_version() {
 
 hex_to_decimal() {
   printf "%d" "0x""$1"
-}
-
-find_fw_link_path() {
-  # Given a hardware version (or product ID depending on the device)
-  # determine which fw symlink in /lib/firmware it should try to load
-  hw_version="$1"
-  fw_link_name="$2"
-  fw_link_name_extension="`expr "$fw_link_name" : ".*\(\..*\)"`"
-  fw_link_name_base="${fw_link_name%$fw_link_name_extension}"
-
-  case ${fw_link_name_base} in
-  /*) fw_link_path="${fw_link_name_base}" ;;
-  *)  fw_link_path="/lib/firmware/${fw_link_name_base}" ;;
-  esac
-
-  specific_fw_link_path="${fw_link_path}_${hw_version}${fw_link_name_extension}"
-  generic_fw_link_path="${fw_link_path}${fw_link_name_extension}"
-
-  if [ -e "${specific_fw_link_path}" ]; then
-    echo "${specific_fw_link_path}"
-  else
-    echo "${generic_fw_link_path}"
-  fi
 }
 
 main() {
