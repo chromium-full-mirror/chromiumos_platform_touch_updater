@@ -195,7 +195,8 @@ main() {
   if [ -z "${active_product_id}" ] ||
      [ "${active_product_id}" = "0.0" ] ||
      [ "${active_product_id}" = "1.0" ] ||
-     [ "${active_product_id}" = "255.0" ]; then
+     [ "${active_product_id}" = "255.0" ] ||
+     [ "${active_product_id}" = "65535.0" ]; then
     log_msg "Touch device in non operational state. Updating."
     update_needed=${FLAGS_TRUE}
   fi
