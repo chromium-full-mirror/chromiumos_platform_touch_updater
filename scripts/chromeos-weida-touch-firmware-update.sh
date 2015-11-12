@@ -12,21 +12,11 @@ DEFINE_string 'device' '' "device name" 'd'
 FW_DIR="/lib/firmware"
 FW_LINK_NAME="wdt87xx_fw.bin"
 FW_LINK_PATH="${FW_DIR}/${FW_LINK_NAME}"
+WEIDA_FW_VERSION_SYSFS="fw_version"
 
 # Parse command line
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
-
-get_active_firmware_version() {
-  local touch_device_path="$1"
-  local fw_version_sysfs_path="${touch_device_path}/fw_version"
-
-  if [ -e "${fw_version_sysfs_path}" ]; then
-    cat "${fw_version_sysfs_path}"
-  else
-    die "No firmware version sysfs at ${touch_device_path}."
-  fi
-}
 
 get_active_product_id() {
   # Get the "product id" of this device.  Weida devices just use the USB ids
@@ -112,8 +102,8 @@ main() {
   fi
 
   # Get the current FW version that's loaded on the touch IC
-  active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
-                     "${trackpad_device_name}")"
+  active_fw_version="$(get_active_firmware_version_from_sysfs \
+                     "${WEIDA_FW_VERSION_SYSFS}" "${touch_device_path}")"
   log_msg "Product ID: ${product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
@@ -125,8 +115,8 @@ main() {
     log_msg "Updating FW to ${fw_filename}..."
     standard_update_firmware "${touch_device_path}"
 
-    active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
-                       "${trackpad_device_name}")"
+    active_fw_version="$(get_active_firmware_version_from_sysfs \
+                       "${WEIDA_FW_VERSION_SYSFS}" "${touch_device_path}")"
     log_msg "Current Firmware (after update attempt): ${active_fw_version}"
 
     if [ "${active_fw_version}" != "${fw_version}" ]; then
