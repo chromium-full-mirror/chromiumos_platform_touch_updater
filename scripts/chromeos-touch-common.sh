@@ -81,7 +81,6 @@ find_fw_link_path() {
   fi
 }
 
-
 standard_update_firmware() {
   # Update a touch device by piping a "1" into a sysfs entry called update_fw
   # This is a common method for triggering a FW update, and it used by several
@@ -99,6 +98,18 @@ standard_update_firmware() {
     log_msg "update_firmware try #${i} failed... retrying."
   done
   die "Error updating touch firmware. ${ret}"
+}
+
+get_active_firmware_version_from_sysfs() {
+  local sysfs_name="$1"
+  local touch_device_path="$2"
+  local fw_version_sysfs_path="${touch_device_path}/${sysfs_name}"
+
+  if [ -e "${fw_version_sysfs_path}" ]; then
+    cat "${fw_version_sysfs_path}"
+  else
+    die "No firmware version sysfs at ${fw_version_sysfs_path}."
+  fi
 }
 
 rebind_driver() {
