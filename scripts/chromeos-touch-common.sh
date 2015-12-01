@@ -147,3 +147,38 @@ die() {
   log_msg "error: $*"
   exit 1
 }
+
+
+# These flags can be used as "update types" to indicate updater state
+UPDATE_NEEDED_OUT_OF_DATE="1"
+UPDATE_NEEDED_RECOVERY="2"
+UPDATE_NOT_NEEDED_UP_TO_DATE="3"
+UPDATE_NOT_NEEDED_AHEAD_OF_DATE="4"
+
+log_update_type() {
+  # Given the update type, print a corresponding message into the logs.
+  local update_type="$1"
+  if [ "${update_type}" -eq "${UPDATE_NEEDED_OUT_OF_DATE}" ]; then
+    log_msg "Update needed, firmware out of date."
+  elif [ "${update_type}" -eq "${UPDATE_NEEDED_RECOVERY}" ]; then
+    log_msg "Recovery firmware update. Rolling back."
+  elif [ "${update_type}" -eq "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+    log_msg "Firmware up to date."
+  elif [ "${update_type}" -eq "${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}" ]; then
+    log_msg "Active firmware is ahead of updater, no update needed."
+  else
+    log_msg "Unknow update type '${update_type}'."
+  fi
+}
+
+is_update_needed() {
+  # Given an update type, this function returns a boolean indicating if the
+  # updater should trigger an update at all.
+  local update_type="$1"
+  if [ "${update_type}" -eq "${UPDATE_NEEDED_OUT_OF_DATE}" ] ||
+     [ "${update_type}" -eq "${UPDATE_NEEDED_RECOVERY}" ]; then
+    echo ${FLAGS_TRUE}
+  else
+    echo ${FLAGS_FALSE}
+  fi
+}
