@@ -101,22 +101,9 @@ compare_fw_versions() {
   local active_fw_version_minor="$(get_minor_version_number "${active_fw_version}")"
   local active_fw_version_build="$(get_build_number "${active_fw_version}" ${FLAGS_TRUE})"
 
-  if [ "${active_fw_version_major}" -eq "${fw_version_major}" ] &&
-     [ "${active_fw_version_minor}" -eq "${fw_version_minor}" ] &&
-     [ "${active_fw_version_build}" -eq "${fw_version_build}" ]; then
-    echo "${UPDATE_NOT_NEEDED_UP_TO_DATE}"
-  elif [ "${active_fw_version_major}" -lt "${fw_version_major}" ] ||
-     ([ "${active_fw_version_major}" -eq "${fw_version_major}" ] &&
-      [ "${active_fw_version_minor}" -lt "${fw_version_minor}" ]) ||
-     ([ "${active_fw_version_major}" -eq "${fw_version_major}" ] &&
-      [ "${active_fw_version_minor}" -eq "${fw_version_minor}" ] &&
-      [ "${active_fw_version_build}" -lt "${fw_version_build}" ]); then
-    echo "${UPDATE_NEEDED_OUT_OF_DATE}"
-  elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
-    echo "${UPDATE_NEEDED_RECOVERY}"
-  else
-    echo "${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}"
-  fi
+  compare_multipart_version "${active_fw_version_major}" "${fw_version_major}" \
+                            "${active_fw_version_minor}" "${fw_version_minor}" \
+                            "${active_fw_version_build}" "${fw_version_build}"
 }
 
 main() {
