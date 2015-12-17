@@ -182,3 +182,40 @@ is_update_needed() {
     echo ${FLAGS_FALSE}
   fi
 }
+
+compare_multipart_version() {
+  # Compare firmware versions that are of the form A.B...Y.Z
+  # The numbers must all be devimal integers for this to work, so
+  # do your conversions before calling the function.
+  # To call this function interleave the two version strings by
+  # importance, starting with the active FW version.
+  # eg: If your active version is A.B.C and the fw updater is X.Y.Z
+  #     you should call compare_multipart_version A X B Y C Z
+  local update_type=""
+  local num_parts="$(($# / 2))"
+
+  # Starting with the most significant values, compare them one
+  # by one until we find a difference or run out of values.
+  for i in `seq "$num_parts"`; do
+    local active_component="$1"
+    local updater_component="$2"
+    if [ -z "${update_type}" ]; then
+      if [ "${active_component}" -lt "${updater_component}" ]; then
+        update_type="${UPDATE_NEEDED_OUT_OF_DATE}"
+      elif [ "${active_component}" -gt "${updater_component}" ]; then
+        update_type="${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}"
+      fi
+    fi
+    shift
+    shift
+  done
+
+  if [ -z "${update_type}" ]; then
+    update_type="${UPDATE_NOT_NEEDED_UP_TO_DATE}"
+  elif [ "${FLAGS_recovery}" -eq "${FLAGS_TRUE}" ] &&
+       [ "${update_type}" = "${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}" ]; then
+    update_type="${UPDATE_NEEDED_RECOVERY}"
+  fi
+
+  echo "${update_type}"
+}

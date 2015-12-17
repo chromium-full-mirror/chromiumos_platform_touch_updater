@@ -33,8 +33,7 @@ get_active_product_id() {
   echo "${usb_vendor_id}${usb_product_id}"
 }
 
-update_needed=${FLAGS_FALSE}
-check_is_update_needed() {
+compare_fw_versions() {
   # Weida firmware versions are just a single hexidecimal number.  To compare
   # the active FW version and the one we're considering, this function converts
   # them to decimal first for the comparison, but displays them in their
@@ -44,16 +43,7 @@ check_is_update_needed() {
   local decimal_active_fw_version="$(hex_to_decimal "$raw_active_fw_version")"
   local decimal_fw_version="$(hex_to_decimal "$raw_fw_version")"
 
-
-  if [ "${decimal_active_fw_version}" -lt "${decimal_fw_version}" ]; then
-    log_msg "Update needed. (${raw_active_fw_version} < ${raw_fw_version})"
-    update_needed=${FLAGS_TRUE}
-  elif [ "${decimal_active_fw_version}" -eq "${decimal_fw_version}" ]; then
-    log_msg "Firmware up to date. (${raw_active_fw_version})"
-  elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
-    log_msg "Recovery firmware update. Rolling back to ${raw_fw_version}."
-    update_needed=${FLAGS_TRUE}
-  fi
+  compare_multipart_version "${decimal_active_fw_version}" "${decimal_fw_version}"
 }
 
 main() {
@@ -64,6 +54,8 @@ main() {
   local fw_path=""
   local fw_filename=""
   local fw_name=""
+  local update_type=""
+  local update_needed=${FLAGS_FALSE}
   local product_id=""
   local fw_version=""
 
@@ -110,7 +102,9 @@ main() {
 
 
   # Determine if an update is needed, and if we do, trigger it now
-  check_is_update_needed "${active_fw_version}" "${fw_version}"
+  update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
+  log_update_type "${update_type}"
+  update_needed="$(is_update_needed "${update_type}")"
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "Updating FW to ${fw_filename}..."
     standard_update_firmware "${touch_device_path}"
@@ -119,10 +113,11 @@ main() {
                        "${WEIDA_FW_VERSION_SYSFS}" "${touch_device_path}")"
     log_msg "Current Firmware (after update attempt): ${active_fw_version}"
 
-    if [ "${active_fw_version}" != "${fw_version}" ]; then
-      die "Firmware update failed. (${active_fw_version} != ${fw_version})"
+    update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
+    if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
-    log_msg "Update FW succeded."
+    log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
 
     # Rebind the driver incase there is setup that will be different with the
     # new firmware we just loaded.
