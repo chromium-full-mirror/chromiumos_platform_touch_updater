@@ -41,6 +41,27 @@ else
   die "This script only supports two drivers (elants_i2c and elan_i2c)"
 fi
 
+compare_fw_versions() {
+  local active_fw_version="$1"
+  local fw_version="$2"
+
+  # Compare the two version numbers and see which is ahead of the other
+  # Elan FW versions are given as floating point numbers, so to compare
+  # them we must use awk.
+  local min_version="$(echo ${active_fw_version} ${fw_version} |
+                             awk '{if ($1 < $2) print $1; else print $2}')"
+
+  if [ "${active_fw_version}" = "${fw_version}" ]; then
+    echo "${UPDATE_NOT_NEEDED_UP_TO_DATE}"
+  elif [ "${active_fw_version}" = "${min_version}" ]; then
+    echo "${UPDATE_NEEDED_OUT_OF_DATE}"
+  elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
+    echo "${UPDATE_NEEDED_RECOVERY}"
+  else
+    echo "${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}"
+  fi
+}
+
 
 main() {
   local touch_device_name="${FLAGS_device}"
@@ -52,6 +73,7 @@ main() {
   local fw_link_path=""
   local fw_filename=""
   local fw_name=""
+  local update_type=""
   local product_id=""
   local fw_version=""
   local board=`grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}'`
@@ -109,17 +131,10 @@ main() {
                      "${FW_VERSION_SYSFS}" "${touch_device_path}")"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
-  local min_version="$(echo ${active_fw_version} ${fw_version} |
-                             awk '{if ($1 < $2) print $1; else print $2}')"
-  if [ "${active_fw_version}" = "${fw_version}" ]; then
-    log_msg "Firmware up to date."
-  elif [ "${active_fw_version}" = "${min_version}" ]; then
-    log_msg "Update needed."
-    update_needed=${FLAGS_TRUE}
-  elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
-    log_msg "Recovery firmware update. Rolling back to ${fw_version}."
-    update_needed=${FLAGS_TRUE}
-  fi
+
+  update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
+  log_update_type "${update_type}"
+  update_needed="$(is_update_needed "${update_type}")"
 
   # Hack to prevent Squawks users with FW 5.0 from updating.  It may brick
   # the device -- chrome-os-partner:41066
@@ -136,7 +151,8 @@ main() {
 
     active_fw_version="$(get_active_firmware_version_from_sysfs \
                        "${FW_VERSION_SYSFS}" "${touch_device_path}")"
-    if [ "${active_fw_version}" != "${fw_version}" ]; then
+    update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
+    if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"

@@ -53,15 +53,15 @@ find_fw_path() {
 }
 
 
-update_needed=${FLAGS_FALSE}
-compute_if_update_is_needed() {
-  local fw_version="$1"
+compare_fw_versions() {
+  local active_fw_version="$1"
+  local fw_version="$2"
+
   local fw_version_major=""
   local fw_version_minor=""
   local fw_version_build_hex=""
   local fw_version_build=""
 
-  local active_fw_version="$2"
   local active_fw_version_major=""
   local active_fw_version_minor=""
   local active_fw_version_build=""
@@ -84,40 +84,9 @@ compute_if_update_is_needed() {
   fw_version_minor=${minor_build_tmp%.*}
   fw_version_build=${minor_build_tmp#*.}
 
-  # Print out the values into the debug logs
-  if [ -n "${verbose}" ]; then
-    log_msg "Current FW: ${active_fw_version_major}.${active_fw_version_minor}.${active_fw_version_build}"
-    log_msg "Updater FW: ${fw_version_major}.${fw_version_minor}.${fw_version_build}"
-  fi
-
-  # Compare the version numbers in order of decreasing significance
-  update_needed=${FLAGS_FALSE}
-  if [ "${active_fw_version_major}" -lt "${fw_version_major}" ]; then
-    update_needed=${FLAGS_TRUE}
-  elif [ "${active_fw_version_major}" -eq "${fw_version_major}" ]; then
-    if [ "${active_fw_version_minor}" -lt "${fw_version_minor}" ]; then
-      update_needed=${FLAGS_TRUE}
-    elif [ "${active_fw_version_minor}" -eq "${fw_version_minor}" ]; then
-      if [ "${active_fw_version_build}" -lt "${fw_version_build}" ]; then
-        update_needed=${FLAGS_TRUE}
-      elif [ "${active_fw_version_build}" -eq "${fw_version_build}" ]; then
-        if [ -n "${verbose}" ]; then
-          log_msg "FW up-to-date."
-        fi
-        return 0
-      fi
-    fi
-  fi
-  if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
-    if [ -n "${verbose}" ]; then
-      log_msg "FW out of date."
-    fi
-  elif [ ${FLAGS_recovery} -eq ${FLAGS_TRUE} ]; then
-    if [ -n "${verbose}" ]; then
-      log_msg "Recovery firmware update. Rolling back to ${fw_version}."
-    fi
-    update_needed=${FLAGS_TRUE}
-  fi
+  compare_multipart_version "${active_fw_version_major}" "${fw_version_major}" \
+                            "${active_fw_version_minor}" "${fw_version_minor}" \
+                            "${active_fw_version_build}" "${fw_version_build}"
 }
 
 main() {
@@ -125,6 +94,8 @@ main() {
   local touch_device_path=""
   local active_product_id=""
   local active_fw_version=""
+  local update_type=""
+  local update_needed="${FLAGS_FALSE}"
   local product_id=""
   local fw_link_path=""
   if [ -z "${FLAGS_device}" ]; then
@@ -140,15 +111,12 @@ main() {
 
   # Find the active fw version and the product ID currently in use
   active_product_id="${trackpad_device_name##*_}"
-  log_msg "active_product_id: '${active_product_id}'"
   active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
-  log_msg "active_fw_version: '${active_fw_version}'"
 
   # Find the fw version and product ID on disk
   fw_path="$(find_fw_path ${active_product_id} ${FLAGS_device})"
   fw_name="$(basename "${fw_path}" | sed "s/.bin$//")"
 
-  log_msg "fw path: '${fw_path}'"
   product_id=${fw_name%_*}
   fw_version=${fw_name#"${product_id}_"}
 
@@ -160,26 +128,27 @@ main() {
     die "Touch firmware updater: Product ID mismatch!"
   fi
 
-  # Check if we need to do an update.  If not, exit immediately
-  compute_if_update_is_needed "${fw_version}" "${active_fw_version}" "verbose"
-  if [ "${update_needed}" -eq ${FLAGS_FALSE} ]; then
-    log_msg "No update needed."
-    return 0
-  fi
+  # Compare the two versions, and see if an update is needed
+  log_msg "Product ID : ${hw_version}"
+  log_msg "Current Firmware: ${active_fw_version}"
+  log_msg "Updater Firmware: ${fw_version}"
+  update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
+  log_update_type "${update_type}"
+  update_needed="$(is_update_needed "${update_type}")"
 
-  # Since we're still here, we need an update.  Start it now.
-  log_msg "Attempting to update FW to ${fw_name}"
-  update_firmware "${touch_device_path}" "${fw_path}"
-
-  # Confirm that the FW was updated by checking the current FW version again
-  fw_version_after_update="$(get_active_firmware_version "${touch_device_path}")"
-  log_msg "After update, FW version: '${fw_version_after_update}'"
-  compute_if_update_is_needed "${fw_version}" "${fw_version_after_update}"
-
+  # If an update is needed, start it now and confirm it worked.
   if [ "${update_needed}" -eq ${FLAGS_TRUE} ]; then
-    die "Firmware update failed! Current Firmware: ${fw_version_after_update}"
+    log_msg "Update FW to ${fw_name}"
+    update_firmware "${touch_device_path}" "${fw_path}"
+
+    # Confirm that the FW was updated by checking the current FW version again
+    active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
+    update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
+    if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      die "Firmware update failed. Current Firmware: ${active_fw_version}"
+    fi
+    log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
   fi
-  log_msg "Update FW succeded."
 
   exit 0
 }
