@@ -67,7 +67,6 @@ compare_fw_versions() {
   local active_fw_version_build=""
 
   local minor_build_tmp=""
-  local verbose="$3"
 
   # Synaptics FWs are in the format major.minor.build (eg: 1.7.1e4aa0) so
   # the next step is to parse those values out.
