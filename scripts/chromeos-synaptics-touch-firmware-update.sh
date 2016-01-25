@@ -128,7 +128,7 @@ main() {
   fi
 
   # Compare the two versions, and see if an update is needed
-  log_msg "Product ID : ${hw_version}"
+  log_msg "Product ID : ${active_product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
