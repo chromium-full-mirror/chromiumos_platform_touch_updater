@@ -136,14 +136,6 @@ main() {
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
 
-  # Hack to prevent Squawks users with FW 5.0 from updating.  It may brick
-  # the device -- chrome-os-partner:41066
-  if [ -n "$(echo ${board} | grep "^squawks")" ] &&
-     [ "${active_fw_version}" = "5.0" ]; then
-    log_msg "Skipping FW update for Squawks 5.0 FW users."
-    update_needed=${FLAGS_FALSE}
-  fi
-
   # If the touch device needs an update, trigger it now and confirm it worked.
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "Update FW to ${fw_name}"
