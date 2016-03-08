@@ -94,7 +94,7 @@ elan_update_firmware() {
   local corrected_product_id="$3"
   local fw_path="$4"
 
-  if [ "${reported_product_id}" == "${corrected_product_id}" ]; then
+  if [ "${reported_product_id}" = "${corrected_product_id}" ]; then
     standard_update_firmware "${touch_device_path}"
   else
     log_msg "Warning - The product ID of this device has been corrected (it " \
@@ -102,7 +102,7 @@ elan_update_firmware() {
     local tmp_fw_dir=""
     local linked_fw_name=""
     local driver_fw_link="/lib/firmware/${FW_NAME}_${reported_product_id}.bin"
-    if [ ! -f "${driver_fw}" ]; then
+    if [ ! -f "${driver_fw_link}" ]; then
       driver_fw_link="/lib/firmware/${FW_NAME}.bin"
     fi
     linked_fw_name="$(readlink -f "${driver_fw_link}" | xargs basename)"
@@ -180,12 +180,12 @@ main() {
      product_id_matches=${FLAGS_TRUE}
   elif [ -n "$(echo ${board} | grep "^blaze")" ] &&
      [ "${FLAGS_driver_name}" = "elants_i2c" ] &&
-     [ "${active_product_id}" == "232d" -a "${product_id}" == "280d" ]; then
+     [ "${active_product_id}" = "232d" -a "${product_id}" = "280d" ]; then
      # Hack to support Blaze's touchscreen -- chrome-os-partner:29794
      product_id_matches=${FLAGS_TRUE}
   elif [ -n "$(echo ${board} | grep "^enguarde")" ] &&
      [ "${FLAGS_driver_name}" = "elan_i2c" ] &&
-     [ "${active_product_id}" == "57.0" -a "${product_id}" == "69.0" ]; then
+     [ "${active_product_id}" = "57.0" -a "${product_id}" = "69.0" ]; then
      # Hack to support Enguarde's touchpad -- chrome-os-partner:28165
      product_id_matches=${FLAGS_TRUE}
   fi
