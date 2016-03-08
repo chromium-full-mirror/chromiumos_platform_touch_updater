@@ -10,12 +10,14 @@ DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_string 'driver_name' '' "Which Elan driver (elan_i2c elants_i2c)" 'n'
 
-ELAN_I2C_FW_NAME="elan_i2c.bin"
+ELAN_I2C_FW_NAME="elan_i2c"
 ELAN_I2C_FW_VERSION_SYSFS="firmware_version"
 ELAN_I2C_PRODUCT_ID_SYSFS="product_id"
-ELANTS_I2C_FW_NAME="elants_i2c.bin"
+ELANTS_I2C_FW_NAME="elants_i2c"
 ELANTS_I2C_FW_VERSION_SYSFS="fw_version"
 ELANTS_I2C_PRODUCT_ID_SYSFS="hw_version"
+
+VPD_CACHE_FILE="/mnt/stateful_partition/unencrypted/cache/vpd/filtered.txt"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -62,11 +64,72 @@ compare_fw_versions() {
   fi
 }
 
+correct_reported_product_id() {
+  local reported_product_id="$1"
+  local board="$2"
+
+  # Normally we simply rely on the reported product ID.  Unfortunately, for us
+  # Kip and Kip+ are vulnerable to a bug that's makes them report 255.0.  When
+  # we see that value and the device is Kip, we need to differentiate them
+  # and manually set the product ID to recover the touchpad. crosbug.com/p/46266
+  if [ "${board}" = "kip" ] && [ "${reported_product_id}" = "255.0" ]; then
+    if [ -e "${VPD_CACHE_FILE}" ]; then
+      local customization_id="$(sed -nre 's/^"customization_id"="(.*)"$/\1/p' \
+                                < ${VPD_CACHE_FILE})"
+      if [ "${customization_id}" = "HP-KIP14" ]; then
+        echo "72.0"
+      else
+        echo "75.0"
+      fi
+    fi
+  else
+    # Otherwise, just rely on the product ID that the device reported
+    echo "${reported_product_id}"
+  fi
+}
+
+elan_update_firmware() {
+  local touch_device_path="$1"
+  local reported_product_id="$2"
+  local corrected_product_id="$3"
+  local fw_path="$4"
+
+  if [ "${reported_product_id}" == "${corrected_product_id}" ]; then
+    standard_update_firmware "${touch_device_path}"
+  else
+    log_msg "Warning - The product ID of this device has been corrected (it " \
+            "reported ${reported_product_id}).  Attempting to recover now."
+    local tmp_fw_dir=""
+    local linked_fw_name=""
+    local driver_fw_link="/lib/firmware/${FW_NAME}_${reported_product_id}.bin"
+    if [ ! -f "${driver_fw}" ]; then
+      driver_fw_link="/lib/firmware/${FW_NAME}.bin"
+    fi
+    linked_fw_name="$(readlink -f "${driver_fw_link}" | xargs basename)"
+
+    # First make a temp directory where we can put custom symlinks to the right file
+    tmp_fw_dir=`mktemp -d`
+
+    # Now the correct FW into the tmp directory and rename to match the symlink
+    cp  "${fw_path}" "${tmp_fw_dir}/${linked_fw_name}"
+
+    # Mount the temporary directory over the existing firmware directory
+    mount --bind "${tmp_fw_dir}" /opt/google/touch/firmware
+
+    # Now that the symlink is set up, continue as normal
+    standard_update_firmware "${touch_device_path}"
+
+    # Remove the newly mounted directory to return /lib/firmware to normal
+    umount /opt/google/touch/firmware
+    rm -rf "${tmp_fw_dir}"
+  fi
+}
 
 main() {
   local touch_device_name="${FLAGS_device}"
   local touch_device_path=""
   local update_needed=${FLAGS_FALSE}
+  local reported_product_id=""
   local active_product_id=""
   local active_fw_version=""
   local fw_path=""
@@ -87,14 +150,18 @@ main() {
   fi
 
   # Find the product ID that the touch device is reporting itself as.
-  active_product_id="$(cat ${touch_device_path}/${PRODUCT_ID_SYSFS})"
+  reported_product_id="$(cat ${touch_device_path}/${PRODUCT_ID_SYSFS})"
+  active_product_id="$(correct_reported_product_id ${reported_product_id} ${board})"
   if [ -z "${active_product_id}" ]; then
     log_msg "Unable to determine active product id"
     die "Aborting.  Can not continue safely without knowing active product ID"
+  elif [ "${reported_product_id}" != ${active_product_id} ]; then
+    log_msg "Warning: reported product id ${reported_product_id} was corrected" \
+            "to ${active_product_id} for this device."
   fi
 
   # Find the FW that the updater is considering flashing on the touch device.
-  fw_link_path="$(find_fw_link_path ${active_product_id} ${FW_NAME})"
+  fw_link_path="$(find_fw_link_path ${active_product_id} ${FW_NAME}.bin)"
   fw_path="$(readlink "${fw_link_path}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   if [ ! -e "${fw_link_path}" ] || [ ! -e "${fw_path}" ]; then
@@ -139,7 +206,8 @@ main() {
   # If the touch device needs an update, trigger it now and confirm it worked.
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "Update FW to ${fw_name}"
-    standard_update_firmware "${touch_device_path}"
+    elan_update_firmware "${touch_device_path}" "${reported_product_id}" \
+                         "${active_product_id}" "${fw_path}"
 
     active_fw_version="$(get_active_firmware_version_from_sysfs \
                        "${FW_VERSION_SYSFS}" "${touch_device_path}")"
