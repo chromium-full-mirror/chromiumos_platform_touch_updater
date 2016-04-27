@@ -14,6 +14,7 @@ FW_LINK_NAME="melfas_mip4.fw"
 FW_LINK_PATH="${FW_DIR}/${FW_LINK_NAME}"
 FW_VERSION_SYSFS="fw_version"
 PRODUCT_ID_SYSFS="hw_version"
+CORRUPTED_FW_PRODUCT_ID="T4H0_BOOTLOADER"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -34,7 +35,8 @@ compare_fw_versions() {
   local active_fw_version="$1"
   local fw_version="$2"
 
-  compare_multipart_version "${active_fw_version}" "${fw_version}"
+  compare_multipart_version "$(hex_to_decimal "${active_fw_version}")" \
+                            "$(hex_to_decimal "${fw_version}")"
 }
 
 main() {
@@ -81,7 +83,12 @@ main() {
      [ "${product_id}" != "${active_product_id}" ]; then
     log_msg "Current product id: ${active_product_id}"
     log_msg "Updater product id: ${product_id}"
-    die "Touch firmware updater: Product ID mismatch!"
+
+    if [ "${active_product_id}" = "${CORRUPTED_FW_PRODUCT_ID}" ]; then
+      log_msg "Corrupted FW detected, attempting to continue anyway."
+    else
+      die "Touch firmware updater: Product ID mismatch!"
+    fi
   fi
 
   # Get the current FW version that's loaded on the touch IC
