@@ -45,10 +45,6 @@ find_fw_path() {
   local fw_link_path="$(find_fw_link_path $hw_version $fw_link_name)"
   local fw_path="$(readlink "${fw_link_path}")"
 
-  if [ ! -e "${fw_link_path}" ] || [ ! -e "${fw_path}" ]; then
-    die "No valid firmware for ${FLAGS_device} found."
-  fi
-
   echo "${fw_path}"
 }
 
@@ -114,6 +110,9 @@ main() {
 
   # Find the fw version and product ID on disk
   fw_path="$(find_fw_path ${active_product_id} ${FLAGS_device})"
+  if [ -z "${fw_path}" || ! -e "${fw_path}" ]; then
+    die "No valid firmware for ${FLAGS_device} found."
+  fi
   fw_name="$(basename "${fw_path}" | sed "s/.bin$//")"
 
   product_id=${fw_name%_*}
