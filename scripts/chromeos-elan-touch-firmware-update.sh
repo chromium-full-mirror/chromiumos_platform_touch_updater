@@ -72,7 +72,7 @@ correct_reported_product_id() {
   # Kip and Kip+ are vulnerable to a bug that's makes them report 255.0.  When
   # we see that value and the device is Kip, we need to differentiate them
   # and manually set the product ID to recover the touchpad. crosbug.com/p/46266
-  if [ "${board}" = "kip" ] && [ "${reported_product_id}" = "255.0" ]; then
+  if [  -n "$(echo ${board} | grep "^kip")" ] && [ "${reported_product_id}" = "255.0" ]; then
     if [ -e "${VPD_CACHE_FILE}" ]; then
       local customization_id="$(sed -nre 's/^"customization_id"="(.*)"$/\1/p' \
                                 < ${VPD_CACHE_FILE})"
@@ -155,6 +155,7 @@ main() {
   local product_id=""
   local fw_version=""
   local board=`grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}'`
+  log_msg "Board detected as '${board}'"
 
   # Find the device in the filesystem.
   required_sysfs="update_fw ${FW_VERSION_SYSFS} ${PRODUCT_ID_SYSFS}"
@@ -166,6 +167,7 @@ main() {
 
   # Find the product ID that the touch device is reporting itself as.
   reported_product_id="$(cat ${touch_device_path}/${PRODUCT_ID_SYSFS})"
+  log_msg "Touch controller reported Product ID: ${reported_product_id}"
   active_product_id="$(correct_reported_product_id ${reported_product_id} ${board})"
   if [ -z "${active_product_id}" ]; then
     log_msg "Unable to determine active product id"
@@ -179,6 +181,7 @@ main() {
   fw_link_path="$(find_fw_link_path ${active_product_id} ${FW_NAME}.bin)"
   fw_path="$(readlink "${fw_link_path}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
+  log_msg "(which points to '${fw_path}')"
   if [ ! -e "${fw_link_path}" ] || [ ! -e "${fw_path}" ]; then
     die "No valid firmware for ${touch_device_name} found."
   fi
