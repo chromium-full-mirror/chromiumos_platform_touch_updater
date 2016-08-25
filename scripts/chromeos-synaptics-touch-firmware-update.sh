@@ -23,7 +23,8 @@ update_firmware() {
   local ret
 
   for i in $(seq 5); do
-    ${RMI4UPDATE} -f -d "$1" "$2"
+    minijail0 -S /opt/google/touch/policies/rmi4update.update.policy \
+        ${RMI4UPDATE} -f -d "$1" "$2"
 
     ret=$?
     if [ ${ret} -eq 0 ]; then
@@ -36,7 +37,8 @@ update_firmware() {
 
 get_active_firmware_version() {
   local touch_device_path="$1"
-  ${RMI4UPDATE} -p -d "${touch_device_path}"
+  minijail0 -S /opt/google/touch/policies/rmi4update.query.policy \
+      ${RMI4UPDATE} -p -d "${touch_device_path}"
 }
 
 find_fw_path() {
