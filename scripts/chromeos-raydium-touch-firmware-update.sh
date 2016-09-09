@@ -18,6 +18,7 @@ DEFINE_string 'device' '' "device name" 'd'
 
 RAYDIUM_FIRMWARE_NAME='raydium.fw'
 RAYDIUM_NUM_RETRIES=3
+RAYDIUM_FW_BOOT_MODE="Recovery"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -116,8 +117,10 @@ main() {
     die "Unable to determine hw/fw versions on disk from ${fw_path}."
   fi
 
-  # If the updater expected a different HW version, stop now.
-  if [ "${hw_version}" != "${active_hw_version}" ]; then
+  # If the updater expected a different HW version in normal mode, stop now.
+  if [ "${active_boot_mode}" = "${RAYDIUM_FW_BOOT_MODE}" ]; then
+    log_msg "Device in boot mode, skipping HW version check to recover"
+  elif [ "${hw_version}" != "${active_hw_version}" ]; then
     log_msg "Hardware HW version : ${active_hw_version}"
     log_msg "Updater HW version  : ${hw_version}"
     die "HW Version mismatch, unable to continue!"
