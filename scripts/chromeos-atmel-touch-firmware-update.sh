@@ -21,6 +21,7 @@ DEFINE_string 'firmware_name' '' "firmware name (in /lib/firmware)" 'n'
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
+CORRUPTED_HW_VERSION="0.0"
 ATMEL_FW_VERSION_SYSFS="fw_version"
 ATMEL_FW_UPDATE_SYSFS="update_fw"
 ATMEL_FW_FILENAME_SYSFS="fw_file"
@@ -155,7 +156,9 @@ main() {
   fi
 
   # If the updater expected a different HW version, stop now.
-  if [ "${hw_version}" != "${active_hw_version}" ]; then
+  if [ "${active_hw_version}" = "${CORRUPTED_HW_VERSION}" ]; then
+    log_msg "Forcing FW update, the device appears to have corrupted FW"
+  elif [ "${hw_version}" != "${active_hw_version}" ]; then
     log_msg "Hardware HW version : ${active_hw_version}"
     log_msg "Updater HW version  : ${hw_version}"
     die "HW Version mismatch, unable to continue!"
