@@ -10,11 +10,9 @@ DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 
 FW_DIR="/lib/firmware"
-FW_LINK_NAME="melfas_mip4.fw"
-FW_LINK_PATH="${FW_DIR}/${FW_LINK_NAME}"
+FW_LINK_NAME_BASE="melfas_mip4.fw"
 FW_VERSION_SYSFS="fw_version"
-PRODUCT_ID_SYSFS="hw_version"
-CORRUPTED_FW_PRODUCT_ID="T4H0_BOOTLOADER"
+PRODUCT_ID_SYSFS="product_id"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -44,6 +42,7 @@ main() {
   local touch_device_path=""
   local active_product_id=""
   local active_fw_version=""
+  local fw_link_path=""
   local fw_path=""
   local fw_filename=""
   local fw_name=""
@@ -67,9 +66,11 @@ main() {
   active_product_id="$(cat ${touch_device_path}/${PRODUCT_ID_SYSFS})"
 
   # Make sure there is a FW that looks like it's for the same product ID
-  log_msg "Attempting to load FW: '${FW_LINK_PATH}'"
-  fw_path="$(readlink "${FW_LINK_PATH}")"
-  if [ ! -e "${FW_LINK_PATH}" ] ||
+  fw_link_path="$(find_fw_link_path "${active_product_id}" \
+                                    "${FW_LINK_NAME_BASE}")"
+  fw_path="$(readlink "${fw_link_path}")"
+  log_msg "Attempting to load FW: '${fw_link_path}'"
+  if [ ! -e "${fw_link_path}" ] ||
      [ ! -e "${fw_path}" ]; then
     die "No valid firmware for ${trackpad_device_name} found."
   fi
@@ -83,12 +84,7 @@ main() {
      [ "${product_id}" != "${active_product_id}" ]; then
     log_msg "Current product id: ${active_product_id}"
     log_msg "Updater product id: ${product_id}"
-
-    if [ "${active_product_id}" = "${CORRUPTED_FW_PRODUCT_ID}" ]; then
-      log_msg "Corrupted FW detected, attempting to continue anyway."
-    else
-      die "Touch firmware updater: Product ID mismatch!"
-    fi
+    die "Touch firmware updater: Product ID mismatch!"
   fi
 
   # Get the current FW version that's loaded on the touch IC
