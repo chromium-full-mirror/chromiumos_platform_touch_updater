@@ -10,7 +10,7 @@
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device_name" 'd'
 
-FW_LINK_PATH="/lib/firmware/wacom_firmware.hex"
+FW_LINK_BASE="wacom_firmware.hex"
 WACOMFLASH="/usr/sbin/wacom_flash"
 GET_ACTIVE_FIRMVER="-a"
 
@@ -21,12 +21,11 @@ eval set -- "${FLAGS_ARGV}"
 update_firmware() {
   # Actually trigger a firmware update by running the Wacom update tool
   # in minijail to limit the syscalls it can access.
+  local fw_link="$1"
   local cmd_log=""
   cmd_log="$(
     minijail0 -S /opt/google/touch/policies/wacom_flash.update.policy \
-      "${WACOMFLASH}" "${FW_LINK_PATH}" \
-      ${FLAGS_recovery} ${FLAGS_device} \
-      2>&1
+      "${WACOMFLASH}" "${fw_link}" ${FLAGS_recovery} ${FLAGS_device} 2>&1
   )"
 
   if [ "$?" -ne 0 ]; then
@@ -36,16 +35,18 @@ update_firmware() {
 
 get_fw_version_from_disk() {
   # The on-disk FW version is determined by reading the filename which
-  # is in the format "wacom_FWVERSION.hex".  This function just
-  # strips away everything but the FW version.
+  # is in the format "wacom_FWVERSION.hex".  We follow the fw's link
+  # to the actual file then strip away everything in the FW's filename
+  # but the FW version.
+  local fw_link="$1"
   local fw_filepath=""
   local fw_filename=""
   local fw_ver=""
 
-  if [ ! -L "${FW_LINK_PATH}" ]; then
+  if [ ! -L "${fw_link}" ]; then
     return
   fi
-  fw_filepath="$(readlink -f "${FW_LINK_PATH}")"
+  fw_filepath="$(readlink -f "${fw_link}")"
   if [ ! -e "${fw_filepath}" ]; then
     return
   fi
@@ -62,7 +63,7 @@ get_active_fw_version() {
 
   active_fw_ver="$(
     minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
-      "${WACOMFLASH}" "${FW_LINK_PATH}" "${GET_ACTIVE_FIRMVER}" \
+      "${WACOMFLASH}" "dummy_unused_argument" "${GET_ACTIVE_FIRMVER}" \
       "${FLAGS_device}"
   )"
   if [ "$?" -eq 0 ]; then
@@ -104,10 +105,12 @@ main() {
   local update_type=""
   local update_needed=""
 
-  log_msg "Attempting to Load FW: '${FW_LINK_PATH}'"
+  local customization_id="$(get_customization_id)"
+  local fw_link="$(find_fw_link_path "${customization_id}" "${FW_LINK_BASE}")"
+  log_msg "Attempting to Load FW: '${fw_link}'"
 
   active_fw_ver="$(get_active_fw_version)"
-  new_fw_ver="$(get_fw_version_from_disk)"
+  new_fw_ver="$(get_fw_version_from_disk "${fw_link}")"
   log_msg "Active firmware version: ${active_fw_ver}"
   log_msg "New firmware version: ${new_fw_ver}"
   if [ -z "${active_fw_ver}" ]; then
@@ -123,7 +126,7 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${new_fw_ver}"
-    update_firmware
+    update_firmware "${fw_link}"
 
     # Check if update was successful
     active_fw_ver="$(get_active_fw_version)"

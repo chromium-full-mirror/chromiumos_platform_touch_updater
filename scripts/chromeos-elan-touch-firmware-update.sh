@@ -17,8 +17,6 @@ ELANTS_I2C_FW_NAME="elants_i2c"
 ELANTS_I2C_FW_VERSION_SYSFS="fw_version"
 ELANTS_I2C_PRODUCT_ID_SYSFS="hw_version"
 
-VPD_CACHE_FILE="/mnt/stateful_partition/unencrypted/cache/vpd/filtered.txt"
-
 # Parse command line
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
@@ -73,14 +71,10 @@ correct_reported_product_id() {
   # we see that value and the device is Kip, we need to differentiate them
   # and manually set the product ID to recover the touchpad. crosbug.com/p/46266
   if [  -n "$(echo ${board} | grep "^kip")" ] && [ "${reported_product_id}" = "255.0" ]; then
-    if [ -e "${VPD_CACHE_FILE}" ]; then
-      local customization_id="$(sed -nre 's/^"customization_id"="(.*)"$/\1/p' \
-                                < ${VPD_CACHE_FILE})"
-      if [ "${customization_id}" = "HP-KIP14" ]; then
-        echo "72.0"
-      else
-        echo "75.0"
-      fi
+    if [ "$(get_customization_id)" = "HP-KIP14" ]; then
+      echo "72.0"
+    else
+      echo "75.0"
     fi
 
   # If an elan device is reporting 255.0 and there is only an elan_i2c.bin FW

@@ -219,3 +219,12 @@ compare_multipart_version() {
 
   echo "${update_type}"
 }
+
+
+get_customization_id() {
+  # Get the "customization id" from the Chromebook's VPD.  This ID is
+  # mandatory for Zerg systems (where 2 different devices use the same build)
+  # and can be used to differentiate them.  If the entry doesn't exist, this
+  # will simply not print anything.
+  dump_vpd_log --stdout | grep '^"customization_id"=".*"$' | cut -d '"' -f 4
+}
