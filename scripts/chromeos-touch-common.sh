@@ -226,5 +226,5 @@ get_customization_id() {
   # mandatory for Zerg systems (where 2 different devices use the same build)
   # and can be used to differentiate them.  If the entry doesn't exist, this
   # will simply not print anything.
-  dump_vpd_log --stdout | grep '^"customization_id"=".*"$' | cut -d '"' -f 4
+  vpd_get_value customization_id
 }
