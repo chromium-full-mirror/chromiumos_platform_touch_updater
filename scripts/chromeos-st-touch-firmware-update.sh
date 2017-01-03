@@ -74,6 +74,12 @@ main() {
   local updater_fw_ver="$(get_fw_version_from_disk "${FW_LINK}")"
   log_msg "Current active fw version is: '${active_fw_ver}'"
   log_msg "Current updater fw version is: '${updater_fw_ver}'"
+  if [ -z "${active_fw_ver}" ]; then
+    die "Unable to detect the active FW version with st_flash."
+  fi
+  if [ -z "${updater_fw_ver}" ]; then
+    die "Unable to detect the updater's FW version on disk."
+  fi
   update_type="$(compare_fw_version "${active_fw_ver}" "${updater_fw_ver}")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
