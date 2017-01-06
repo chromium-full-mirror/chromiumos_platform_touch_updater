@@ -105,8 +105,9 @@ main() {
   local update_type=""
   local update_needed=""
 
-  local customization_id="$(get_customization_id)"
-  local fw_link="$(find_fw_link_path "${customization_id}" "${FW_LINK_BASE}")"
+  local board_name="$(get_board_name_from_vpd)"
+  log_msg "Board name detected from VPD as '${board_name}'"
+  local fw_link="$(find_fw_link_path "${board_name}" "${FW_LINK_BASE}")"
   log_msg "Attempting to Load FW: '${fw_link}'"
 
   active_fw_ver="$(get_active_fw_version)"

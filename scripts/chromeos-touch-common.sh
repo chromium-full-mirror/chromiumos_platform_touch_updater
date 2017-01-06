@@ -225,6 +225,23 @@ get_customization_id() {
   # Get the "customization id" from the Chromebook's VPD.  This ID is
   # mandatory for Zerg systems (where 2 different devices use the same build)
   # and can be used to differentiate them.  If the entry doesn't exist, this
-  # will simply not print anything.
+  # will simply not print anything.  Note that is is only required to remain
+  # constant *after* a machine has reached MP -- if you don't know what you're
+  # doing you're probably better off using get_board_name which wraps this.
   vpd_get_value customization_id
+}
+
+get_board_name_from_vpd() {
+  # Get the name of this specific board.  This is done to differentiate which
+  # board is being used, and the board name is determined by looking at the
+  # customization_id in VPD which is supposed to be of the format:
+  # "${OEM_NAME}-${BOARD_NAME}"  By stripping off the OEM name we allow the
+  # customization_id to change to mask the OEM name during early stages of
+  # development without having to modify the firmware filenames.
+  local customization_id="$(get_customization_id)"
+  if [ -z "${customization_id}" ]; then
+    echo ""
+  fi
+
+  echo "${customization_id##*-}"
 }
