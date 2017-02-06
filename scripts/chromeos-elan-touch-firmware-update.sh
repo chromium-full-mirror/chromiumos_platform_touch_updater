@@ -71,7 +71,7 @@ correct_reported_product_id() {
   # we see that value and the device is Kip, we need to differentiate them
   # and manually set the product ID to recover the touchpad. crosbug.com/p/46266
   if [  -n "$(echo ${board} | grep "^kip")" ] && [ "${reported_product_id}" = "255.0" ]; then
-    if [ "$(get_customization_id)" = "HP-KIP14" ]; then
+    if [ "$(mosys platform chassis)" = "KIP14" ]; then
       echo "72.0"
     else
       echo "75.0"
