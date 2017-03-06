@@ -70,7 +70,16 @@ main() {
     exit -2
   fi
 
-  local active_fw_ver="$(st_flash --fw_version --board="${board}")"
+  local active_fw_ver
+  local try
+  for try in $(seq 10); do
+    active_fw_ver="$(st_flash --fw_version --board="${board}")"
+    [ "${active_fw_ver}" ] && break
+    sleep 1
+  done
+  if [ "${try}" -gt 1 ]; then
+    log_msg "Took ${try} tries to read active firmware version"
+  fi
   local updater_fw_ver="$(get_fw_version_from_disk "${FW_LINK}")"
   log_msg "Current active fw version is: '${active_fw_ver}'"
   log_msg "Current updater fw version is: '${updater_fw_ver}'"
