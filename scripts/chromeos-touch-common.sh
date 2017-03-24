@@ -225,3 +225,29 @@ get_chassis_id() {
   # devices sharing same image, even same main logic board.
   mosys platform chassis
 }
+
+i2c_chardev_present() {
+  # This function tests to see if there are any i2c char devices on the system.
+  # It returns 0 iff /dev/i2c-* matches at least one file.
+  local f=""
+  for f in /dev/i2c-*; do
+    if [ -e "${f}" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+check_i2c_chardev_driver() {
+  # Check to make sure the required drivers are already availible.
+  if ! i2c_chardev_present; then
+    modprobe i2c-dev
+    log_msg "Please compile I2C_CHARDEV into the kernel"
+    log_msg "Sleeping 15s to wait for them to show up"
+
+    # Without this the added delay is small enough that a human might not
+    # notice that they had just slowed down the boot time by removing the
+    # driver from the kernel.
+    sleep 15
+  fi
+}

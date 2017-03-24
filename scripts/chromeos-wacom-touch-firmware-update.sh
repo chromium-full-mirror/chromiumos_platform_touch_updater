@@ -72,34 +72,12 @@ get_active_fw_version() {
   fi
 }
 
-i2c_chardev_present() {
-  # This function tests to see if there are any i2c char devices on the system.
-  # It returns 0 iff /dev/i2c-* matches at least one file.
-  local f=""
-  for f in /dev/i2c-*; do
-    if [ -e "${f}" ]; then
-      return 0
-    fi
-  done
-  return 1
-}
-
 main() {
-  # Check to make sure the required drivers are already availible.  This script
-  # runs early at bootup, so if the touch driver is mistakenly included as a
-  # module (as opposed to being compiled directly in) the i2c device may not be
-  # present yet.
-  if ! i2c_chardev_present; then
-    modprobe i2c-dev
-    log_msg "Please compile I2C_CHARDEV into the kernel"
-    log_msg "Sleeping 15s to wait for them to show up"
-
-    # Pause long enough for for people to notice and fix the kernel config.
-    # Without this the added delay is small enough that a human might not
-    # notice that they had just slowed down the boot time by removing the
-    # driver from the kernel.
-    sleep 15
-  fi
+  # This script runs early at bootup, so if the touch driver is mistakenly
+  # included as a module (as opposed to being compiled directly in) the i2c
+  # device may not be present yet. Pause long enough for for people to notice
+  # and fix the kernel config.
+  check_i2c_chardev_driver
 
   local active_fw_ver=""
   local new_fw_ver=""
