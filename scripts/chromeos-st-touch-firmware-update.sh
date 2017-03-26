@@ -80,6 +80,10 @@ main() {
   if [ "${try}" -gt 1 ]; then
     log_msg "Took ${try} tries to read active firmware version"
   fi
+  if [ "${active_fw_ver}" = "0x40661" ]; then
+    log_msg "FTM2 trackpad found, skipped firmware update"
+    exit 1
+  fi
   local updater_fw_ver="$(get_fw_version_from_disk "${FW_LINK}")"
   log_msg "Current active fw version is: '${active_fw_ver}'"
   log_msg "Current updater fw version is: '${updater_fw_ver}'"
