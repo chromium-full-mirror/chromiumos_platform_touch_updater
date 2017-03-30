@@ -9,6 +9,7 @@
 
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device_name" 'd'
+DEFINE_string 'device_path' '' "device path" 'p'
 
 FW_LINK_BASE="wacom_firmware.hex"
 WACOMFLASH="/usr/sbin/wacom_flash"
@@ -137,7 +138,11 @@ main() {
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+
+    rebind_driver "${FLAGS_device_path}"
   fi
+
+  exit 0
 }
 
 main "$@"
