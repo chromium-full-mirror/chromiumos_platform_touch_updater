@@ -73,7 +73,7 @@ case "$1" in
 esac
 
 # Must have a command and must be root
-if [ "$#" = 0 ] || [ "$USER" != root -a "$UID" != 0 ]; then
+if [ "$#" = 0 ] || [ "$(whoami)" != root -a "$(id -u)" != 0 ]; then
     usage
 fi
 
