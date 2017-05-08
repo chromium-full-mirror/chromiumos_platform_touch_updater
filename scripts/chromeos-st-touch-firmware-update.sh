@@ -8,6 +8,7 @@
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
+DEFINE_string 'device_path' '' "device path" 'p'
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -15,15 +16,44 @@ eval set -- "${FLAGS_ARGV}"
 
 FW_LINK="/lib/firmware/st_touch.bin"
 
-compare_fw_version() {
-  # ST firmware versions are just hex numbers, so to compare them we can
-  # convert them to decimal and use the standard comparison functions.
-  local active_fw_ver_hex="$1"
-  local updater_fw_ver_hex="$2"
-  local active_fw_ver_dec="$(printf "%d" "${active_fw_ver_hex}")"
-  local updater_fw_ver_dec="$(printf "%d" "${updater_fw_ver_hex}")"
+# Sysfs entry created by cros_ec driver.
+CROS_TP_SYSFS="/sys/class/chromeos/cros_tp"
 
-  compare_multipart_version "${active_fw_ver_dec}" "${updater_fw_ver_dec}"
+# Flashrom programmer argument, we are type "tp"
+PROGRAMMER="ec:type=tp"
+
+extract_numerical_fw_version() {
+  # FW version string has the following format:
+  # rose_v1.1.6371-3fc259f2c
+  # This function extract the "numerical" part, which is "1.1.6371"
+  echo $1 | sed -n "s/^.*_v\(.*\)-.*$/\1/p"
+}
+
+get_minor_version() {
+  local major_minor=${1%.*}
+  echo ${major_minor#*.}
+}
+
+compare_fw_versions() {
+  # FW version string has the following format:
+  # rose_v1.1.6371-3fc259f2c
+  # We only need to compare the numeric part of the version string.
+  local active_fw_ver_raw="$1"
+  local updater_fw_ver_raw="$2"
+  local active_fw_ver="$(extract_numerical_fw_version "${active_fw_ver_raw}")"
+  local updater_fw_ver="$(extract_numerical_fw_version "${updater_fw_ver_raw}")"
+
+  local active_fw_ver_major="${active_fw_ver%%.*}"
+  local active_fw_ver_minor="$(get_minor_version "${active_fw_ver}")"
+  local active_fw_ver_revision="${active_fw_ver##*.}"
+
+  local updater_fw_ver_major="${updater_fw_ver%%.*}"
+  local updater_fw_ver_minor="$(get_minor_version "${updater_fw_ver}")"
+  local updater_fw_ver_revision="${updater_fw_ver##*.}"
+
+  compare_multipart_version "${active_fw_ver_major}" "${updater_fw_ver_major}" \
+                            "${active_fw_ver_minor}" "${updater_fw_ver_minor}" \
+                            "${active_fw_ver_revision}" "${updater_fw_ver_revision}"
 }
 
 get_fw_version_from_disk() {
@@ -51,39 +81,35 @@ get_fw_version_from_disk() {
   echo "${fw_ver}"
 }
 
+get_active_fw_version() {
+  cat "${CROS_TP_SYSFS}"/version | awk 'NR==2 { print $3 }'
+}
+
 main() {
-  # TODO(charliemooney): This firmware updater is quite naive and just forces
-  # firmware update every time the fw versions aren't the same.  There's no
-  # real follow up to make sure everything worked, nor does this support
-  # multiple product IDs, which are all things we need.  This is just here
-  # as a stop-gap solution to get things up at running, but will be replaced
-  # very soon.
   local board="$(grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | \
                  awk -F = '{print $2}')"
-  local ret;
+  local ret
 
-  log_msg "WARNING: Using very simplified touch firmware updater logic!"
-  log_msg "Forcing a firmware update with few checks..."
+  # TODO(wnhuang): remove the following code once the transition is completed
+  # and we no longer have TP using the old firmware.
 
-  if [ ! -e "${FW_LINK}" ]; then
-    log_msg "Unable to proceed with update: '${FW_LINK}' not found."
-    exit -2
+  # If we are not running EC firmware, use st_flash to flash EC firmware.
+  if [ ! -e "${CROS_TP_SYSFS}" ]; then
+    log_msg "Transiting to new touchpad firmware, forcing an update."
+    st_flash --board="${board}" "${FW_LINK}"
+
+    # We need a reboot so the cros_ec kernel driver get reloaded. This should
+    # only happen once when device is transiting from old firmware to EC
+    # firmware.
+    log_msg "========================== WARNING =========================="
+    log_msg "Reboot to reload touchpad driver, this will only happen once."
+    log_msg "============================================================="
+    reboot
+    exit 0  # Reboot is not a blocking call, so we need to explicity exit.
   fi
 
-  local active_fw_ver
-  local try
-  for try in $(seq 10); do
-    active_fw_ver="$(st_flash --fw_version --board="${board}")"
-    [ "${active_fw_ver}" ] && break
-    sleep 1
-  done
-  if [ "${try}" -gt 1 ]; then
-    log_msg "Took ${try} tries to read active firmware version"
-  fi
-  if [ "${active_fw_ver}" = "0x40661" ]; then
-    log_msg "FTM2 trackpad found, skipped firmware update"
-    exit 1
-  fi
+  # Active firmware version (RW version)
+  local active_fw_ver="$(get_active_fw_version)"
   local updater_fw_ver="$(get_fw_version_from_disk "${FW_LINK}")"
   log_msg "Current active fw version is: '${active_fw_ver}'"
   log_msg "Current updater fw version is: '${updater_fw_ver}'"
@@ -93,25 +119,36 @@ main() {
   if [ -z "${updater_fw_ver}" ]; then
     die "Unable to detect the updater's FW version on disk."
   fi
-  update_type="$(compare_fw_version "${active_fw_ver}" "${updater_fw_ver}")"
+
+  update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${updater_fw_ver}"
 
-    st_flash --board="${board}" "${FW_LINK}"
-    ret=$?
+    # Determine if WP is enabled
+    local extra_flashrom_arg=""
+    local wp_status="$(flashrom -p "${PROGRAMMER}" --wp-status | \
+                       sed -n 's/WP: status: \(.*\)/\1/p' 2>/dev/null)"
 
-    if [ "${ret}" -eq 0 ]; then
-      # If everything looks right, check the FW version one last time.
-      log_msg "Call to st_flash succeded!  The touchpad should work."
-      exit 0
-    else
-      # If something went wrong with st_flash there's nothing we can do.
-      die "Update failed! st_flash returned (${ret}) The touchpad might " \
-          "not work, sorry."
+    # Only update RW section if WP is enabled
+    if [ "${wp_status}" != "0x00" ]; then
+      extra_flashrom_arg="-i EC_RW"
     fi
+
+    # Run the actual firmware update
+    flashrom -p "${PROGRAMMER}" ${extra_flashrom_arg} -w "${FW_LINK}"
+
+    # Check if update was successful
+    active_fw_ver="$(get_active_fw_version)"
+    update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
+    if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      die "Firmware update failed. Current Firmware: ${active_fw_ver}"
+    fi
+    log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+
+    rebind_driver "${FLAGS_device_path}"
   fi
 }
 
