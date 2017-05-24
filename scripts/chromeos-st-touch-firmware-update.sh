@@ -89,8 +89,6 @@ get_active_fw_version() {
 }
 
 main() {
-  local board="$(grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | \
-                 awk -F = '{print $2}')"
   local ret
 
   # TODO(wnhuang): remove the following code once the transition is completed
@@ -104,7 +102,11 @@ main() {
     fi
 
     log_msg "Transiting to new touchpad firmware, forcing an update."
-    st_flash --board="${board}" "${FW_LINK}"
+    st_flash --board=eve "${FW_LINK}"
+
+    if [ "$?" -ne "0" ]; then
+      die "Unable to flash new touchpad firmware, abort."
+    fi
 
     # We need a reboot so the cros_ec kernel driver get reloaded. This should
     # only happen once when device is transiting from old firmware to EC
