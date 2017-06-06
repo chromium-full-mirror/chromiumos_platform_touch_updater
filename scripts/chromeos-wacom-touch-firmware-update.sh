@@ -12,6 +12,7 @@ DEFINE_string 'device' '' "device_name" 'd'
 DEFINE_string 'device_path' '' "device path" 'p'
 
 FW_LINK_BASE="wacom_firmware.hex"
+FW_LINK_BASE_V2="wacom2_firmware.hex"
 WACOMFLASH="/usr/sbin/wacom_flash"
 GET_ACTIVE_FIRMVER="-a"
 
@@ -72,6 +73,24 @@ get_active_fw_version() {
   fi
 }
 
+get_product_id() {
+  # Query the touchscreen and get the product id
+  local product_id=""
+  local cmd_log=""
+
+  cmd_log="$(
+    minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
+      "${WACOMFLASH}" "dummy_unused_argument" "${GET_ACTIVE_FIRMVER}" \
+      "${FLAGS_device}" 2>&1
+  )"
+  product_id="${cmd_log#*PID:0x}"
+  product_id="${product_id%% *}"
+
+  if [ "$?" -eq 0 ]; then
+    echo "${product_id}"
+  fi
+}
+
 main() {
   # This script runs early at bootup, so if the touch driver is mistakenly
   # included as a module (as opposed to being compiled directly in) the i2c
@@ -84,10 +103,21 @@ main() {
   local update_type=""
   local update_needed=""
 
-  local chassis_id="$(get_chassis_id)"
-  log_msg "Chassis identifier detected as '${chassis_id}'"
-  local fw_link="$(find_fw_link_path "${chassis_id}" "${FW_LINK_BASE}")"
-  log_msg "Attempting to Load FW: '${fw_link}'"
+  local product_id="$(get_product_id)"
+  log_msg "Device product id dectected as: ${product_id}"
+
+  local fw_link="$(find_fw_link_path "${product_id}" "${FW_LINK_BASE_V2}")"
+  log_msg "Attempting to find FW_V2: ${fw_link}"
+
+  if [ -L "${fw_link}" ]; then
+      log_msg "Wacom fw v2 found."
+  else
+      log_msg "Wacom fw v2 not found. Will use v1."
+      local chassis_id="$(get_chassis_id)"
+      log_msg "Chassis identifier detected as '${chassis_id}'"
+      fw_link="$(find_fw_link_path "${chassis_id}" "${FW_LINK_BASE}")"
+      log_msg "Attempting to Load FW: '${fw_link}'"
+  fi
 
   active_fw_ver="$(get_active_fw_version)"
   new_fw_ver="$(get_fw_version_from_disk "${fw_link}")"
