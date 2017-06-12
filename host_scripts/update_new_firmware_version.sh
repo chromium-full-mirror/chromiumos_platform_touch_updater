@@ -82,6 +82,21 @@ check_git_clean() {
   [ -n "$(git status | grep "working tree clean")" ]
 }
 
+read_wacom_config() {
+  if [ "${FLAGS_touch_vendor}" == "wacom" ]; then
+    echo "Please select wacom firmware update method:"
+    echo "0 means update wacom firmware according to chassis_id"
+    echo "1 means update wacom firmware according to product id"
+    read -p ">>" USE_WACOM_PID
+
+    if [ "${USE_WACOM_PID}" != "0" ] &&
+      [ "${USE_WACOM_PID}" != "1" ]; then
+      die "Invaild input. Wacom update version can only be 0 or 1."
+    fi
+  fi
+
+}
+
 verify_args() {
   if [ "${FLAGS_action}" != "cl" ] &&
     [ "${FLAGS_action}" != "manifest" ] &&
@@ -119,7 +134,9 @@ verify_args() {
     return
   fi
 
-  if [ "${FLAGS_touch_vendor}" != "wacom" ] &&
+  read_wacom_config
+
+  if [ "${FLAGS_touch_vendor}" != "wacom" ] || [ "${USE_WACOM_PID}" != "0" ] &&
     [ -z "${FLAGS_product_id}" ]; then
     die "Product ID is required for the all non-Wacom vendors using -i"\
 " to specify one."
@@ -147,6 +164,7 @@ verify_args() {
   fi
 
   if [ "${FLAGS_touch_vendor}" = "wacom" ] &&
+    [  "${USE_WACOM_PID}" = "0" ] &&
     [ "${FLAGS_chassis_id}" = "" ]; then
     die "Wacom needs chassis_id info using -s"
   fi
@@ -181,7 +199,8 @@ generate_ebuild_variable_name() {
   local escaped_product_id="${FLAGS_product_id/./_}"
   local suffix="${escaped_product_id}"
 
-  if [ "${FLAGS_touch_vendor}" = "wacom" ]; then
+  if [ "${FLAGS_touch_vendor}" = "wacom" ] &&
+    [ "${USE_WACOM_PID}" = "0" ]; then
     suffix="WACOM"
   fi
 
@@ -302,7 +321,11 @@ generate_blob_name() {
   local blob_name="${part_1}_${part_2}"
 
   if [ "${FLAGS_touch_vendor}" = "wacom" ]; then
-    blob_name="wacom_${part_2}.hex"
+    if [ "${USE_WACOM_PID}" = 0 ]; then
+      blob_name="wacom_${part_2}.hex"
+    else
+      blob_name="${blob_name}.hex"
+    fi
   elif [ "${FLAGS_touch_vendor}" = "melfas" ]; then
     blob_name="${blob_name}.fw"
   else
@@ -332,7 +355,12 @@ generate_symlink_path() {
     fi
   else
     # This is for the case of Wacom.
-    path="/lib/firmware/wacom_firmware_${FLAGS_chassis_id}.hex"
+    if [ "${USE_WACOM_PID}" = 0 ]; then
+      path="/lib/firmware/wacom_firmware_${FLAGS_chassis_id}.hex"
+    else
+      local wacom2_prefix="wacom2_firmware"
+      path="${path/PLACEHOLDER/${wacom2_prefix}}.fw"
+    fi
   fi
 
   echo "${path}"
