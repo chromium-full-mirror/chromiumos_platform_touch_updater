@@ -123,27 +123,27 @@ check_test_result "Test case 2 - Uprev_Existed_Configuration"
 check_test_result "Test case 3 - Add_New_Configuration"
 
 # test case 4 - to add a new configuration of wacom
-./update_new_firmware_version.sh -a cl \
-                                 -b "${FLAGS_board}" \
-                                 -s "${FLAGS_board}" \
-                                 -v 100 \
-                                 -p testdata/wacom_100.hex \
-                                 -t STYLUS \
-                                 -r wacom \
-                                 -c arm \
-                                 -d
+echo 0 | ./update_new_firmware_version.sh -a cl \
+                                          -b "${FLAGS_board}" \
+                                          -s "${FLAGS_board}" \
+                                          -v 100 \
+                                          -p testdata/wacom_100.hex \
+                                          -t STYLUS \
+                                          -r wacom \
+                                          -c arm \
+                                          -d
 check_test_result "Test case 4 - Add_New_Configuration_for_Wacom"
 
 # test case 5 - to uprev existed configuration of wacom
-./update_new_firmware_version.sh -a cl \
-                                 -b "${FLAGS_board}" \
-                                 -s "${FLAGS_board}" \
-                                 -v 200 \
-                                 -p testdata/wacom_200.hex \
-                                 -t STYLUS \
-                                 -r wacom \
-                                 -c arm \
-                                 -d
+echo 0 | ./update_new_firmware_version.sh -a cl \
+                                          -b "${FLAGS_board}" \
+                                          -s "${FLAGS_board}" \
+                                          -v 200 \
+                                          -p testdata/wacom_200.hex \
+                                          -t STYLUS \
+                                          -r wacom \
+                                          -c arm \
+                                          -d
 check_test_result "Test case 5 - Uprev_Existed_Configuration_for_Wacom"
 
 # test case 5 - to add a new configuration of melfas
