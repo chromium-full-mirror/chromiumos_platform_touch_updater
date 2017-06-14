@@ -34,7 +34,7 @@ DEFINE_string touch_type "" "Touch type - TP (Touchpad) / TS (Touchscreen) /"\
 DEFINE_string var_name_prefix "" "The prefix to be appended to variables in"\
 "ebuild file" n
 DEFINE_string touch_vendor "" "The vendor name of this firmware - elan / atmel"\
-" / melfas / wacom" r
+" / melfas / wacom / raydium" r
 # TODO(marcochen@chromium.org): CPU can be detected by checking into
 # toolchain.conf
 DEFINE_string cpu "" "What CPU family used in this board - x86 / arm" c
@@ -126,8 +126,10 @@ verify_args() {
   if [ "${FLAGS_touch_vendor}" != "elan" ] &&
     [ "${FLAGS_touch_vendor}" != "atmel" ] &&
     [ "${FLAGS_touch_vendor}" != "melfas" ] &&
-    [ "${FLAGS_touch_vendor}" != "wacom" ]; then
-    die "Touch vendor should be one of elan / atmel / melfas / wacom using -r"
+    [ "${FLAGS_touch_vendor}" != "wacom" ] &&
+    [ "${FLAGS_touch_vendor}" != "raydium" ]; then
+    die "Touch vendor should be one of elan / atmel / melfas / wacom / raydium"\
+" using -r"
   fi
 
   if [ "${FLAGS_action}" = "verification" ]; then
@@ -328,6 +330,8 @@ generate_blob_name() {
     fi
   elif [ "${FLAGS_touch_vendor}" = "melfas" ]; then
     blob_name="${blob_name}.fw"
+  elif [ "${FLAGS_touch_vendor}" = "raydium" ]; then
+    blob_name="raydium_${blob_name}.bin"
   else
     blob_name="${blob_name}.bin"
   fi
@@ -353,6 +357,8 @@ generate_symlink_path() {
     else
       path="${path/PLACEHOLDER/maxtouch-ts}.fw"
     fi
+  elif [ "${FLAGS_touch_vendor}" = "raydium" ] ; then
+    path="/lib/firmware/raydium.fw"
   else
     # This is for the case of Wacom.
     if [ "${USE_WACOM_PID}" = 0 ]; then
