@@ -88,6 +88,23 @@ get_active_fw_version() {
   cat "${CROS_TP_SYSFS}"/version | awk 'NR==2 { print $3 }'
 }
 
+force_flash() {
+  st_flash --board=eve "${FW_LINK}"
+
+  if [ "$?" -ne "0" ]; then
+    die "Unable to flash new touchpad firmware, abort."
+  fi
+
+  # We need a reboot so the cros_ec kernel driver get reloaded. This should
+  # only happen once when device is transiting from old firmware to EC
+  # firmware.
+  log_msg "========================== WARNING =========================="
+  log_msg "Reboot to reload touchpad driver, this will only happen once."
+  log_msg "============================================================="
+  reboot
+  exit 0  # Reboot is not a blocking call, so we need to explicity exit.
+}
+
 main() {
   local ret
 
@@ -102,20 +119,7 @@ main() {
     fi
 
     log_msg "Transiting to new touchpad firmware, forcing an update."
-    st_flash --board=eve "${FW_LINK}"
-
-    if [ "$?" -ne "0" ]; then
-      die "Unable to flash new touchpad firmware, abort."
-    fi
-
-    # We need a reboot so the cros_ec kernel driver get reloaded. This should
-    # only happen once when device is transiting from old firmware to EC
-    # firmware.
-    log_msg "========================== WARNING =========================="
-    log_msg "Reboot to reload touchpad driver, this will only happen once."
-    log_msg "============================================================="
-    reboot
-    exit 0  # Reboot is not a blocking call, so we need to explicity exit.
+    force_flash
   fi
 
   # Active firmware version (RW version)
@@ -124,7 +128,8 @@ main() {
   log_msg "Current active fw version is: '${active_fw_ver}'"
   log_msg "Current updater fw version is: '${updater_fw_ver}'"
   if [ -z "${active_fw_ver}" ]; then
-    die "Unable to detect the active FW version with st_flash."
+    log_msg "Unable to detect the active FW version, forcing a reflash."
+    force_flash
   fi
   if [ -z "${updater_fw_ver}" ]; then
     die "Unable to detect the updater's FW version on disk."
