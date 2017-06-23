@@ -127,8 +127,10 @@ rebind_driver() {
     echo "${bus_id}" > "${driver_path}/bind"
     if [ "$?" -ne "0" ]; then
       log_msg "Unable to bind the device back to the driver."
+      return 1
     else
       log_msg "Success."
+      return 0
     fi
   fi
 }

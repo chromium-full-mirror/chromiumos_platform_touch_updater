@@ -164,6 +164,11 @@ main() {
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
 
     rebind_driver "${FLAGS_device_path}"
+    if [ "$?" -ne "0" ]; then
+      log_msg "Driver rebind failed, doing a reboot to reload driver."
+      reboot
+      exit 0
+    fi
   fi
 }
 
