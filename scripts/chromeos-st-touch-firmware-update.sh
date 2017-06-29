@@ -85,7 +85,15 @@ get_fw_version_from_disk() {
 }
 
 get_active_fw_version() {
-  cat "${CROS_TP_SYSFS}"/version | awk 'NR==2 { print $3 }'
+  local fw_copy=$(cat "${CROS_TP_SYSFS}"/version | awk 'NR==3 { print $3 }')
+
+  # If we TP firmware is still in RO, wait 1 second for it to jump to RW.
+  if [ "${fw_copy}" = "RO" ]; then
+    sleep 1
+    fw_copy=$(cat "${CROS_TP_SYSFS}"/version | awk 'NR==3 { print $3 }')
+  fi
+
+  cat "${CROS_TP_SYSFS}"/version | grep ${fw_copy} | awk 'NR==1 { print $3 }'
 }
 
 force_flash() {
