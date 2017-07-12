@@ -70,26 +70,27 @@ correct_reported_product_id() {
   # Kip and Kip+ are vulnerable to a bug that's makes them report 255.0.  When
   # we see that value and the device is Kip, we need to differentiate them
   # and manually set the product ID to recover the touchpad. crosbug.com/p/46266
-  if [  -n "$(echo ${board} | grep "^kip")" ] && [ "${reported_product_id}" = "255.0" ]; then
-    if [ "$(mosys platform chassis)" = "KIP14" ]; then
-      echo "72.0"
-    else
-      echo "75.0"
+  if [ "${reported_product_id}" = "255.0" ] ||
+     [ "${reported_product_id}" = "65535.0" ]; then
+    if [  -n "$(echo ${board} | grep "^kip")" ]; then
+      if [ "$(mosys platform chassis)" = "KIP14" ]; then
+        echo "72.0"
+      else
+        echo "75.0"
+      fi
+    # If an elan device is reporting 255.0 and there is only an elan_i2c.bin FW
+    # in /lib/firmware (old-style without a product ID appended to the filename)
+    # then it's reasonable to assume the touchpad got wiped and that we should
+    # try to recover it with whatever the FW there happens to be.  To do this,
+    # we can just correct the product_id with whatever is on disk.
+    elif [ -f "/lib/firmware/elan_i2c.bin" ] &&
+         [ "$(ls /lib/firmware/elan_i2c*.bin | wc -l)" -eq 1 ]; then
+      local fw_path=$(readlink /lib/firmware/elan_i2c.bin)
+      local fw_filename=${fw_path##*/}
+      local fw_name=${fw_filename%.bin}
+      local product_id=${fw_name%_*}
+      echo "${product_id}"
     fi
-
-  # If an elan device is reporting 255.0 and there is only an elan_i2c.bin FW
-  # in /lib/firmware (old-style without a product ID appended to the filename)
-  # then it's reasonable to assume the touchpad got wiped and that we should
-  # try to recover it with whatever the FW there happens to be.  To do this, we
-  # can just correct the product_id with whatever is on disk.
-  elif [ "${reported_product_id}" = "255.0" ] &&
-       [ -f "/lib/firmware/elan_i2c.bin" ] &&
-       [ "$(ls /lib/firmware/elan_i2c*.bin | wc -l)" -eq 1 ]; then
-    local fw_path=$(readlink /lib/firmware/elan_i2c.bin)
-    local fw_filename=${fw_path##*/}
-    local fw_name=${fw_filename%.bin}
-    local product_id=${fw_name%_*}
-    echo "${product_id}"
 
   # Otherwise, just rely on the product ID that the device reported
   else
