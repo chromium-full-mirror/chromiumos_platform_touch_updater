@@ -96,7 +96,19 @@ get_active_fw_version() {
   cat "${CROS_TP_SYSFS}"/version | grep ${fw_copy} | awk 'NR==1 { print $3 }'
 }
 
+display_splash() {
+  local frecon_vt0="/run/frecon/vt0"
+
+  if [ -c "${frecon_vt0}" ]; then
+    echo "Touchpad firmware update in progress, "\
+         "this will take around 2 minutes ..." >> "${frecon_vt0}"
+    echo "Please keep your hands off from the touchpad." >> "${frecon_vt0}"
+  fi
+}
+
 force_flash() {
+  display_splash
+
   st_flash --board=eve "${FW_LINK}"
 
   if [ "$?" -ne "0" ]; then
@@ -149,6 +161,8 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${updater_fw_ver}"
+
+    display_splash
 
     # Determine if WP is enabled
     local extra_flashrom_arg=""
