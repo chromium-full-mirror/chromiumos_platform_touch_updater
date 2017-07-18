@@ -96,14 +96,37 @@ get_active_fw_version() {
   cat "${CROS_TP_SYSFS}"/version | grep ${fw_copy} | awk 'NR==1 { print $3 }'
 }
 
-display_splash() {
-  local frecon_vt0="/run/frecon/vt0"
+prepare_message() {
+  # Prepare image for displaying in frecon.
+  local message="
+    <span font=\"Noto Sans UI 16\"
+          foreground=\"black\">"
 
-  if [ -c "${frecon_vt0}" ]; then
-    echo "Touchpad firmware update in progress, "\
-         "this will take around 2 minutes ..." >> "${frecon_vt0}"
-    echo "Please keep your hands off from the touchpad." >> "${frecon_vt0}"
-  fi
+  printf "${message}\n"
+  # Append messages with newline.
+  for message in "$@"; do
+    printf "${message}\n"
+  done
+  printf "</span>"
+}
+
+display_message() {
+  # Display message in frecon.
+  local message_file="$(mktemp --tmpdir)"
+  prepare_message "$@" >"${message_file}"
+  SPINNER_INTERVAL=25 display_boot_message "show_spinner" "${message_file}"
+  rm -rf ${message_file}  # show be safe to delete this.
+}
+
+display_splash() {
+  display_message "Touchpad firmware update in progress..."\
+                  "Please keep your hands off the touchpad."\
+                  "This will take around 2 minutes."
+}
+
+clear_splash() {
+  # Clear screen by killing frecon
+  pkill -9 -f frecon
 }
 
 force_flash() {
@@ -191,6 +214,8 @@ main() {
       reboot
       exit 0
     fi
+
+    clear_splash
   fi
 }
 
