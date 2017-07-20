@@ -135,6 +135,7 @@ force_flash() {
   st_flash --board=eve "${FW_LINK}"
 
   if [ "$?" -ne "0" ]; then
+    clear_splash
     die "Unable to flash new touchpad firmware, abort."
   fi
 
@@ -204,6 +205,7 @@ main() {
     active_fw_ver="$(get_active_fw_version)"
     update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      clear_splash
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
