@@ -14,7 +14,7 @@ DEFINE_string 'device_path' '' "device path" 'p'
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-FW_LINK="/lib/firmware/st_touch.bin"
+FW_LINK="/lib/firmware/google_touchpad.bin"
 
 # Sysfs entry created by cros_ec driver.
 CROS_TP_SYSFS="/sys/class/chromeos/cros_tp"
@@ -61,7 +61,7 @@ compare_fw_versions() {
 
 get_fw_version_from_disk() {
   # The on-disk FW version is determined by reading the filename which
-  # is in the format "st_FWVERSION.hex" where the fw version is a hex
+  # is in the format "FWVERSION.hex" where the fw version is a hex
   # number preceeded by 0x and using lower case letters. We follow the fw's
   # link to the actual file then strip away everything in the FW's filename
   # but the FW version.
@@ -79,8 +79,7 @@ get_fw_version_from_disk() {
   fi
 
   fw_filename="$(basename "${fw_filepath}")"
-  fw_ver="${fw_filename#*_}"
-  fw_ver="${fw_ver%.*}"
+  fw_ver="${fw_filename%.*}"
   echo "${fw_ver}"
 }
 
