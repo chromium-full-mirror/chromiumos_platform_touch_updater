@@ -34,7 +34,7 @@ DEFINE_string touch_type "" "Touch type - TP (Touchpad) / TS (Touchscreen) /"\
 DEFINE_string var_name_prefix "" "The prefix to be appended to variables in"\
 "ebuild file" n
 DEFINE_string touch_vendor "" "The vendor name of this firmware - elan / atmel"\
-" / melfas / wacom / raydium" r
+" / melfas / wacom / raydium / google" r
 # TODO(marcochen@chromium.org): CPU can be detected by checking into
 # toolchain.conf
 DEFINE_string cpu "" "What CPU family used in this board - x86 / arm" c
@@ -127,9 +127,10 @@ verify_args() {
     [ "${FLAGS_touch_vendor}" != "atmel" ] &&
     [ "${FLAGS_touch_vendor}" != "melfas" ] &&
     [ "${FLAGS_touch_vendor}" != "wacom" ] &&
-    [ "${FLAGS_touch_vendor}" != "raydium" ]; then
+    [ "${FLAGS_touch_vendor}" != "raydium" ] &&
+    [ "${FLAGS_touch_vendor}" != "google" ]; then
     die "Touch vendor should be one of elan / atmel / melfas / wacom / raydium"\
-" using -r"
+" / google using -r"
   fi
 
   if [ "${FLAGS_action}" = "verification" ]; then
@@ -169,6 +170,11 @@ verify_args() {
     [  "${USE_WACOM_PID}" = "0" ] &&
     [ "${FLAGS_chassis_id}" = "" ]; then
     die "Wacom needs chassis_id info using -s"
+  fi
+
+  if [ "${FLAGS_touch_vendor}" = "google" ] &&
+    [ "${FLAGS_touch_type}" != "TP" ]; then
+    die "Google only supports TP now."
   fi
 
   # Check whether EBUILD_DIR exists or if we need to create an initial one.
@@ -359,13 +365,19 @@ generate_symlink_path() {
     fi
   elif [ "${FLAGS_touch_vendor}" = "raydium" ] ; then
     path="/lib/firmware/raydium.fw"
-  else
+  elif [ "${FLAGS_touch_vendor}" = "wacom" ]; then
     # This is for the case of Wacom.
     if [ "${USE_WACOM_PID}" = 0 ]; then
       path="/lib/firmware/wacom_firmware_${FLAGS_chassis_id}.hex"
     else
       local wacom2_prefix="wacom2_firmware"
       path="${path/PLACEHOLDER/${wacom2_prefix}}.fw"
+    fi
+  elif [ "${FLAGS_touch_vendor}" = "google" ]; then
+    if [ "${FLAGS_touch_type}" = "TP" ]; then
+      path="/lib/firmware/google_touchpad.bin"
+    else
+      path="/lib/firmware/google_touchscreen.bin"
     fi
   fi
 
@@ -654,9 +666,9 @@ main() {
     exit 1
   fi
 
-  verify_args
-
   prepare_global_info
+
+  verify_args
 
   action_"${FLAGS_action}"
 
