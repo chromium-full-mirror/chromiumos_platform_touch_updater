@@ -22,9 +22,6 @@ CROS_TP_SYSFS="/sys/class/chromeos/cros_tp"
 # Flashrom programmer argument, we are type "tp"
 PROGRAMMER="ec:type=tp"
 
-# ACPI device sysfs entry for touchpad
-CROS_TP_ACPI_PATH="/sys/bus/acpi/devices/ACPI0C50:00"
-
 extract_numerical_fw_version() {
   # FW version string has the following format:
   # rose_v1.1.6371-3fc259f2c
@@ -128,6 +125,7 @@ clear_splash() {
   pkill -9 -f frecon
 }
 
+# TODO(wnhuang): remove these once we have RO-WP enabled.
 force_flash() {
   display_splash
 
@@ -148,22 +146,22 @@ force_flash() {
   exit 0  # Reboot is not a blocking call, so we need to explicity exit.
 }
 
-main() {
-  local ret
+# Eve TP firmware version before 6627 has issue which may cause flashrom to
+# fail (see b/38018926). If detct firmware version < 6627, force an update with
+# st_flash.
+check_for_force_update() {
+  local active_fw_ver_raw="$1"
+  local active_fw_ver="$(extract_numerical_fw_version "${active_fw_ver_raw}")"
+  local active_fw_ver_revision="${active_fw_ver##*.}"
 
-  # TODO(wnhuang): remove the following code once the transition is completed
-  # and we no longer have TP using the old firmware.
-
-  # If we are not running EC firmware, use st_flash to flash EC firmware.
-  if [ ! -e "${CROS_TP_SYSFS}" ]; then
-    # If we have device with old AP firmware, abort firmware update completely.
-    if [ ! -e "${CROS_TP_ACPI_PATH}" ]; then
-      die "Old AP firmware detected, update aborted."
-    fi
-
-    log_msg "Transiting to new touchpad firmware, forcing an update."
+  if [ "${active_fw_ver_revision}" -lt "6627" ]; then
+    log_msg "Detected firmware with issue, force reflashing touchpad firmware."
     force_flash
   fi
+}
+
+main() {
+  local ret
 
   # Active firmware version (RW version)
   local active_fw_ver="$(get_active_fw_version)"
@@ -177,6 +175,8 @@ main() {
   if [ -z "${updater_fw_ver}" ]; then
     die "Unable to detect the updater's FW version on disk."
   fi
+
+  check_for_force_update "${active_fw_ver}"
 
   update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
   log_update_type "${update_type}"
