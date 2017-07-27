@@ -150,7 +150,8 @@ force_flash() {
 # fail (see b/38018926). If detct firmware version < 6627, force an update with
 # st_flash.
 check_for_force_update() {
-  local active_fw_ver_raw="$1"
+  local active_fw_ver_raw="$(cat "${CROS_TP_SYSFS}"/version | \
+                             awk 'NR==1 { print $3 }')"
   local active_fw_ver="$(extract_numerical_fw_version "${active_fw_ver_raw}")"
   local active_fw_ver_revision="${active_fw_ver##*.}"
 
@@ -176,7 +177,7 @@ main() {
     die "Unable to detect the updater's FW version on disk."
   fi
 
-  check_for_force_update "${active_fw_ver}"
+  check_for_force_update
 
   update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
   log_update_type "${update_type}"
