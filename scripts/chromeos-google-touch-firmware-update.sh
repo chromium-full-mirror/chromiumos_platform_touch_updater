@@ -80,16 +80,31 @@ get_fw_version_from_disk() {
   echo "${fw_ver}"
 }
 
-get_active_fw_version() {
+real_get_active_fw_version() {
   local fw_copy=$(cat "${CROS_TP_SYSFS}"/version | awk 'NR==3 { print $3 }')
 
-  # If we TP firmware is still in RO, wait 1 second for it to jump to RW.
+  # If TP firmware is still in RO, wait 1 second for it to jump to RW.
   if [ "${fw_copy}" = "RO" ]; then
     sleep 1
     fw_copy=$(cat "${CROS_TP_SYSFS}"/version | awk 'NR==3 { print $3 }')
   fi
 
   cat "${CROS_TP_SYSFS}"/version | grep ${fw_copy} | awk 'NR==1 { print $3 }'
+}
+
+get_active_fw_version() {
+  local active_fw_ver
+  # If we check the touchpad during RWSIG jump, we may get an empty version
+  # number. In this case, retry after 0.5 seconds and we should get the correct
+  # version number.
+  for i in $(seq 0 3); do
+    active_fw_ver="$(real_get_active_fw_version)"
+    if [ -n "${active_fw_ver}" ]; then
+      echo ${active_fw_ver}
+      return
+    fi
+    sleep 0.5
+  done
 }
 
 prepare_message() {
