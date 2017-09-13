@@ -17,17 +17,15 @@ RDEPEND="
 "
 
 CROS_BINARY_URI="${CATEGORY}/${PN}/${PF}.tbz2"
-CROS_BINARY_INSTALL_FLAGS="--strip-components=1"
 
-if [[ ${PR} != "r0" ]]; then
-	cros-binary_add_gs_uri bcs-PROJECT-private overlay-PROJECT-private \
-		"${CROS_BINARY_URI}"
-fi
+cros-binary_add_gs_uri bcs-PROJECT-private overlay-PROJECT-private \
+	"${CROS_BINARY_URI}"
 
 S=${WORKDIR}
 
 src_install() {
-	cros-binary_src_install
+	insinto /
+	doins -r */*
 
 	# Create symlinks at /lib/firmware to the firmware binaries
 
