@@ -200,6 +200,9 @@ main() {
       reboot
       exit 0
     fi
+  else
+    # Force rebind driver to reload RW HID descriptor
+    rebind_driver "${FLAGS_device_path}"
   fi
 }
 
