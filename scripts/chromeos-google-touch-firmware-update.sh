@@ -107,32 +107,8 @@ get_active_fw_version() {
   done
 }
 
-prepare_message() {
-  # Prepare image for displaying in frecon.
-  local message="
-    <span font=\"Noto Sans UI 16\"
-          foreground=\"black\">"
-
-  printf "${message}\n"
-  # Append messages with newline.
-  for message in "$@"; do
-    printf "${message}\n"
-  done
-  printf "</span>"
-}
-
-display_message() {
-  # Display message in frecon.
-  local message_file="$(mktemp --tmpdir)"
-  prepare_message "$@" >"${message_file}"
-  SPINNER_INTERVAL=25 display_boot_message "show_spinner" "${message_file}"
-  rm -rf ${message_file}  # show be safe to delete this.
-}
-
 display_splash() {
-  display_message "Touchpad firmware update in progress..."\
-                  "Please keep your hands off the touchpad."\
-                  "This will take around 2 minutes."
+  chromeos-boot-alert update_touchpad_firmware
 }
 
 # TODO(wnhuang): remove these once we have RO-WP enabled.
