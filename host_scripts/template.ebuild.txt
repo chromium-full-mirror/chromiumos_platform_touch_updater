@@ -16,7 +16,7 @@ RDEPEND="
 	${DEPEND}
 "
 
-CROS_BINARY_URI="${CATEGORY}/${PN}/${PF}.tbz2"
+CROS_BINARY_URI="${CATEGORY}/${PN}/${P}.tbz2"
 
 cros-binary_add_gs_uri bcs-PROJECT-private overlay-PROJECT-private \
 	"${CROS_BINARY_URI}"

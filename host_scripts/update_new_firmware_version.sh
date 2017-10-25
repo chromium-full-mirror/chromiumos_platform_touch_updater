@@ -305,7 +305,7 @@ create_initial_ebuild_dir() {
   fi
 
   SYMBOLIC_EBUILD_FILE="chromeos-touch-firmware-${FLAGS_board}-0.0.1-r1.ebuild"
-  ln -s "${EBUILD_DIR}/${EBUILD_FILE}" "${EBUILD_DIR}/${SYMBOLIC_EBUILD_FILE}"
+  ln -rs "${EBUILD_DIR}/${EBUILD_FILE}" "${EBUILD_DIR}/${SYMBOLIC_EBUILD_FILE}"
 
   set_dep_into_chromeos_bsp
 
@@ -409,7 +409,7 @@ update_blob_in_tarball() {
     full_blob_path="${TMP}/${extracted_folder}/${fw_path}"
     mkdir -p "${full_blob_path}"
   else
-    local old_tarball_name="$(basename "${SYMBOLIC_EBUILD_FILE/ebuild/tbz2}")"
+    local old_tarball_name="$(basename "${EBUILD_FILE/ebuild/tbz2}")"
     local gs_old_tarball_path="${gs_path}/${old_tarball_name}"
 
     if [ "${FLAGS_test_mode}" = "${FLAGS_TRUE}" ] &&
@@ -434,7 +434,7 @@ update_blob_in_tarball() {
   cp "${FLAGS_firmware_path}" "${full_blob_path}/${new_blob_name}"
 
   # We are repacking tarball with new blob here.
-  local new_folder="${new_symbolic_ebuild_file%.*}"
+  local new_folder="${new_ebuild_file%.*}"
   mv "${TMP}/${extracted_folder}" "${TMP}/${new_folder}"
   tar -jcvf "${TMP}/${new_folder}.tbz2" -C "${TMP}" "${new_folder}"
 
@@ -551,17 +551,24 @@ modify_ebuild_file() {
 "* Remember to add changes in chromeos-touch-firmware-${FLAGS_board} to a CL\n"
 
   if ${NEW_EBUILD_CREATED} ; then
+    new_ebuild_file="${EBUILD_FILE}"
     new_symbolic_ebuild_file="${SYMBOLIC_EBUILD_FILE}"
     update_blob_in_tarball "${old_fw_version}"
     return
   fi
 
   # Ebuild version should be bumped.
-  file_name="${SYMBOLIC_EBUILD_FILE%.*}"
-  old_rev="${file_name##*r}"
+  # EBUILD_FILE should look like "chromeos-touch-firmware-xxx-0.0.1.ebuild".
+  file_name="${EBUILD_FILE%.*}"
+  # file_name should look like "chromeos-touch-firmware-xxx-0.0.1".
+  old_rev="${file_name##*.}"
   new_rev="$((old_rev+1))"
-  new_symbolic_ebuild_file="${SYMBOLIC_EBUILD_FILE/-r${old_rev}/-r${new_rev}}"
-  git mv "${EBUILD_DIR}/${SYMBOLIC_EBUILD_FILE}" \
+  new_ebuild_file="${EBUILD_FILE/0.0.${old_rev}/0.0.${new_rev}}"
+  git mv "${EBUILD_DIR}/${EBUILD_FILE}" "${EBUILD_DIR}/${new_ebuild_file}"
+  git rm "${EBUILD_DIR}/${SYMBOLIC_EBUILD_FILE}"
+  new_symbolic_ebuild_file=\
+"${SYMBOLIC_EBUILD_FILE/0.0.${old_rev}/0.0.${new_rev}}"
+  ln -rs "${EBUILD_DIR}/${new_ebuild_file}" \
 "${EBUILD_DIR}/${new_symbolic_ebuild_file}"
 
   update_blob_in_tarball "${old_fw_version}"
