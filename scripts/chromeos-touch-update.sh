@@ -19,17 +19,6 @@ check_update() {
   local driver_name="$(basename "$(readlink -f "${dev}/driver")")"
   local device_name="$(cat "${dev}/name")"
 
-  # For devices supported runtime power managment, the "auto" mode would have
-  # chance to let device go into runtime_suspend state. Which will prevent
-  # touch updater from accessing that device. Here tries to move i2c devices's
-  # state from "auto" to "on" then restoring them in the end of update
-  # process.
-  local power_path="${dev}/power/control"
-  if [ -e "${power_path}" ] && [ "auto" = "$(cat "${power_path}")" ]; then
-    echo on > "${power_path}"
-    restore_power_paths="${restore_power_paths} ${power_path}"
-  fi
-
   if [ "${driver_name}" = "i2c_hid" ]; then
     local hidpath="$(echo "${dev}"/*:*:*.*)"
     local hidname="hid-$(echo "${hidpath##*/}" | \
@@ -150,7 +139,19 @@ main() {
   fi
 
   local dev
+  local power_path
   for dev in "/sys/bus/i2c/devices"/*; do
+    # For devices supported runtime power managment, the "auto" mode would have
+    # chance to let device go into runtime_suspend state. Which will prevent
+    # touch updater from accessing that device. Here tries to move i2c devices's
+    # state from "auto" to "on" then restoring them in the end of update
+    # process.
+    power_path="${dev}/power/control"
+    if [ -e "${power_path}" ] && [ "auto" = "$(cat "${power_path}")" ]; then
+      echo on > "${power_path}"
+      restore_power_paths="${restore_power_paths} ${power_path}"
+    fi
+
     ( check_update "${dev}" ) &
   done
 
@@ -176,7 +177,6 @@ main() {
 
   # To restore runtime power management state from "on" to "auto" if they are
   # changed by this script in the begining.
-  local power_path
   for power_path in ${restore_power_paths}; do
     echo auto > "${power_path}"
   done
