@@ -15,6 +15,7 @@ FW_LINK_BASE="wacom_firmware.hex"
 FW_LINK_BASE_V2="wacom2_firmware.hex"
 WACOMFLASH="/usr/sbin/wacom_flash"
 GET_ACTIVE_FIRMVER="-a"
+GET_TOUCH_HWID="-h"
 
 # Parse command line.
 FLAGS "$@" || exit 1
@@ -91,6 +92,13 @@ get_product_id() {
   fi
 }
 
+get_hardware_id() {
+  # Query the touchscreen and get the hardware id (vendor_id+product_id).
+  minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
+    "${WACOMFLASH}" "dummy_unused_argument" "${GET_TOUCH_HWID}" \
+    "${FLAGS_device}" 2>/dev/null
+}
+
 main() {
   # This script runs early at bootup, so if the touch driver is mistakenly
   # included as a module (as opposed to being compiled directly in) the i2c
@@ -102,21 +110,42 @@ main() {
   local new_fw_ver=""
   local update_type=""
   local update_needed=""
+  local fw_link=""
+  local product_id=""
 
-  local product_id="$(get_product_id)"
-  log_msg "Device product id dectected as: ${product_id}"
+  local hardware_id="$(get_hardware_id)"
+  if [ -z "${hardware_id}" ]; then
+    product_id="$(get_product_id)"
+    log_msg "Device product id dectected as: ${product_id}"
 
-  local fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${product_id}")"
-  log_msg "Attempting to find FW_V2: ${fw_link}"
+    fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${product_id}")"
+    log_msg "Attempting to find FW_V2: ${fw_link}"
 
-  if [ -L "${fw_link}" ]; then
+    if [ -L "${fw_link}" ]; then
       log_msg "Wacom fw v2 found."
-  else
+    else
       log_msg "Wacom fw v2 not found. Will use v1."
       local chassis_id="$(get_chassis_id)"
       log_msg "Chassis identifier detected as '${chassis_id}'"
       fw_link="$(find_fw_link_path "${FW_LINK_BASE}" "${chassis_id}")"
       log_msg "Attempting to Load FW: '${fw_link}'"
+    fi
+  else
+    product_id=${hardware_id#*_}
+    log_msg "Wacom device hardware ID dectected as: ${hardware_id}"
+    log_msg "Wacom device Product ID (derived from hardware ID): ${product_id}"
+    fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${hardware_id}" \
+      "${product_id}")"
+    log_msg "Attempting to find FW_V2: ${fw_link}"
+
+    if [ -L "${fw_link}" ]; then
+      log_msg "Wacom fw v2 found."
+    else
+      log_msg "Wacom fw v2 not found. Will use v1."
+      fw_link="$(find_fw_link_path "${FW_LINK_BASE}" "${hardware_id}" \
+        "${product_id}")"
+      log_msg "Attempting to Load FW: '${fw_link}'"
+    fi
   fi
 
   active_fw_ver="$(get_active_fw_version)"
