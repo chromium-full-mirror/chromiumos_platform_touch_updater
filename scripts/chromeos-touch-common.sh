@@ -6,6 +6,20 @@
 
 I2C_DEVICES_PATH="/sys/bus/i2c/devices"
 
+# powerd will check this lock file and block device suspension.
+POWERD_LOCK_FILE="/run/lock/power_override/touch_updater.lock"
+
+# The function will run the cmd and block powerd from suspending the system.
+# It's done by creating the lock file while the cmd is running. Remove the lock
+# file once it returns.
+run_cmd_and_block_powerd() {
+  trap 'rm -f "${POWERD_LOCK_FILE}"' EXIT
+  echo $$ > "${POWERD_LOCK_FILE}"
+  "$@"
+  rm -f "${POWERD_LOCK_FILE}"
+  trap - EXIT
+}
+
 # Find touchscreen/pad path in i2c devices given it's device name and a list
 # of the sysfs entries it is expect to have (this can help skip over some
 # bogus devices that have already been disconnected)

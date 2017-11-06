@@ -136,7 +136,7 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${new_fw_ver}"
-    update_firmware "${fw_link}"
+    run_cmd_and_block_powerd update_firmware "${fw_link}"
 
     # Check if update was successful
     active_fw_ver="$(get_active_fw_version)"
