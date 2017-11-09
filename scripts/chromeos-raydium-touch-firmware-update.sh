@@ -17,6 +17,9 @@ DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 
 RAYDIUM_FIRMWARE_NAME='raydium.fw'
+RAYDIUM_SAND_1023_FIRMWARE_NAME='raydium_1023.fw'
+RAYDIUM_SNAPPY_0A2B_FIRMWARE_NAME='raydium_0a2b.fw'
+RAYDIUM_SNAPPY_082C_FIRMWARE_NAME='raydium_082c.fw'
 RAYDIUM_NUM_RETRIES=3
 RAYDIUM_FW_BOOT_MODE="Recovery"
 
@@ -75,12 +78,15 @@ main() {
   local active_fw_version=""
   local active_boot_mode=""
   local fw_path=""
+  local fw_tmp_link_path=""
   local fw_link_path=""
   local fw_filename=""
   local fw_name=""
   local hw_fw_version=""
   local fw_version=""
   local hw_version=""
+  local board=`grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}'`
+  log_msg "Board detected as '${board}'"
 
   # Make sure the specified device exists
   if [ -z "${FLAGS_device}" ]; then
@@ -101,6 +107,18 @@ main() {
 
   # Find the location of the correct FW to load in /lib/firmware
   fw_link_path="$(find_fw_link_path ${active_hw_version} ${RAYDIUM_FIRMWARE_NAME})"
+  if [ "${board}" = "snappy" ]; then
+    if [ "${active_hw_version}" = "0xa2000a2b" ]; then
+      fw_tmp_link_path="$(find_fw_link_path ${active_hw_version} ${RAYDIUM_SNAPPY_0A2B_FIRMWARE_NAME})"
+    elif [ "${active_hw_version}" = "0xa200082c" ]; then
+      fw_tmp_link_path="$(find_fw_link_path ${active_hw_version} ${RAYDIUM_SNAPPY_082C_FIRMWARE_NAME})"
+    fi
+    mv ${fw_tmp_link_path} ${fw_link_path}
+  fi
+  if [ "${board}" = "sand" ]; then
+    fw_tmp_link_path="$(find_fw_link_path ${active_hw_version} ${RAYDIUM_SAND_1023_FIRMWARE_NAME})"
+    mv ${fw_tmp_link_path} ${fw_link_path}
+  fi
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink -f "${fw_link_path}")"
   if [ ! -e "${fw_link_path}" ] || [ ! -e "${fw_path}" ]; then
