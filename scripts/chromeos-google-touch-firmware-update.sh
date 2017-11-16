@@ -95,15 +95,15 @@ real_get_active_fw_version() {
 get_active_fw_version() {
   local active_fw_ver
   # If we check the touchpad during RWSIG jump, we may get an empty version
-  # number. In this case, retry after 0.5 seconds and we should get the correct
+  # number. In this case, retry after 1 seconds and we should get the correct
   # version number.
-  for i in $(seq 0 3); do
+  for i in $(seq 0 10); do
     active_fw_ver="$(real_get_active_fw_version)"
     if [ -n "${active_fw_ver}" ]; then
       echo ${active_fw_ver}
       return
     fi
-    sleep 0.5
+    sleep 1
   done
 }
 
@@ -185,8 +185,7 @@ main() {
   log_msg "Current active fw version is: '${active_fw_ver}'"
   log_msg "Current updater fw version is: '${updater_fw_ver}'"
   if [ -z "${active_fw_ver}" ]; then
-    log_msg "Unable to detect the active FW version, forcing a reflash."
-    force_flash
+    die "Unable to detect the active FW version."
   fi
   if [ -z "${updater_fw_ver}" ]; then
     die "Unable to detect the updater's FW version on disk."
