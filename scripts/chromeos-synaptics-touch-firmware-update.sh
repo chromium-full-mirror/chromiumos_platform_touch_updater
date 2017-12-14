@@ -99,6 +99,7 @@ main() {
     die "Please specify a device using -d"
   fi
 
+  modprobe -q hid-rmi || die "Not able to load hid-rmi kernel module"
   # Find the device path if it exists "/dev/hidrawX"
   touch_device_path="$(find_i2c_hid_device ${trackpad_device_name##*-})"
   log_msg "touch_device_path: '${touch_device_path}'"
