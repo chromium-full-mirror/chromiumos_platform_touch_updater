@@ -44,7 +44,7 @@ get_active_firmware_version() {
 find_fw_path() {
   local hw_version="$1"
   local fw_link_name="$2"
-  local fw_link_path="$(find_fw_link_path $hw_version $fw_link_name)"
+  local fw_link_path="$(find_fw_link_path "${fw_link_name}" "${hw_version}")"
   local fw_path="$(readlink "${fw_link_path}")"
 
   echo "${fw_path}"
