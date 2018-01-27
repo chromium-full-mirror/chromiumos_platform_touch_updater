@@ -71,11 +71,17 @@ find_i2c_hid_device() {
 }
 
 find_fw_link_path() {
-  # Given a hardware version (or product ID depending on the device)
-  # determine which fw symlink in /lib/firmware it should try to load
-  local hw_version="$1"
-  local fw_link_name="$2"
+  # Given one or two (second is optional) hardware versions (or product ID
+  # depending on the device) determine which fw symlink in /lib/firmware
+  # it should try to load. This function shall try in this order:
+  # <fw_link_name>_<hw_ver1>.<extension>
+  # <fw_link_name>_<hw_ver2>.<extension>
+  # <fw_link_name>.<extension>
+  local fw_link_name="$1"
+  local hw_ver1="$2"
+  local hw_ver2="$3"
   local specific_fw_link_path=""
+  local specific_fw_link_path2=""
   local generic_fw_link_path=""
   local fw_link_name_extension="`expr "$fw_link_name" : ".*\(\..*\)"`"
   local fw_link_name_base="${fw_link_name%$fw_link_name_extension}"
@@ -85,11 +91,14 @@ find_fw_link_path() {
   *)  fw_link_path="/lib/firmware/${fw_link_name_base}" ;;
   esac
 
-  specific_fw_link_path="${fw_link_path}_${hw_version}${fw_link_name_extension}"
+  specific_fw_link_path="${fw_link_path}_${hw_ver1}${fw_link_name_extension}"
+  specific_fw_link_path2="${fw_link_path}_${hw_ver2}${fw_link_name_extension}"
   generic_fw_link_path="${fw_link_path}${fw_link_name_extension}"
 
   if [ -e "${specific_fw_link_path}" ]; then
     echo "${specific_fw_link_path}"
+  elif [ -n "${hw_ver2}" ] && [ -e "${specific_fw_link_path2}" ]; then
+    echo "${specific_fw_link_path2}"
   else
     echo "${generic_fw_link_path}"
   fi

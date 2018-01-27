@@ -77,7 +77,8 @@ main() {
   fi
 
   # Find the FW that the updater is considering flashing on the touch device.
-  fw_link_path="$(find_fw_link_path ${active_product_id} ${CYAPA_FIRMWARE_NAME})"
+  fw_link_path="$(find_fw_link_path "${CYAPA_FIRMWARE_NAME}" \
+                                    "${active_product_id}")"
   fw_path="$(readlink "${fw_link_path}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   if [ ! -e "${fw_link_path}" ] || [ ! -e "${fw_path}" ]; then

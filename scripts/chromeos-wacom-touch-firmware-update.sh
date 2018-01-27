@@ -106,7 +106,7 @@ main() {
   local product_id="$(get_product_id)"
   log_msg "Device product id dectected as: ${product_id}"
 
-  local fw_link="$(find_fw_link_path "${product_id}" "${FW_LINK_BASE_V2}")"
+  local fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${product_id}")"
   log_msg "Attempting to find FW_V2: ${fw_link}"
 
   if [ -L "${fw_link}" ]; then
@@ -115,7 +115,7 @@ main() {
       log_msg "Wacom fw v2 not found. Will use v1."
       local chassis_id="$(get_chassis_id)"
       log_msg "Chassis identifier detected as '${chassis_id}'"
-      fw_link="$(find_fw_link_path "${chassis_id}" "${FW_LINK_BASE}")"
+      fw_link="$(find_fw_link_path "${FW_LINK_BASE}" "${chassis_id}")"
       log_msg "Attempting to Load FW: '${fw_link}'"
   fi
 

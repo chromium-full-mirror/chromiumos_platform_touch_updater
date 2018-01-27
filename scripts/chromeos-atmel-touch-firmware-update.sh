@@ -139,7 +139,8 @@ main() {
   fi
 
   # Find the location of the correct FW to load in /lib/firmware
-  fw_link_path="$(find_fw_link_path ${active_hw_version} ${FLAGS_firmware_name})"
+  fw_link_path="$(find_fw_link_path "${FLAGS_firmware_name}" \
+                                    "${active_hw_version}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink "${fw_link_path}")"
   if [ ! -e "${fw_link_path}" ] || [ ! -e "${fw_path}" ]; then

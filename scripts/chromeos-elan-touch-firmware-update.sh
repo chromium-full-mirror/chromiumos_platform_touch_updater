@@ -173,7 +173,7 @@ main() {
   fi
 
   # Find the FW that the updater is considering flashing on the touch device.
-  fw_link_path="$(find_fw_link_path ${active_product_id} ${FW_NAME}.bin)"
+  fw_link_path="$(find_fw_link_path "${FW_NAME}.bin" "${active_product_id}")"
   fw_path="$(readlink "${fw_link_path}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   log_msg "(which points to '${fw_path}')"

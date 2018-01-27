@@ -102,7 +102,7 @@ main() {
   active_product_id="$(get_active_product_id)"
 
   # Make sure there is a FW that looks like it's for the same product ID
-  fw_link_path="$(find_fw_link_path "${active_product_id}" "${FW_LINK_NAME}")"
+  fw_link_path="$(find_fw_link_path "${FW_LINK_NAME}" "${active_product_id}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink "${fw_link_path}")"
   if [ ! -e "${fw_link_path}" ] ||
