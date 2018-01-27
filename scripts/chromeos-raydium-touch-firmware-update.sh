@@ -102,7 +102,7 @@ main() {
 
   # Find the location of the correct FW to load in /lib/firmware
   firmware_name="raydium_${active_hw_version}.fw"
-  fw_link_path="$(find_fw_link_path "${active_hw_version}" "${firmware_name}")"
+  fw_link_path="$(find_fw_link_path "${firmware_name}" "${active_hw_version}")"
   fw_folder="$(dirname "$(readlink -f "${fw_link_path}")")"
   fw_file_cnt=$(find "${fw_folder}" -type f -name "*${active_hw_version}*" | wc -l)
 
