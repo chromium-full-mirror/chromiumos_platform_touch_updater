@@ -251,6 +251,13 @@ get_chassis_id() {
   mosys platform chassis
 }
 
+get_platform_ver() {
+  # Get platform version, since different boards (EVT, DVT etc) may need
+  # different touchpad firmware on devices sharing same image.
+  local version="$(mosys platform version)"
+  echo "${version#rev}"
+}
+
 i2c_chardev_present() {
   # This function tests to see if there are any i2c char devices on the system.
   # It returns 0 iff /dev/i2c-* matches at least one file.

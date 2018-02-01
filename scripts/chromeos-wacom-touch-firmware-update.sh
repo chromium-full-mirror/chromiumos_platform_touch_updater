@@ -114,7 +114,21 @@ main() {
   local product_id=""
 
   local hardware_id="$(get_hardware_id)"
-  if [ -z "${hardware_id}" ]; then
+  local chassis_id="$(get_chassis_id)"
+  local board_rev="$(get_platform_ver)"
+
+  log_msg "Chassis identifier detected as: ${chassis_id}"
+  log_msg "Platform version detected as: ${board_rev}"
+  log_msg "Wacom device hardware ID dectected as: ${hardware_id}"
+
+  if [ "${hardware_id}" = "2d1f_4876" ] && [ "${chassis_id}" = "SORAKA" ] \
+       && [ "${board_rev}" -lt "5" ]; then
+    # Special case: Soraka < rev5 with Laibao panel cannot handle latest fw.
+    log_msg "Soraka legacy (Laibao) special case"
+    fw_link="/lib/firmware/wacom2_firmware_4876_evt2_or_below.hex"
+    log_msg "Attempting to find special FW: ${fw_link}"
+
+  elif [ -z "${hardware_id}" ]; then
     product_id="$(get_product_id)"
     log_msg "Device product id dectected as: ${product_id}"
 
@@ -125,14 +139,11 @@ main() {
       log_msg "Wacom fw v2 found."
     else
       log_msg "Wacom fw v2 not found. Will use v1."
-      local chassis_id="$(get_chassis_id)"
-      log_msg "Chassis identifier detected as '${chassis_id}'"
       fw_link="$(find_fw_link_path "${FW_LINK_BASE}" "${chassis_id}")"
       log_msg "Attempting to Load FW: '${fw_link}'"
     fi
   else
     product_id=${hardware_id#*_}
-    log_msg "Wacom device hardware ID dectected as: ${hardware_id}"
     log_msg "Wacom device Product ID (derived from hardware ID): ${product_id}"
     fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${hardware_id}" \
       "${product_id}")"
