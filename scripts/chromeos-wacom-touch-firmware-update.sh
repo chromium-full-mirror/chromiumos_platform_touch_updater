@@ -94,9 +94,17 @@ get_product_id() {
 
 get_hardware_id() {
   # Query the touchscreen and get the hardware id (vendor_id+product_id).
-  minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
-    "${WACOMFLASH}" "dummy_unused_argument" "${GET_TOUCH_HWID}" \
-    "${FLAGS_device}" 2>/dev/null
+  local hardware_id=""
+
+  hardware_id="$(
+    minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
+      "${WACOMFLASH}" "dummy_unused_argument" "${GET_TOUCH_HWID}" \
+      "${FLAGS_device}" 2>/dev/null
+  )"
+
+  if [ "$?" -eq 0 ] && [ "${hardware_id}" != "0000_0000" ]; then
+    echo "${hardware_id}"
+  fi
 }
 
 main() {
