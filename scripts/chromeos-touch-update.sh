@@ -12,6 +12,7 @@ SYNAPTICS_VENDOR_ID="06CB"
 WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"
 GOODIX_VENDOR_ID="27C6"
+SIS_VENDOR_ID="0457"
 
 restore_power_paths=""
 
@@ -64,6 +65,35 @@ check_update() {
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
+                "unknown vid '${vendor_id}'"
+    esac
+
+    continue
+  fi
+
+  if [ "${driver_name}" = "hid-multitouch" ] \
+        || [ "${driver_name}" = "hid-generic" ]; then
+    local hidpath="$(echo "${dev}")"
+    local hidname="hid-$(echo "${hidpath##*/}" | \
+                         awk -F'[:.]' '{ print $2 "_" $3 }')"
+    local vendor_id="${hidname#*-}"
+    vendor_id="${vendor_id%_*}"
+
+    # Make sure the HID driver successfully bound to the device.
+    if [ ! -d "${hidpath}" ]; then
+      continue
+    fi
+    local hid_link_path="$(readlink -f "${hidpath}")"
+    hid_link_path="${hid_link_path%/*}"
+
+    case "${vendor_id}" in
+    "${SIS_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-sis-touch-firmware-update.sh \
+        -p "${hid_link_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
+    *)
+      logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
                 "unknown vid '${vendor_id}'"
     esac
 
@@ -138,6 +168,10 @@ check_update() {
   esac
 }
 
+get_dev_list() {
+  echo "/sys/bus/i2c/devices"/* "/sys/bus/hid/devices"/*
+}
+
 main() {
   if [ $# -ne 0 ]; then
     logger -t "${LOGGER_TAG}" "This script should not have any argument."
@@ -146,7 +180,7 @@ main() {
 
   local dev
   local power_path
-  for dev in "/sys/bus/i2c/devices"/*; do
+  for dev in $(get_dev_list); do
     # For devices supported runtime power managment, the "auto" mode would have
     # chance to let device go into runtime_suspend state. Which will prevent
     # touch updater from accessing that device. Here tries to move i2c devices's
