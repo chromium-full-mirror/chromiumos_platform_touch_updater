@@ -125,21 +125,28 @@ main() {
   local chassis_id="$(get_chassis_id)"
   local board_rev="$(get_platform_ver)"
 
+  if [ -z "${hardware_id}" ]; then
+    product_id="$(get_product_id)"
+  else
+    product_id="${hardware_id#*_}"
+  fi
+
   log_msg "Chassis identifier detected as: ${chassis_id}"
   log_msg "Platform version detected as: ${board_rev}"
   log_msg "Wacom device hardware ID dectected as: ${hardware_id}"
+  log_msg "Device product id detected as: ${product_id}"
 
-  if [ "${hardware_id}" = "2d1f_4876" ] && [ "${chassis_id}" = "SORAKA" ] \
-       && [ "${board_rev}" -lt "5" ]; then
-    # Special case: Soraka < rev5 with Laibao panel cannot handle latest fw.
+  if [ "${chassis_id}" = "SORAKA" ] && [ "${board_rev}" -lt "5" ] && \
+       [ "${product_id}" = "4876" -o "${product_id}" = "94" ]; then
+    # Special case: Soraka < rev5 with Laibao panel (pid = 4876) cannot
+    # handle latest fw. Also PID will be 94 if fw is corrupted and no
+    # hwid is supported. So default that case also to the same laibao fw
+    # since no way to determine correct pid.
     log_msg "Soraka legacy (Laibao) special case"
     fw_link="/lib/firmware/wacom2_firmware_4876_evt2_or_below.hex"
     log_msg "Attempting to find special FW: ${fw_link}"
 
   elif [ -z "${hardware_id}" ]; then
-    product_id="$(get_product_id)"
-    log_msg "Device product id dectected as: ${product_id}"
-
     fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${product_id}")"
     log_msg "Attempting to find FW_V2: ${fw_link}"
 
@@ -151,8 +158,6 @@ main() {
       log_msg "Attempting to Load FW: '${fw_link}'"
     fi
   else
-    product_id=${hardware_id#*_}
-    log_msg "Wacom device Product ID (derived from hardware ID): ${product_id}"
     fw_link="$(find_fw_link_path "${FW_LINK_BASE_V2}" "${hardware_id}" \
       "${product_id}")"
     log_msg "Attempting to find FW_V2: ${fw_link}"
