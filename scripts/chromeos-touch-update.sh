@@ -11,6 +11,7 @@ WACOM_VENDOR_ID_2="2D1F"
 SYNAPTICS_VENDOR_ID="06CB"
 WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"
+GOODIX_VENDOR_ID="27C6"
 
 restore_power_paths=""
 
@@ -54,6 +55,11 @@ check_update() {
     "${GOOGLE_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-google-touch-firmware-update.sh \
         -p "${i2c_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${GOODIX_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update.sh \
+        -d "${hidname}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
