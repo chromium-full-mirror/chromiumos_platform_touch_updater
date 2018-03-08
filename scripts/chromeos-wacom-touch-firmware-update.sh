@@ -16,6 +16,7 @@ FW_LINK_BASE_V2="wacom2_firmware.hex"
 WACOMFLASH="/usr/sbin/wacom_flash"
 GET_ACTIVE_FIRMVER="-a"
 GET_TOUCH_HWID="-h"
+GET_BOARD_SPECIFIC_HWID="/opt/google/touch/scripts/get_board_specific_wacom_hwid.sh"
 
 # Parse command line.
 FLAGS "$@" || exit 1
@@ -92,21 +93,6 @@ get_product_id() {
   fi
 }
 
-get_hardware_id() {
-  # Query the touchscreen and get the hardware id (vendor_id+product_id).
-  local hardware_id=""
-
-  hardware_id="$(
-    minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
-      "${WACOMFLASH}" "dummy_unused_argument" "${GET_TOUCH_HWID}" \
-      "${FLAGS_device}" 2>/dev/null
-  )"
-
-  if [ "$?" -eq 0 ] && [ "${hardware_id}" != "0000_0000" ]; then
-    echo "${hardware_id}"
-  fi
-}
-
 main() {
   # This script runs early at bootup, so if the touch driver is mistakenly
   # included as a module (as opposed to being compiled directly in) the i2c
@@ -120,10 +106,14 @@ main() {
   local update_needed=""
   local fw_link=""
   local product_id=""
+  local hardware_id=""
 
-  local hardware_id="$(get_hardware_id)"
   local chassis_id="$(get_chassis_id)"
   local board_rev="$(get_platform_ver)"
+
+  if [ -x "${GET_BOARD_SPECIFIC_HWID}" ]; then
+      hardware_id="$(${GET_BOARD_SPECIFIC_HWID} -d ${FLAGS_device})"
+  fi
 
   if [ -z "${hardware_id}" ]; then
     product_id="$(get_product_id)"
