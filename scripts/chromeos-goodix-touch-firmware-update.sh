@@ -10,6 +10,9 @@
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 
+GOODIX_FW_UPDATE_USER="goodixfwupdate"
+GOODIX_FW_UPDATE_GROUP="goodixfwupdate"
+GOODIX_TOUCHSCREEN_HIDRAW="/dev/goodix_touchscreen_hidraw"
 FW_LINK_NAME="goodix_firmware.bin"
 FW_LINK_PATH="/lib/firmware/goodix-ts.bin"
 GDIXUPDATE="/usr/sbin/gdixupdate"
@@ -24,7 +27,8 @@ update_firmware() {
   local ret
 
   for i in $(seq 3); do
-    minijail0 -S /opt/google/touch/policies/gdixupdate.update.policy \
+    minijail0 -u "${GOODIX_FW_UPDATE_USER}" -g "${GOODIX_FW_UPDATE_GROUP}" \
+        -n -S /opt/google/touch/policies/gdixupdate.update.policy \
         "${GDIXUPDATE}" -f -d "$1" "$2"
 
     ret=$?
@@ -38,7 +42,8 @@ update_firmware() {
 
 get_active_firmware_version() {
   local touch_device_path="$1"
-  minijail0 -S /opt/google/touch/policies/gdixupdate.query.policy \
+  minijail0 -u "${GOODIX_FW_UPDATE_USER}" -g "${GOODIX_FW_UPDATE_GROUP}" \
+      -n -S /opt/google/touch/policies/gdixupdate.query.policy \
       "${GDIXUPDATE}" -p -d "${touch_device_path}"
 }
 
@@ -62,6 +67,43 @@ compare_fw_versions() {
                             "${active_fw_version_minor}" "${fw_version_minor}"
 }
 
+create_goodix_hidraw() {
+  local touch_device="$1"
+  local dev_t_major=""
+  local dev_t_minor=""
+
+  if [ -e "${GOODIX_TOUCHSCREEN_HIDRAW}" ]; then
+    log_msg "Touchscreen hidraw device already exists."
+    return 0
+  fi
+
+  if [ -c "${touch_device}" ]; then
+    # create a device node for touchscreen firmware update
+    dev_t_major="$(ls -l "${touch_device}" | awk '{print $5}')"
+    dev_t_major=${dev_t_major%%,}
+    dev_t_minor="$(ls -l "${touch_device}" | awk '{print $6}')"
+    mknod "${GOODIX_TOUCHSCREEN_HIDRAW}" c "${dev_t_major}" "${dev_t_minor}"
+    if [ $? -ne 0 ]; then
+      die "Failed create node: '${GOODIX_TOUCHSCREEN_HIDRAW}'."
+    fi
+
+    # Change ownership and access mode for goodix touchscreen device
+    chown "${GOODIX_FW_UPDATE_USER}":"${GOODIX_FW_UPDATE_GROUP}" \
+          "${GOODIX_TOUCHSCREEN_HIDRAW}"
+    if [ $? -ne 0 ]; then
+      die "Failed change owner of node: '${GOODIX_TOUCHSCREEN_HIDRAW}'."
+    fi
+
+    chmod 0660 ${GOODIX_TOUCHSCREEN_HIDRAW}
+    if [ $? -ne 0 ]; then
+      die "Failed change mode of node: '${GOODIX_TOUCHSCREEN_HIDRAW}'."
+    fi
+  else
+    die "Not a legal node: '${touch_device}'."
+  fi
+  return 0
+}
+
 main() {
   local touch_device_name="${FLAGS_device}"
   local touch_device_path=""
@@ -80,10 +122,13 @@ main() {
 
   # Find the device path if it exists "/dev/hidrawX".
   touch_device_path="$(find_i2c_hid_device "${touch_device_name##*-}")"
-  log_msg "touch_device_path: '${touch_device_path}'"
   if [ -z "${touch_device_path}" ]; then
     die "${touch_device_name} not found on system. Aborting update."
   fi
+
+  create_goodix_hidraw "${touch_device_path}"
+  touch_device_path="${GOODIX_TOUCHSCREEN_HIDRAW}"
+  log_msg "Touch device path: '${touch_device_path}'"
 
   # Find the active fw version and the product ID currently in use.
   active_product_id="${touch_device_name##*_}"
