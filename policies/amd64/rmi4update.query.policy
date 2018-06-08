@@ -17,6 +17,7 @@ exit: 1
 rt_sigreturn: 1
 exit_group: 1
 mmap: 1
+munmap: 1
 arch_prctl: 1
 uname: 1
 readlink: 1
