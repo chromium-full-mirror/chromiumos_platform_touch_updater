@@ -28,6 +28,7 @@ exit: 1
 rt_sigreturn: 1
 uname: 1
 mmap: 1
+munmap: 1
 arch_prctl: 1
 fstat: 1
 fcntl: 1
