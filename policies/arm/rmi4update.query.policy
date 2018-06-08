@@ -17,6 +17,7 @@ restart_syscall: 1
 exit: 1
 exit_group: 1
 mmap2: 1
+munmap: 1
 uname: 1
 readlink: 1
 close: 1
