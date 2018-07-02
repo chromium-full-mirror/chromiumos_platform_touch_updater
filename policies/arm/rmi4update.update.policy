@@ -33,3 +33,4 @@ execve: 1
 exit_group: 1
 ARM_set_tls: 1
 readlink: 1
+clock_gettime: 1
