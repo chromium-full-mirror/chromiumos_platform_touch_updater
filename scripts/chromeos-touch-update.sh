@@ -195,30 +195,13 @@ main() {
     ( check_update "${dev}" ) &
   done
 
-  # TODO(wnhuang): This is left here to allow eve units running old trackpad
-  # firmware to transit to new firmware. Since the old firmware does not
-  # provide a good way to detect the trackpad, we call the updater whenever
-  # the target board is "eve". This should be removed when all the old units
-  # are switched to the new firmware or we deprecated all the old units.
-  #
-  # The [ ! -e "/dev/cros_tp" ] check is added to prevent the script from
-  # executing twice. If the touchpad is already running new firmware, the
-  # google-touch updater script would have been triggered above due to the
-  # i2c-hid match.
-  local board="$(grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | \
-                 awk -F = '{print $2}')"
-  if [ ! -e "/dev/cros_tp" ] && [ -n "$(echo "${board}" | grep "^eve")" ]; then
-    logger -t "${LOGGER_TAG}" "Detected board as Eve, running updater now."
-    ( /opt/google/touch/scripts/chromeos-google-touch-firmware-update.sh -r || \
-        logger -t "${LOGGER_TAG}" "Eve touchpad firmware update failed." ) &
-  fi
-
   wait
 
   # To restore runtime power management state from "on" to "auto" if they are
   # changed by this script in the begining.
   for power_path in ${restore_power_paths}; do
-    echo auto > "${power_path}"
+    echo auto > "${power_path}" ||
+    logger -t "${LOGGER_TAG}" "Restore ${power_path} to auto failed."
   done
 }
 
