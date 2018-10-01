@@ -93,6 +93,39 @@ get_product_id() {
   fi
 }
 
+wacom_rebind_driver() {
+  # Unbind and then bind the driver for this touchpad incase the recent FW
+  # update changed the way it talks to the OS.
+  local touch_device_path="$1"
+  local bus_id="$(basename ${touch_device_path})"
+  local driver_path="$(readlink -f ${touch_device_path}/driver)"
+
+  log_msg "Attempting to re-bind '${bus_id}' to driver '${driver_path}'"
+  echo "${bus_id}" > "${driver_path}/unbind"
+  if [ "$?" -ne "0" ]; then
+    log_msg "Unable to unbind."
+  else
+    local retry_cnt=1
+    echo "${bus_id}" > "${driver_path}/bind"
+    # For some boards, the device will be powered off when the kernel driver
+    # unbind. Bind the driver immediately after powering off will fail.
+    while [ "$?" -ne "0" ] && [ $retry_cnt -le 4 ]; do
+      retry_cnt="$((retry_cnt + 1))"
+      log_msg "Fail to bind driver, will retry"
+      sleep "$retry_cnt"
+      echo "${bus_id}" > "${driver_path}/bind"
+    done
+
+    if [ "$?" -ne "0" ]; then
+      log_msg "Unable to bind the device back to the driver."
+      return 1
+    else
+      log_msg "Success."
+      return 0
+    fi
+  fi
+}
+
 main() {
   # This script runs early at bootup, so if the touch driver is mistakenly
   # included as a module (as opposed to being compiled directly in) the i2c
@@ -190,7 +223,7 @@ main() {
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
 
-    rebind_driver "${FLAGS_device_path}"
+    wacom_rebind_driver "${FLAGS_device_path}"
   fi
 
   exit 0
