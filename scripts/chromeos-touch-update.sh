@@ -181,7 +181,10 @@ check_update() {
 }
 
 get_dev_list() {
-  echo "/sys/bus/i2c/devices"/* "/sys/bus/hid/devices"/*
+  # Some devices show up in both lists (i2c and hid), so we block hid
+  # in one case to avoid duplication.
+  echo "/sys/bus/i2c/devices"/* "/sys/bus/hid/devices"/* | tr ' ' '\n' | \
+      grep -v ":${PIXART_VENDOR_ID}:[0-9A-F]\{4\}\."  # Skip Pixart HID
 }
 
 main() {
