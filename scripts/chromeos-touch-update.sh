@@ -16,6 +16,7 @@ GOODIX_VENDOR_ID="27C6"
 SIS_VENDOR_ID="0457"
 PIXART_VENDOR_ID="093A"
 G2TOUCH_VENDOR_ID="2A94"
+ST_VENDOR_ID="0483"
 
 restore_power_paths=""
 
@@ -74,6 +75,11 @@ check_update() {
     "${PIXART_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-pixart-hid-touch-firmware-update.sh \
         -h "${hidname}" -i "${i2c_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${ST_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-st-touch-firmware-update.sh \
+        -d "${i2c_device}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
