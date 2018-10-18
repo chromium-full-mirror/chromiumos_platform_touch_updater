@@ -33,3 +33,4 @@ execve: 1
 set_tid_address: 1
 time: 1
 futex: 1
+getpid: 1

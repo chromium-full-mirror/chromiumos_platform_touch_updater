@@ -24,3 +24,4 @@ munmap: 1
 brk: 1
 execve: 1
 nanosleep: 1
+getpid: 1

@@ -31,3 +31,4 @@ nanosleep: 1
 readlinkat: 1
 exit_group: 1
 
+getpid: 1

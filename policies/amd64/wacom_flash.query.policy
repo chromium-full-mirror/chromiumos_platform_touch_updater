@@ -23,3 +23,4 @@ access: 1
 munmap: 1
 execve: 1
 nanosleep: 1
+getpid: 1

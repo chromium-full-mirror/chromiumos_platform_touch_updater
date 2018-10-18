@@ -27,3 +27,4 @@ exit_group: 1
 arch_prctl: arg0 == 0x1002
 access: 1
 munmap: 1
+getpid: 1

@@ -29,3 +29,4 @@ set_tid_address: 1
 fstat: 1
 execve: 1
 futex: 1
+getpid: 1

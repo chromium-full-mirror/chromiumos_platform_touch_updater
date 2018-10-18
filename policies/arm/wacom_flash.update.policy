@@ -25,3 +25,4 @@ ARM_set_tls: 1
 uname: 1
 execve: 1
 _llseek: 1
+getpid: 1

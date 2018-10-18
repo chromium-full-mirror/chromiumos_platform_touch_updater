@@ -30,3 +30,4 @@ nanosleep: 1
 write: 1
 exit_group: 1
 
+getpid: 1
