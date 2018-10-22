@@ -31,3 +31,4 @@ fstat: 1
 execve: 1
 futex: 1
 getpid: 1
+prlimit64: arg2 == 0 && arg3 != 0
