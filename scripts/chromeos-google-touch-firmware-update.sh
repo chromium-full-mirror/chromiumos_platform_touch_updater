@@ -203,6 +203,21 @@ main() {
     # Force rebind driver to reload RW HID descriptor
     rebind_driver "${FLAGS_device_path}"
   fi
+
+  # Try to read the FW version again after driver rebinding.
+  #
+  # The act of reading the FW version is used to turn on CrOS specific features
+  # of the touchpad (e.g., hovering). We do this because:
+  #
+  # 1. Some features like hovering are only supported on CrOS.
+  # 2. CrOS EC host commands serve as a reliable way to tell if we are running
+  #    CrOS since it isn't used by any other OS for now.
+  # 3. Getting FW version is the only host command that we can send without
+  #    using the ectool which is unavailable on a normal image.
+  local final_fw_ver="$(get_active_fw_version)"
+  if [ -z "${final_fw_ver}" ]; then
+    log_msg "Can't read FW version. CrOS-specific feature may not be enabled."
+  fi
 }
 
 main "$@"
