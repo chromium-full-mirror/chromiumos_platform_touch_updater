@@ -29,7 +29,7 @@ update_firmware() {
   for i in $(seq 3); do
     minijail0 -u "${GOODIX_FW_UPDATE_USER}" -g "${GOODIX_FW_UPDATE_GROUP}" \
         -n -S /opt/google/touch/policies/gdixupdate.update.policy \
-        "${GDIXUPDATE}" -f -d "$1" "$2"
+        "${GDIXUPDATE}" -f -t "$3" -d "$1" "$2"
 
     ret=$?
     if [ ${ret} -eq 0 ]; then
@@ -44,7 +44,7 @@ get_active_firmware_version() {
   local touch_device_path="$1"
   minijail0 -u "${GOODIX_FW_UPDATE_USER}" -g "${GOODIX_FW_UPDATE_GROUP}" \
       -n -S /opt/google/touch/policies/gdixupdate.query.policy \
-      "${GDIXUPDATE}" -p -d "${touch_device_path}"
+      "${GDIXUPDATE}" -p -d "${touch_device_path}" -t "$2"
 }
 
 compare_fw_versions() {
@@ -132,7 +132,8 @@ main() {
 
   # Find the active fw version and the product ID currently in use.
   active_product_id="${touch_device_name##*_}"
-  active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
+  active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
+      "${active_product_id}")"
 
   # Find the fw version and product ID on disk.
   fw_link_path="$(find_fw_link_path "${FW_LINK_NAME}" "${active_product_id}")"
@@ -166,10 +167,11 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_name}"
-    update_firmware "${touch_device_path}" "${fw_path}"
+    update_firmware "${touch_device_path}" "${fw_path}" "${active_product_id}"
 
     # Confirm that the FW was updated by checking the current FW version again.
-    active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
+    active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
+         "${active_product_id}")"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
 
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
