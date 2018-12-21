@@ -35,7 +35,7 @@ check_update() {
 
     # Make sure the HID driver successfully bound to the device.
     if [ ! -d "${hidpath}" ]; then
-      continue
+      return
     fi
     local link_path="${hidpath%/*}"
     local i2c_path="$(readlink -f "${link_path}")"
@@ -88,7 +88,7 @@ check_update() {
                 "unknown vid '${vendor_id}'"
     esac
 
-    continue
+    return
   fi
 
   if [ "${driver_name}" = "hid-multitouch" ] \
@@ -101,7 +101,7 @@ check_update() {
 
     # Make sure the HID driver successfully bound to the device.
     if [ ! -d "${hidpath}" ]; then
-      continue
+      return
     fi
     local hid_link_path="$(readlink -f "${hidpath}")"
     hid_link_path="${hid_link_path%/*}"
@@ -122,12 +122,12 @@ check_update() {
                 "unknown vid '${vendor_id}'"
     esac
 
-    continue
+    return
   fi
 
   # Skip over any bogus devices.
   if [ ! -e "${dev}/update_fw" ]; then
-    continue
+    return
   fi
 
   case "${driver_name}" in
