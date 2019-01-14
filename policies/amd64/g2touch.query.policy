@@ -1,0 +1,29 @@
+# Copyright 2018 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Policy file for g2touch touchscreen tools.
+# It is used to get firmware version.
+
+gettid: 1
+write: 1
+brk: 1
+read: 1
+fstat: 1
+close: 1
+gettimeofday: 1
+open: 1
+openat: 1
+select: 1
+stat: 1
+uname: 1
+arch_prctl: 1
+readlink: 1
+access: 1
+mmap: arg2 in 0xfffffffd || arg2 in 0xfffffffb
+lseek: 1
+munmap: 1
+exit_group: 1
+restart_syscall: 1
+exit: 1
+rt_sigreturn: 1
