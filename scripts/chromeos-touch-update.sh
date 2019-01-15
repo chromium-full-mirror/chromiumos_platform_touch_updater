@@ -12,6 +12,7 @@ SYNAPTICS_VENDOR_ID="06CB"
 WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"
 GOODIX_VENDOR_ID="27C6"
+G2TOUCH_VENDOR_ID="2A94"
 
 restore_power_paths=""
 
@@ -64,6 +65,35 @@ check_update() {
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
+                "unknown vid '${vendor_id}'"
+    esac
+
+    continue
+  fi
+
+  if [ "${driver_name}" = "hid-multitouch" ] \
+        || [ "${driver_name}" = "hid-generic" ]; then
+    local hidpath="$(echo "${dev}")"
+    local hidname="hid-$(echo "${hidpath##*/}" | \
+                         awk -F'[:.]' '{ print $2 "_" $3 }')"
+    local vendor_id="${hidname#*-}"
+    vendor_id="${vendor_id%_*}"
+
+    # Make sure the HID driver successfully bound to the device.
+    if [ ! -d "${hidpath}" ]; then
+      continue
+    fi
+    local hid_link_path="$(readlink -f "${hidpath}")"
+    hid_link_path="${hid_link_path%/*}"
+
+    case "${vendor_id}" in
+    "${G2TOUCH_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-g2touch-touch-firmware-update.sh \
+        -p "${hid_link_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
+    *)
+      logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
                 "unknown vid '${vendor_id}'"
     esac
 
