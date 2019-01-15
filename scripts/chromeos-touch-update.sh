@@ -13,6 +13,7 @@ WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"
 GOODIX_VENDOR_ID="27C6"
 SIS_VENDOR_ID="0457"
+G2TOUCH_VENDOR_ID="2A94"
 
 restore_power_paths=""
 
@@ -89,6 +90,11 @@ check_update() {
     case "${vendor_id}" in
     "${SIS_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-sis-touch-firmware-update.sh \
+        -p "${hid_link_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
+    "${G2TOUCH_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-g2touch-touch-firmware-update.sh \
         -p "${hid_link_path}" -r || \
       logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
