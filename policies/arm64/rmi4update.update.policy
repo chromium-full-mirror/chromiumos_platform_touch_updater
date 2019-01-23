@@ -1,0 +1,27 @@
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# These seccomp rules specify the syscalls used by the Synaptics touch FW
+# updater tool rmi4update when querying a device to see what its current
+# FW version is.  To actually perform an update, more syscalls are needed
+# and are supplied in a different policy file.
+openat: 1
+# Don't allow mmap or mprotect with both PROT_WRITE and PROT_EXEC
+mmap: arg2 in 0xfffffffb || arg2 in 0xfffffffd
+mprotect: arg2 in 0xfffffffb || arg2 in 0xfffffffd
+write: 1
+newfstatat: 1
+fstat: 1
+close: 1
+brk: 1
+# TODO: filter ioctl.
+ioctl: 1
+exit_group: 1
+restart_syscall: 1
+execve: 1
+munmap: 1
+read: 1
+faccessat: 1
+exit: 1
+rt_sigreturn: 1
