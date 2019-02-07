@@ -164,7 +164,7 @@ hex_to_decimal() {
 
 log_msg() {
   local script_filename="$(basename $0)"
-  logger -t "${script_filename%.*}[${PPID}]-${FLAGS_device}" "$@"
+  logger -t "${script_filename%.*}" --id=$$ "${FLAGS_device} $@"
   echo "$@"
 }
 
