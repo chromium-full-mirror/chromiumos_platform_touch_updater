@@ -97,8 +97,8 @@ main() {
     product_id_matches=${FLAGS_TRUE}
   elif [ "${active_product_id}" = "CYTRA-119001-TD" ]; then
     product_id_matches=${FLAGS_TRUE}
-  elif [ "${active_product_id}" = "CYTRA-103001-00" -a
-         "${product_id}" = "CYTRA-101003-00" ]; then
+  elif [ "${active_product_id}" = "CYTRA-103001-00" ] && \
+       [ "${product_id}" = "CYTRA-101003-00" ]; then
     product_id_matches=${FLAGS_TRUE}
   fi
   if [ "${product_id_matches}" -ne ${FLAGS_TRUE} ]; then
