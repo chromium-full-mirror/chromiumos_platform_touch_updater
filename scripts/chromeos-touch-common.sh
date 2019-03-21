@@ -208,31 +208,43 @@ is_update_needed() {
   fi
 }
 
+# This supports hexadecimal numbers (0x / 0X prefix) and decimal numbers (no
+# prefix).  Currently leading zero (0) prefix is treated as decimal for
+# compatibility with old updater scripts that might output them.
+_canonicalize_ver_num() {
+  echo "$(( $(echo "$1" | sed 's/^0\+\([^Xx]\)/\1/') ))"
+}
+
 compare_multipart_version() {
   # Compare firmware versions that are of the form A.B...Y.Z
-  # The numbers must all be devimal integers for this to work, so
-  # do your conversions before calling the function.
+  # The numbers may be hexadecimal (0x / 0X prefix) or decimal (no prefix).
+  # octal (0 prefix).  Currently leading zero (0) prefix is treated as decimal
+  # for compatibility with old updater scripts that might output them.
+  #
   # To call this function interleave the two version strings by
   # importance, starting with the active FW version.
   # eg: If your active version is A.B.C and the fw updater is X.Y.Z
   #     you should call compare_multipart_version A X B Y C Z
-  local update_type=""
-  local num_parts="$(($# / 2))"
+  local update_type=
+  local num_parts=
+  local active_component=
+  local updater_component=
+
+  num_parts="$(($# / 2))"
 
   # Starting with the most significant values, compare them one
   # by one until we find a difference or run out of values.
-  for i in `seq "$num_parts"`; do
-    local active_component="$1"
-    local updater_component="$2"
-    if [ -z "${update_type}" ]; then
-      if [ "${active_component}" -lt "${updater_component}" ]; then
-        update_type="${UPDATE_NEEDED_OUT_OF_DATE}"
-      elif [ "${active_component}" -gt "${updater_component}" ]; then
-        update_type="${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}"
-      fi
+  for i in $(seq "$num_parts"); do
+    active_component="$(_canonicalize_ver_num "$1")"; shift
+    updater_component="$(_canonicalize_ver_num "$1")"; shift
+    if [ "${active_component}" -lt "${updater_component}" ]; then
+      update_type="${UPDATE_NEEDED_OUT_OF_DATE}"
+    elif [ "${active_component}" -gt "${updater_component}" ]; then
+      update_type="${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}"
+    else
+      continue
     fi
-    shift
-    shift
+    break
   done
 
   if [ -z "${update_type}" ]; then
