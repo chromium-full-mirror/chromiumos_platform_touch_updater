@@ -8,6 +8,7 @@ LOGGER_TAG="chromeos-touch-update"
 # Touch firmware and config updater for Chromebooks
 WACOM_VENDOR_ID_1="056A"
 WACOM_VENDOR_ID_2="2D1F"
+ETPHIDIAP_VENDOR_ID="04F3"
 SYNAPTICS_VENDOR_ID="06CB"
 WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"
@@ -42,6 +43,11 @@ check_update() {
     case "${vendor_id}" in
     "${WACOM_VENDOR_ID_1}"|"${WACOM_VENDOR_ID_2}")
       /opt/google/touch/scripts/chromeos-wacom-touch-firmware-update.sh \
+        -d "${i2c_device}" -p "${i2c_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${ETPHIDIAP_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-etphidiap-touch-firmware-update.sh \
         -d "${i2c_device}" -p "${i2c_path}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
