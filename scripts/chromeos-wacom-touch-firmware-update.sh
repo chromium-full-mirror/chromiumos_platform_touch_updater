@@ -140,6 +140,7 @@ main() {
   local fw_link=""
   local product_id=""
   local hardware_id=""
+  local active_product_id=""
 
   local chassis_id="$(get_chassis_id)"
   local board_rev="$(get_platform_ver)"
@@ -209,6 +210,14 @@ main() {
   update_type="$(compare_multipart_version "${active_fw_ver}" "${new_fw_ver}")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
+
+  if [ "${chassis_id}" = "Arcada" ]; then
+    # Special case: Arcada, if pid not match then force update
+    active_product_id="$(get_product_id)"
+    if [ ! "${product_id}" -ne "${active_product_id}" ]; then
+      update_needed="${FLAGS_TRUE}"
+    fi
+  fi
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${new_fw_ver}"
