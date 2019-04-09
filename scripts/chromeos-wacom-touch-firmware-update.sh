@@ -56,7 +56,7 @@ get_fw_version_from_disk() {
   fi
 
   fw_filename="$(basename "${fw_filepath}")"
-  fw_ver="${fw_filename#*_}"
+  fw_ver="${fw_filename##*_}"
   fw_ver="${fw_ver%.*}"
   echo "${fw_ver}"
 }
@@ -211,10 +211,10 @@ main() {
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
 
-  if [ "${chassis_id}" = "Arcada" ]; then
+  if [ "${chassis_id}" = "ARCADA" ]; then
     # Special case: Arcada, if pid not match then force update
     active_product_id="$(get_product_id)"
-    if [ ! "${product_id}" -ne "${active_product_id}" ]; then
+    if [ "${product_id}" != "${active_product_id}" ]; then
       update_needed="${FLAGS_TRUE}"
     fi
   fi
