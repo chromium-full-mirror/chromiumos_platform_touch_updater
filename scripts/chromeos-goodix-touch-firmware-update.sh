@@ -132,6 +132,9 @@ main() {
 
   # Find the active fw version and the product ID currently in use.
   active_product_id="${touch_device_name##*_}"
+
+  # Wait for firmware init complete
+  sleep 2
   active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
       "${active_product_id}")"
 
