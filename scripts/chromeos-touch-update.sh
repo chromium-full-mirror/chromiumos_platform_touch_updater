@@ -1,4 +1,5 @@
 #!/bin/sh
+#
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -192,11 +193,23 @@ check_update() {
   esac
 }
 
+# Get all I2C and HID devices that might be a touch input device.
 get_dev_list() {
-  # Some devices show up in both lists (i2c and hid), so we block hid
-  # in one case to avoid duplication.
-  echo "/sys/bus/i2c/devices"/* "/sys/bus/hid/devices"/* | tr ' ' '\n' | \
-      grep -v ":${PIXART_VENDOR_ID}:[0-9A-F]\{4\}\."  # Skip Pixart HID
+  for dev_path in /sys/bus/i2c/devices/* /sys/bus/hid/devices/*; do
+    # Skip failed glob expansion.
+    if echo "$dev_path" | grep -q -E '/\*$'; then
+      continue
+    fi
+    # Skip Pixart HID because it also shows up in I2C list.
+    if echo "$dev_path" | grep -q -E ":${PIXART_VENDOR_ID}:[0-9A-F]{4}\."; then
+      continue
+    fi
+    # Skip activating camera devices.  https://issuetracker.google.com/132838666
+    if echo "$dev_path" | grep -q -E '/i2c-(INT3478|INT3499):'; then
+      continue
+    fi
+    echo "$dev_path"
+  done
 }
 
 main() {
