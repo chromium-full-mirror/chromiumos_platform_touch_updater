@@ -1,0 +1,21 @@
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# These seccomp rules specify only the syscalls used by gdixfwupdate
+# when querying the device for its current firmware version.
+
+openat: 1
+ARM_set_tls: 1
+ioctl: 1
+brk: 1
+exit: 1
+restart_syscall: 1
+uname: 1
+rt_sigreturn: 1
+exit_group: 1
+open: 1
+fstat64: 1
+readlink: 1
+write: 1
+access: 1
