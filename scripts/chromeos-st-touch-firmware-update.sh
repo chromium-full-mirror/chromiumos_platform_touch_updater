@@ -126,7 +126,9 @@ main() {
   fi
 
   log_msg "version mismatch, performing firmware update..."
-  chromeos-boot-alert update_touchscreen_firmware
+  # Update splash disabled due to https://issuetracker.google.com/133452184
+  # TODO(https://issuetracker.google.com/129713045): Enable this when safe.
+  #chromeos-boot-alert update_touchscreen_firmware
   run_cmd_and_block_powerd update_firmware "$i2c_dev_path"
 
   if [ "$FLAG" -eq 1 ]; then
