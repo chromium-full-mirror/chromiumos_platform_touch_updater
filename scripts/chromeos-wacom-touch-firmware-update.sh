@@ -211,7 +211,7 @@ main() {
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
 
-  if [ "${chassis_id}" = "ARCADA" ]; then
+  if [ "${chassis_id}" = "ARCADA" ] || [ "${chassis_id}" = "ARCADA_SIGNED" ]; then
     # Special case: Arcada, if pid not match then force update
     active_product_id="$(get_product_id)"
     if [ "${product_id}" != "${active_product_id}" ]; then
