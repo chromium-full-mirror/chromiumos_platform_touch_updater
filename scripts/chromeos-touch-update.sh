@@ -218,6 +218,12 @@ main() {
     exit 1
   fi
 
+  if [ -e /usr/local/factory/enabled ]; then
+    logger -t "${LOGGER_TAG}" "Skipping automatic update of touch controllers "\
+"in factory image."
+    return
+  fi
+
   local dev
   local power_path
   for dev in $(get_dev_list); do
