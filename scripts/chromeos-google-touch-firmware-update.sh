@@ -111,41 +111,6 @@ display_splash() {
   chromeos-boot-alert update_touchpad_firmware
 }
 
-# TODO(wnhuang): remove these once we have RO-WP enabled.
-force_flash() {
-  display_splash
-
-  st_flash --board=eve "${FW_LINK}"
-
-  if [ "$?" -ne "0" ]; then
-    die "Unable to flash new touchpad firmware, abort."
-  fi
-
-  # We need a reboot so the cros_ec kernel driver get reloaded. This should
-  # only happen once when device is transiting from old firmware to EC
-  # firmware.
-  log_msg "========================== WARNING =========================="
-  log_msg "Reboot to reload touchpad driver, this will only happen once."
-  log_msg "============================================================="
-  reboot
-  exit 0  # Reboot is not a blocking call, so we need to explicity exit.
-}
-
-# Eve TP firmware version before 6627 has issue which may cause flashrom to
-# fail (see b/38018926). If detct firmware version < 6627, force an update with
-# st_flash.
-check_for_force_update() {
-  local active_fw_ver_raw="$(cat "${CROS_TP_SYSFS}"/version | \
-                             awk 'NR==1 { print $3 }')"
-  local active_fw_ver="$(extract_numerical_fw_version "${active_fw_ver_raw}")"
-  local active_fw_ver_revision="${active_fw_ver##*.}"
-
-  if [ "${active_fw_ver_revision}" -lt "6627" ]; then
-    log_msg "Detected firmware with issue, force reflashing touchpad firmware."
-    force_flash
-  fi
-}
-
 main() {
   local ret
 
@@ -160,8 +125,6 @@ main() {
   if [ -z "${updater_fw_ver}" ]; then
     die "Unable to detect the updater's FW version on disk."
   fi
-
-  check_for_force_update
 
   update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
   log_update_type "${update_type}"
