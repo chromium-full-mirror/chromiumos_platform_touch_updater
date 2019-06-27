@@ -1,0 +1,51 @@
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# These seccomp rules specify only the syscalls used by the Melfas FW updater
+# tool. The updater tool melfasfwupdate should only be used through
+# minijail with these rules.
+
+lstat: 1
+read: 1
+openat: 1
+close: 1
+fstat: 1
+getrandom: 1
+readlinkat: 1
+ioctl: arg1 == 0x80044801 || arg1 == 0x90044802
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+access: 1
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+timerfd_settime: 1
+futex: 1
+poll: 1
+stat: 1
+write: 1
+getdents: 1
+fcntl: 1
+brk: 1
+uname: 1
+set_robust_list: 1
+munmap: 1
+rt_sigaction: 1
+exit: 1
+clone: 1
+madvise: 1
+recvmsg: 1
+pipe: 1
+setsockopt: 1
+getpid: 1
+exit_group: 1
+prlimit64: 1
+bind: 1
+rt_sigprocmask: 1
+arch_prctl: 1
+socket: arg0 == AF_NETLINK
+execve: 1
+timerfd_create: 1
+gettid: 1
+restart_syscall: 1
+set_tid_address: 1
+getsockname: 1
+rt_sigreturn: 1
