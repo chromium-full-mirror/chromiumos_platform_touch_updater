@@ -73,8 +73,8 @@ create_goodix_hidraw() {
   local dev_t_minor=""
 
   if [ -e "${GOODIX_TOUCHSCREEN_HIDRAW}" ]; then
-    log_msg "Touchscreen hidraw device already exists."
-    return 0
+    log_msg "Remove existing touchscreen hidraw device."
+    rm "${GOODIX_TOUCHSCREEN_HIDRAW}"
   fi
 
   if [ -c "${touch_device}" ]; then
