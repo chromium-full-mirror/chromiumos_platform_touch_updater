@@ -11,7 +11,6 @@ LOGGER_TAG="chromeos-touch-update"
 # Touch firmware and config updater for Chromebooks
 WACOM_VENDOR_ID_1="056A"
 WACOM_VENDOR_ID_2="2D1F"
-ETPHIDIAP_VENDOR_ID="04F3"
 SYNAPTICS_VENDOR_ID="06CB"
 WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"

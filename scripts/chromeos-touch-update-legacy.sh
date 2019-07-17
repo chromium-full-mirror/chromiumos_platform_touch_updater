@@ -11,7 +11,7 @@ LOGGER_TAG="chromeos-touch-update"
 # Touch firmware and config updater for Chromebooks
 WACOM_VENDOR_ID_1="056A"
 WACOM_VENDOR_ID_2="2D1F"
-ETPHIDIAP_VENDOR_ID="04F3"
+ELAN_VENDOR_ID="04F3"
 SYNAPTICS_VENDOR_ID="06CB"
 WEIDA_VENDOR_ID="2575"
 GOOGLE_VENDOR_ID="18D1"
@@ -20,8 +20,6 @@ SIS_VENDOR_ID="0457"
 PIXART_VENDOR_ID="093A"
 G2TOUCH_VENDOR_ID="2A94"
 ST_VENDOR_ID="0483"
-
-restore_power_paths=""
 
 check_update() {
   local dev="$1"
@@ -33,6 +31,7 @@ check_update() {
     local hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
     local vendor_id="${hidname#*-}"
+    local product_id="${vendor_id#*_}"
     vendor_id="${vendor_id%_*}"
 
     # Make sure the HID driver successfully bound to the device.
@@ -50,10 +49,39 @@ check_update() {
         -d "${i2c_device}" -p "${i2c_path}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
-    "${ETPHIDIAP_VENDOR_ID}")
-      /opt/google/touch/scripts/chromeos-etphidiap-touch-firmware-update.sh \
-        -d "${i2c_device}" -p "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+    "${ELAN_VENDOR_ID}")
+      # Select Elan Device
+      local elan_device=
+      product_id=$((0x${product_id}))
+      if [ ${product_id} -eq $((0x0732)) ] ; then
+        elan_device="touchscreen"
+      elif [ ${product_id} -ge $((0x0400)) ] && [ ${product_id} -le $((0x04FF)) ] ; then
+        elan_device="touchpad"
+      elif [ ${product_id} -ge $((0x2000)) ] && [ ${product_id} -le $((0x2FFF)) ] ; then
+        elan_device="touchscreen"
+      elif [ ${product_id} -ge $((0x3000)) ] && [ ${product_id} -le $((0x3FFF)) ] ; then
+        elan_device="touchpad"
+      elif [ ${product_id} -ge $((0x4000)) ] && [ ${product_id} -le $((0x4FFF)) ] ; then
+        elan_device="touchscreen"
+      fi
+
+      # Run appropriate script with device type
+      echo Update elan device: "${elan_device}"
+      case "${elan_device}" in
+      "touchpad")
+        /opt/google/touch/scripts/chromeos-etphidiap-touch-firmware-update.sh \
+          -d "${i2c_device}" -p "${i2c_path}" -r || \
+        logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        ;;
+      "touchscreen")
+        /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
+          -d "${dev}" -p "${product_id}" || \
+        logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        ;;
+      *)
+        logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
+                "unknown pid '${product_id}'"
+      esac
       ;;
     "${SYNAPTICS_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-synaptics-touch-firmware-update.sh \
@@ -212,7 +240,6 @@ main() {
     power_path="${dev}/power/control"
     if [ -e "${power_path}" ] && [ "auto" = "$(cat "${power_path}")" ]; then
       echo on > "${power_path}"
-      restore_power_paths="${restore_power_paths} ${power_path}"
     fi
 
     ( check_update "${dev}" ) &
@@ -222,9 +249,14 @@ main() {
 
   # To restore runtime power management state from "on" to "auto" if they are
   # changed by this script in the begining.
-  for power_path in ${restore_power_paths}; do
-    echo auto > "${power_path}" ||
-    logger -t "${LOGGER_TAG}" "Restore ${power_path} to auto failed."
+  # Since rebinding a device to i2c_hid driver makes a new i2chid device created and the original one terminated,
+  # thus get_dev_list is needed to get existed devices after firmware update process.
+  for dev in $(get_dev_list); do
+    power_path="${dev}/power/control"
+    if [ -e "${power_path}" ] && [ "on" = "$(cat "${power_path}")" ]; then
+      echo auto > "${power_path}" ||
+      logger -t "${LOGGER_TAG}" "Restore ${power_path} to auto failed."
+    fi
   done
 }
 

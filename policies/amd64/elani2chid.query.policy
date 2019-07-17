@@ -1,0 +1,83 @@
+# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+# These seccomp rules specify only the syscalls used by elan_i2chid_read_fwid
+# and elan_i2chid_iap tools when getting the current firmware ID and version.
+# IOCTL Information:
+#  elani2chid_tools:
+#   HIDIOCGRAWINFO: 0x80084803
+#  modetest:
+#   DRM_IOCTL_MODE_GETPROPERTY: 0xc04064aa
+#   DRM_IOCTL_MODE_GETPROPBLOB: 0xc01064ac
+#   DRM_IOCTL_MODE_GETENCODER: 0xc01464a6
+#   DRM_IOCTL_MODE_GETPLANERESOURCES: 0xc01064b5
+#   DRM_IOCTL_MODE_GETCRTC: 0xc06864a1
+#   DRM_IOCTL_MODE_GETPLANE: 0xc02064b6
+#   DRM_IOCTL_GET_UNIQUE: 0xc0106401
+#   DRM_IOCTL_MODE_GETCONNECTOR: 0xc05064a7
+#   DRM_IOCTL_MODE_GETRESOURCES: 0xc04064a0
+#   DRM_IOCTL_VERSION: 0xc0406400
+#   DRM_IOCTL_SET_CLIENT_CAP: 0x4010640d
+#   DRM_IOCTL_MODE_OBJ_GETPROPERTIES: 0xc02064b9
+#  termios
+#   TCGETS: 0x00005401
+# syscall Information from jouralctrl:
+#  elani2chid_tools:
+#   dup2: 33
+#   openat: 257
+#  modetest syscall:
+#   mmap: 9
+#   mprotect: 10
+#   munmap: 11
+#   rt_sigaction: 13
+#   rt_sigprocmask: 14
+#   ioctl: 16
+#   nanosleep: 35
+#   set_tid_address: 218
+#   prlimit64: 302
+#  dash syscall:
+#   getpid: 39
+#   geteuid: 107
+#   getppid: 110
+
+arch_prctl: 1
+execve: 1
+clone: 1
+pipe2: 1
+wait4: 1
+restart_syscall: 1
+rt_sigreturn: 1
+exit: 1
+exit_group: 1
+select: 1
+brk: 1
+fcntl: 1
+open: 1
+close: 1
+read: 1
+write: 1
+ioctl: arg1 == 0x80084803 || arg1 == 0xc04064aa || arg1 == 0xc01064ac || arg1 == 0xc01464a6 || arg1 == 0xc01064b5 || arg1 == 0xc06864a1 || arg1 == 0xc02064b6 || arg1 == 0xc0106401 || arg1 == 0xc05064a7 || arg1 == 0xc04064a0 || arg1 == 0xc0406400 || arg1 == 0x4010640d || arg1 == 0xc02064b9 || arg1 == 0x00005401
+stat: 1
+fstat: 1
+lseek: 1
+readlink: 1
+unlink: 1
+access: 1
+uname: 1
+getdents: 1
+time: 1
+gettimeofday: 1
+openat: 1
+dup2: 1
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+rt_sigaction: 1
+nanosleep: 1
+set_robust_list: 1
+munmap: 1
+rt_sigprocmask: 1
+prlimit64: 1
+set_tid_address: 1
+getpid: 1
+geteuid: 1
+getppid: 1
