@@ -9,6 +9,20 @@ I2C_DEVICES_PATH="/sys/bus/i2c/devices"
 # powerd will check this lock file and block device suspension.
 POWERD_LOCK_FILE="/run/lock/power_override/touch_updater.lock"
 
+# Get the sysfs paths of all I2C and HID devices that might be a touch device.
+get_dev_list() {
+  # Filter failed glob expansion.
+  local failed_glob_pattern='/\*$'
+  # Filter Pixart HID because it also shows up in I2C list.
+  local pixart_pattern=':'"${PIXART_VENDOR_ID}"':[0-9A-F]{4}\.'
+  # Filter camera devices to avoid activating them.
+  # https://issuetracker.google.com/132838666
+  local camera_pattern='/i2c-(INT3478|INT3499):'
+  find /sys/bus/i2c/devices /sys/bus/hid/devices -mindepth 1 -maxdepth 1 \
+    | grep --invert-match -E \
+      "(${failed_glob_pattern}|${pixart_pattern}|${camera_pattern})"
+}
+
 # The function will run the cmd and block powerd from suspending the system.
 # It's done by creating the lock file while the cmd is running. Remove the lock
 # file once it returns.

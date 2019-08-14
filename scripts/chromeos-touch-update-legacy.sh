@@ -4,6 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+. /opt/google/touch/scripts/chromeos-touch-common.sh
+
 LOGGER_TAG="chromeos-touch-update"
 
 # Touch firmware and config updater for Chromebooks
@@ -191,25 +193,6 @@ check_update() {
       logger -t "${LOGGER_TAG}" "${device_name} config update failed."
     ;;
   esac
-}
-
-# Get all I2C and HID devices that might be a touch input device.
-get_dev_list() {
-  for dev_path in /sys/bus/i2c/devices/* /sys/bus/hid/devices/*; do
-    # Skip failed glob expansion.
-    if echo "$dev_path" | grep -q -E '/\*$'; then
-      continue
-    fi
-    # Skip Pixart HID because it also shows up in I2C list.
-    if echo "$dev_path" | grep -q -E ":${PIXART_VENDOR_ID}:[0-9A-F]{4}\."; then
-      continue
-    fi
-    # Skip activating camera devices.  https://issuetracker.google.com/132838666
-    if echo "$dev_path" | grep -q -E '/i2c-(INT3478|INT3499):'; then
-      continue
-    fi
-    echo "$dev_path"
-  done
 }
 
 main() {
