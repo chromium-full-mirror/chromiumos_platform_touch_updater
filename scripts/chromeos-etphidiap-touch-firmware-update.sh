@@ -39,10 +39,11 @@ update_firmware() {
   return "${ret}"
 }
 
-# The on-disk FW version is determined by reading the filename which
-# is in the format "etphidiap_firmware_0xVER.bin".  We follow the fw's link
-# to the actual file then strip away everything in the FW's filename
-# but the 0xVER version (keeping 0x prefix).
+# The on-disk firmware version is determined by parsing the filename of the
+# actual firmware file passed as $1, after resolving any symlinks.  The filename
+# should be in the format "elan_0xVER.bin" e.g. "elan_0x0A.bin".  The 0x prefix
+# is preserved, e.g. if the file is named "elan_0x0A.bin" this function will
+# print "0x0A" to stdout.
 #
 # TODO(https://issuetracker.google.com/79157488): Include hardware ID in the
 # firmware filename once it is available.  See
