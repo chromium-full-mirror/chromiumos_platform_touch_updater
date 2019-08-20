@@ -73,7 +73,7 @@ correct_reported_product_id() {
   if [ "${reported_product_id}" = "255.0" ] ||
      [ "${reported_product_id}" = "65535.0" ]; then
     if [  -n "$(echo ${board} | grep "^kip")" ]; then
-      if [ "$(mosys platform chassis)" = "KIP14" ]; then
+      if [ "$(get_chassis_id)" = "KIP14" ]; then
         echo "72.0"
       else
         echo "75.0"
