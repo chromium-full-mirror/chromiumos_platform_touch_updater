@@ -9,6 +9,7 @@
 
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
+DEFINE_string 'dev_i2c_path' '' "device i2c path" 'p'
 
 GOODIX_FW_UPDATE_USER="goodixfwupdate"
 GOODIX_FW_UPDATE_GROUP="goodixfwupdate"
@@ -169,6 +170,8 @@ main() {
     log_msg "Update FW to ${fw_name}"
     update_firmware "${touch_device_path}" "${fw_path}" "${active_product_id}"
 
+    rebind_driver "${FLAGS_dev_i2c_path}"
+    sleep 0.3
     # Confirm that the FW was updated by checking the current FW version again.
     active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
          "${active_product_id}")"
