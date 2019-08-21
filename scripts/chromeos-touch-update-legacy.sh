@@ -100,7 +100,7 @@ check_update() {
       ;;
     "${GOODIX_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update.sh \
-        -d "${hidname}" -r || \
+        -d "${hidname}" -p "${i2c_path}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${PIXART_VENDOR_ID}")
