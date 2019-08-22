@@ -66,8 +66,8 @@ get_fw_version_from_disk() {
   printf '0x%X\n' "${fw_ver}"
 }
 
+# Query the touchpad controller for its current firmware version.
 get_active_fw_version() {
-  # Query the touchpad and see what the current FW version it's running.
   local active_fw_ver=
   local ret=
 
@@ -80,14 +80,7 @@ get_active_fw_version() {
 
   ret="$?"
   if [ "${ret}" -eq 0 ]; then
-    # The printing of "-1" to stdout is hardcoded in etphid_updater.  Unlike
-    # actual version numbers, "-1" does not represent a hexadecimal number.
-    if [ "${active_fw_ver}" != "-1" ]; then
-      printf '0x%X\n' "0x${active_fw_ver}"
-    else
-      echo 1>&2 "Error on stdout retrieving touchpad firmware version: "\
-"${active_fw_ver}"
-    fi
+    printf '0x%X\n' "0x${active_fw_ver}"
   else
     echo 1>&2 "Exit status ${ret} retrieving touchpad firmware version: "\
 "${active_fw_ver}"
