@@ -149,27 +149,47 @@ get_active_firmware_version_from_sysfs() {
   fi
 }
 
+# Unbind and then re-bind the driver for this touch device, to ensure consistent
+# state between the device and OS.
 rebind_driver() {
-  # Unbind and then bind the driver for this touchpad incase the recent FW
-  # update changed the way it talks to the OS.
-  local touch_device_path="$1"
-  local bus_id="$(basename ${touch_device_path})"
-  local driver_path="$(readlink -f ${touch_device_path}/driver)"
+  local touch_device_path=
+  local driver_path=
+  local bus_id=
+  local ret=
+
+  # Required args
+  touch_device_path="$1" || return; shift
+
+  # Optional: Specify the /sys driver path.  This is **REQUIRED** unless your
+  # touch device is guaranteed to enumerate even with corrupted or erased
+  # firmware!  Without driver_path specified, this function can only determine
+  # it if the device is currently bound to its driver.
+  driver_path="$1"; shift || :
+
+  # Fallback for updaters which do not specify the driver_path arg.
+  if [ -z "$driver_path" ]; then
+    driver_path="$(readlink -f "${touch_device_path}/driver")"
+  fi
+
+  bus_id="$(basename "${touch_device_path}")"
 
   log_msg "Attempting to re-bind '${bus_id}' to driver '${driver_path}'"
   echo "${bus_id}" > "${driver_path}/unbind"
-  if [ "$?" -ne "0" ]; then
-    log_msg "Unable to unbind."
-  else
-    echo "${bus_id}" > "${driver_path}/bind"
-    if [ "$?" -ne "0" ]; then
-      log_msg "Unable to bind the device back to the driver."
-      return 1
-    else
-      log_msg "Success."
-      return 0
-    fi
+  ret="$?"
+  if [ "$ret" -ne 0 ]; then
+    log_msg "Unable to unbind the device from the driver, error $ret.  This "\
+"is sometimes expected when recovering from corrupted firmware.  Continuing "\
+"with attempt to bind the device to the driver."
   fi
+
+  echo "${bus_id}" > "${driver_path}/bind"
+  ret="$?"
+  if [ "$ret" -ne 0 ]; then
+    log_msg "Unable to bind the device to the driver."
+    return 1
+  fi
+
+  log_msg "Device (re)bind to driver success."
 }
 
 hex_to_decimal() {
