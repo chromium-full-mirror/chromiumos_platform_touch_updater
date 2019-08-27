@@ -195,7 +195,7 @@ main() {
     log_msg "Updating firmware succeded.  Firmware version is now: "\
 "${active_fw_ver}"
 
-    rebind_driver "${FLAGS_device_path}"
+    rebind_driver "${FLAGS_device_path}" /sys/bus/i2c/drivers/i2c_hid
   fi
 }
 
