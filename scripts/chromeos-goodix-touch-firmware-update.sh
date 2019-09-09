@@ -18,6 +18,7 @@ FW_LINK_NAME="goodix_firmware.bin"
 FW_LINK_PATH="/lib/firmware/goodix-ts.bin"
 GDIXUPDATE="/usr/sbin/gdixupdate"
 GOODIX_VENDOR_ID="27C6"
+GET_BOARD_SPECIFIC_PID="/opt/google/touch/scripts/get_board_goodix_pid.sh"
 
 # Parse command line.
 FLAGS "$@" || exit 1
@@ -116,6 +117,7 @@ main() {
   local fw_link_path=""
   local fw_path=""
   local fw_name=""
+  local customize_product_id=""
 
   if [ -z "${FLAGS_device}" ]; then
     die "Please specify a device using -d"
@@ -135,6 +137,15 @@ main() {
   active_product_id="${touch_device_name##*_}"
   active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
       "${active_product_id}")"
+
+  if [ -x "${GET_BOARD_SPECIFIC_PID}" ]; then
+    customize_product_id="$(${GET_BOARD_SPECIFIC_PID} -d "${FLAGS_device}")"
+    if [ -n "${customize_product_id}" ]; then
+      log_msg "Change the active_product_id from ${active_product_id}" \
+          "to ${customize_product_id}"
+      active_product_id="${customize_product_id}"
+    fi
+  fi
 
   # Find the fw version and product ID on disk.
   fw_link_path="$(find_fw_link_path "${FW_LINK_NAME}" "${active_product_id}")"
