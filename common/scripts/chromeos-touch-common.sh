@@ -144,7 +144,7 @@ rebind_driver() {
   local ret=
 
   # Required args
-  touch_device_path="$1" || return; shift
+  touch_device_path="$1"; shift || return
 
   # Optional: Specify the /sys driver path.  This is **REQUIRED** unless your
   # touch device is guaranteed to enumerate even with corrupted or erased
