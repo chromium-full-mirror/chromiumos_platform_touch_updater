@@ -14,6 +14,7 @@ GOOGLE_VENDOR_ID="18D1"
 GOODIX_VENDOR_ID="27C6"
 SIS_VENDOR_ID="0457"
 G2TOUCH_VENDOR_ID="2A94"
+EMRIGHT_VENDOR_ID="2C68"
 
 restore_power_paths=""
 
@@ -62,6 +63,11 @@ check_update() {
     "${GOODIX_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update.sh \
         -d "${hidname}" -r || \
+      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${EMRIGHT_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-emright-touch-firmware-update.sh \
+        -d "${hidname}" -p "${i2c_path}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
