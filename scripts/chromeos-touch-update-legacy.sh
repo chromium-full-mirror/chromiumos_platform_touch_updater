@@ -20,6 +20,7 @@ SIS_VENDOR_ID="0457"
 PIXART_VENDOR_ID="093A"
 G2TOUCH_VENDOR_ID="2A94"
 ST_VENDOR_ID="0483"
+EMRIGHT_VENDOR_ID="2C68"
 
 check_update() {
   local dev="$1"
@@ -111,6 +112,11 @@ check_update() {
     "${ST_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-st-touch-firmware-update.sh \
         -d "${i2c_device}" -r || \
+      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${EMRIGHT_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-emright-touch-firmware-update.sh \
+        -d "${hidname}" -p "${i2c_path}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
