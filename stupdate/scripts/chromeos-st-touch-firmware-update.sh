@@ -27,7 +27,8 @@ STUPDATE_GROUP="fwupdate-i2c"
 update_firmware() {
   local i2c_dev_path=
 
-  i2c_dev_path="$1" || return; shift
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  i2c_dev_path="$1"; [ "$#" -gt 0 ] || return; shift
 
   ret="$(minijail0 -u "$STUPDATE_USER" -g "$STUPDATE_GROUP" -G -n \
     -S /opt/google/touch/policies/stupdate.update.policy \
