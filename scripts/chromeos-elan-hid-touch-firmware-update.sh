@@ -113,7 +113,8 @@ get_fw_version_from_filename() {
   local fw_filename=
   local fw_ver=
 
-  fw_filepath="$1" || return; shift
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  fw_filepath="$1"; [ "$#" -gt 0 ] || return; shift
 
   fw_filename="${fw_filepath##*/}"
   fw_ver="${fw_filename#*_}"

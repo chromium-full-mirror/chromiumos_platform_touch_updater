@@ -158,13 +158,14 @@ rebind_driver() {
   local ret=
 
   # Required args
-  touch_device_path="$1"; shift || return
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  touch_device_path="$1"; [ "$#" -gt 0 ] || return; shift
 
   # Optional: Specify the /sys driver path.  This is **REQUIRED** unless your
   # touch device is guaranteed to enumerate even with corrupted or erased
   # firmware!  Without driver_path specified, this function can only determine
   # it if the device is currently bound to its driver.
-  driver_path="$1"; shift || :
+  driver_path="$1"; [ "$#" -eq 0 ] || shift
 
   # Fallback for updaters which do not specify the driver_path arg.
   if [ -z "$driver_path" ]; then

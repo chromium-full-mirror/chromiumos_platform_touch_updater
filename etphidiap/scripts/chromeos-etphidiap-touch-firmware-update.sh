@@ -23,7 +23,8 @@ update_firmware() {
   local cmd_log=
   local ret=
 
-  fw_link="$1" || return; shift
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  fw_link="$1"; [ "$#" -gt 0 ] || return; shift
 
   cmd_log="$(
     minijail0 -u fwupdate-i2c -g fwupdate-i2c \
@@ -54,7 +55,8 @@ get_fw_version_from_disk() {
   local fw_filename=
   local fw_ver=
 
-  fw_link="$1" || return; shift
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  fw_link="$1"; [ "$#" -gt 0 ] || return; shift
 
   [ -L "${fw_link}" ] || return
   fw_filepath="$(realpath -e "${fw_link}")" || return
@@ -72,7 +74,8 @@ get_active_info() {
   local output=
   local ret=
 
-  description="$1" || return; shift
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  description="$1"; [ "$#" -gt 0 ] || return; shift
 
   output="$(
     minijail0 -u fwupdate-i2c -g fwupdate-i2c \
@@ -106,11 +109,12 @@ get_device_module_id() {
 }
 
 assert_is_function_from_overlay() {
-    local func_name=
+  local func_name=
 
-    func_name="$1" || return; shift
+  # POSIX allows, but does not require, shift to exit a non-interactive shell.
+  func_name="$1"; [ "$#" -gt 0 ] || return; shift
 
-    type "${func_name}" | head -n 1 | grep -q -E ' ?function$' || die \
+  type "${func_name}" | head -n 1 | grep -q -E ' ?function$' || die \
 "No ${func_name}() function is defined, this is a bug in the board overlay."
 }
 
