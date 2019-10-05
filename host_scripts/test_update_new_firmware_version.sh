@@ -11,7 +11,6 @@ if [ ! -e "/etc/cros_chroot_version" ]; then
 fi
 
 # Loads script libraries.
-. "/usr/lib64/crosutils/common.sh" || exit 1
 . "/usr/share/misc/shflags" || exit 1
 
 # Flags
@@ -19,15 +18,14 @@ DEFINE_string board "" "Which board the test simulates in" b
 DEFINE_boolean revert $FLAGS_FALSE "revert all changes by this test" r
 DEFINE_string branch "" "revert to which branch" n
 
-FLAGS_HELP="This test will perform some fake firmware updates request in your "\
-"repos, then you need to verify the result manually.
+FLAGS_HELP="This test will perform some fake firmware updates request in your \
+repos, then you need to verify the result manually.
 
 USAGE: $0 -b xxx
 "
 
 # Parse command line
 FLAGS "$@" || exit 1
-ORIGINAL_PARAMS="$@"
 eval set -- "${FLAGS_ARGV}"
 
 if [ "$#" != 0 ]; then
@@ -35,6 +33,12 @@ if [ "$#" != 0 ]; then
   exit 1
 fi
 
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+GCLIENT_ROOT="/mnt/host/source"
 PUBLIC_DIR="${GCLIENT_ROOT}/src/overlays/overlay-${FLAGS_board}"
 PRIVATE_DIR="${GCLIENT_ROOT}/src/private-overlays/overlay-"\
 "${FLAGS_board}-private"
@@ -55,7 +59,7 @@ if [ -z "${FLAGS_board}" ]; then
 fi
 
 if [ ! -d "${PRIVATE_DIR}" ]; then
-  die "There is no corresponding private overlay in your tree ${private_dir}."
+  die "There is no corresponding private overlay in your tree ${PRIVATE_DIR}."
 fi
 
 TOUCH_FW_DIR="${PRIVATE_DIR}/chromeos-base/chromeos-touch-firmware-"\
@@ -78,7 +82,7 @@ check_test_result() {
     exit 1
   fi
 
-  info "${1} is passed."
+  echo "${1} is passed."
 }
 
 #======== test start #========
@@ -170,5 +174,5 @@ check_test_result "Test case 6 - Add_New_Configuration_For_Another_Vendor"
                                  -d
 check_test_result "Test case 7 - Add_New_Configuration_For_Another_Vendor"
 
-info "After verifying all modified codes, remember to
+echo "After verifying all modified codes, remember to
   ${0} -b ${FLAGS_board} -r -n your_original_branch"

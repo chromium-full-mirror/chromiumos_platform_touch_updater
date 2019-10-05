@@ -10,14 +10,13 @@ if [ ! -e "/etc/cros_chroot_version" ]; then
   exit 1
 fi
 
-# Load script libraries.
-. "/usr/lib64/crosutils/common.sh" || exit 1
-. "/usr/share/misc/shflags" || exit 1
-. "/usr/lib64/crosutils/remote_access.sh" || exit 1
+GCLIENT_ROOT="/mnt/host/source"
 
-if [ -f ~/trunk/src/scripts/.default_board ]; then
-  DEFAULT_BOARD="$(cat ~/trunk/src/scripts/.default_board)"
-fi
+# Load script libraries.
+. "/usr/share/misc/shflags" || exit 1
+. "${GCLIENT_ROOT}/src/scripts/remote_access.sh" || exit 1
+
+DEFAULT_BOARD="$(cat "${GCLIENT_ROOT}/src/scripts/.default_board" 2>/dev/null)"
 
 # Here defines flags we need.
 DEFINE_string action "" "What action you want to take - cl / "\
@@ -51,7 +50,12 @@ The link - https://goo.gl/0aedKu is a reference of how to use this script.
 # Parse command line to each values of flags we defined.
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
-switch_to_strict_mode
+set -e
+
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
 
 # Initialize global variables.
 prepare_global_info() {
@@ -255,7 +259,7 @@ prepare_new_git_branch() {
   fi
 
   if [ "${FLAGS_test_mode}" = "${FLAGS_FALSE}" ]; then
-    info "Creating new branch..."
+    echo "Creating new branch..."
     repo start Update-Touch-FW-"${FLAGS_touch_vendor}"-"${FLAGS_product_id}"
   fi
 }
@@ -514,10 +518,10 @@ modify_ebuild_file() {
 
   prepare_new_git_branch
 
-  info "Starting to modify ebuild file..."
+  echo "Starting to modify ebuild file..."
   # Check whether EBUILD_DIR exists or we need to create an initial one.
   if [ ! -d "${EBUILD_DIR}" ]; then
-    info "Creating a whole new chromeos-touch-firmware-${FLAGS_board}..."
+    echo "Creating a whole new chromeos-touch-firmware-${FLAGS_board}..."
     create_initial_ebuild_dir
   fi
 
@@ -536,7 +540,7 @@ modify_ebuild_file() {
     old_fw_version="${old_fw_version_line#*=}"
     old_fw_version="${old_fw_version//\"/}"
     if [ "${old_fw_version}" = "${FLAGS_firmware_version}" ]; then
-      info "The firmware version is the same so there is nothing to do."
+      echo "The firmware version is the same so there is nothing to do."
       exit 1
     fi
     local new_fw_version_line=\
@@ -633,29 +637,29 @@ action_manifest() {
 action_verification() {
   pushd "${EBUILD_DIR}"
 
-  info "Initializing remote access..."
+  echo "Initializing remote access..."
   remote_access_init
 
-  info "Rebuilding the package..."
+  echo "Rebuilding the package..."
   emerge-"${FLAGS_board}" chromeos-touch-firmware-"${FLAGS_board}"
 
-  info "Deploying new package to remote DUT..."
+  echo "Deploying new package to remote DUT..."
   cros deploy "${FLAGS_remote}" chromeos-touch-firmware-"${FLAGS_board}"
 
-  info "Rebooting remote DUT and waiting for connection again..."
+  echo "Rebooting remote DUT and waiting for connection again..."
   remote_reboot
 
-  info "Waiting more 6s for making sure touch updater can finish the job."
+  echo "Waiting more 6s for making sure touch updater can finish the job."
   sleep 6
-  info "Checking the firmware update result from logs in the remote DUT..."
+  echo "Checking the firmware update result from logs in the remote DUT..."
   remote_sh "cat /var/log/messages | grep ${FLAGS_touch_vendor}-touch"
   local result="$(echo "${REMOTE_OUT}" | \
 grep "Update FW succeded. Current Firmware: ${FLAGS_firmware_version}")"
 
   if [ -z "${result}" ]; then
-    info "Firmware update is not successful"
+    echo "Firmware update is not successful"
   else
-    info "${result}"
+    echo "${result}"
   fi
 
   SUMMARY_MSG="${SUMMARY_MSG}"\
@@ -679,7 +683,7 @@ main() {
 
   action_"${FLAGS_action}"
 
-  info "${SUMMARY_MSG}"
+  echo "${SUMMARY_MSG}"
 }
 
 main "$@"
