@@ -195,7 +195,9 @@ main() {
     log_msg "Updating firmware succeded.  Firmware version is now: "\
 "${active_fw_ver}"
 
-    rebind_driver "${FLAGS_device_path}" /sys/bus/i2c/drivers/i2c_hid
+    # Rebind the whole I2C adapter.  https://issuetracker.google.com/142598087
+    # Important: This touch device should be the only slave on its I2C bus!
+    rebind_driver "$(cd -P "${FLAGS_device_path}/../.." && pwd)"
   fi
 }
 
