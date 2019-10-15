@@ -45,10 +45,6 @@ update_firmware() {
 # should be in the format "elan_0xVER.bin" e.g. "elan_0x0A.bin".  The 0x prefix
 # is preserved, e.g. if the file is named "elan_0x0A.bin" this function will
 # print "0x0A" to stdout.
-#
-# TODO(https://issuetracker.google.com/79157488): Include hardware ID in the
-# firmware filename once it is available.  See
-# https://issuetracker.google.com/129152245 for more background.
 get_fw_version_from_disk() {
   local fw_link=
   local fw_filepath=
