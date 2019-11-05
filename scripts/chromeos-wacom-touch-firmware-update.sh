@@ -61,6 +61,20 @@ get_fw_version_from_disk() {
   echo "${fw_ver}"
 }
 
+get_hardware_id() {
+  # Query the touchscreen and get the hardware id.
+  local hardware_id=""
+
+  hardware_id="$(
+    minijail0 -S /opt/google/touch/policies/wacom_flash.query.policy \
+      "${WACOMFLASH}" "dummy_unused_argument" "${GET_TOUCH_HWID}" \
+      "${FLAGS_device}"
+  )"
+  if [ "${hardware_id}" != "0000_0000" ]; then
+    echo "${hardware_id}"
+  fi
+}
+
 get_active_fw_version() {
   # Query the touchscreen and see what the current FW version it's running.
   local active_fw_ver=""
@@ -145,8 +159,13 @@ main() {
   local chassis_id="$(get_chassis_id)"
   local board_rev="$(get_platform_ver)"
 
-  if [ -x "${GET_BOARD_SPECIFIC_HWID}" ]; then
+  # if there is hardware id implemented, try it as first priority.
+  # if no, try GET_BOARD_SPECIFIC_HWID as second choice.
+  hardware_id="$(get_hardware_id)"
+  if [ -z "${hardware_id}" ]; then
+    if [ -x "${GET_BOARD_SPECIFIC_HWID}" ]; then
       hardware_id="$(${GET_BOARD_SPECIFIC_HWID} -d ${FLAGS_device})"
+    fi
   fi
 
   if [ -z "${hardware_id}" ]; then
