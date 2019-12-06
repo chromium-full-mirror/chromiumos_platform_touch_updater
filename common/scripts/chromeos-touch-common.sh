@@ -84,13 +84,21 @@ find_i2c_hid_device() {
   echo "${path}"
 }
 
+# Given a generic name and one or two hardware versions (or product IDs
+# depending on the device), determine which firmware symlink in /lib/firmware
+# we should try to load. Checks for symlinks in this order:
+#   <fw_link_name>_<hw_ver1>.<extension>
+#   <fw_link_name>_<hw_ver2>.<extension>
+#   <fw_link_name>.<extension>
+#
+# For example, `find_fw_link_path acme.bin alpha beta` will look for the
+# following symlinks, in order:
+#   /lib/firmware/acme_alpha.bin
+#   /lib/firmware/acme_beta.bin
+#   /lib/firmware/acme.bin
+#
+# It will then output the full path of the first of those which exists.
 find_fw_link_path() {
-  # Given one or two (second is optional) hardware versions (or product ID
-  # depending on the device) determine which fw symlink in /lib/firmware
-  # it should try to load. This function shall try in this order:
-  # <fw_link_name>_<hw_ver1>.<extension>
-  # <fw_link_name>_<hw_ver2>.<extension>
-  # <fw_link_name>.<extension>
   local fw_link_name="$1"
   local hw_ver1="$2"
   local hw_ver2="$3"
