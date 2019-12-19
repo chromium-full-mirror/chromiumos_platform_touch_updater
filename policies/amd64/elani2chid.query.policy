@@ -1,8 +1,10 @@
 # Copyright 2019 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+#
 # These seccomp rules specify only the syscalls used by elan_i2chid_read_fwid
 # and elan_i2chid_iap tools when getting the current firmware ID and version.
+#
 # IOCTL Information:
 #  elani2chid_tools:
 #   HIDIOCGRAWINFO: 0x80084803
@@ -25,6 +27,7 @@
 #  elani2chid_tools:
 #   dup2: 33
 #   openat: 257
+#   futex: 202
 #  modetest syscall:
 #   mmap: 9
 #   mprotect: 10
@@ -81,3 +84,4 @@ set_tid_address: 1
 getpid: 1
 geteuid: 1
 getppid: 1
+futex: 1

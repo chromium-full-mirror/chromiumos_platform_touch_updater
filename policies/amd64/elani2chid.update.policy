@@ -1,12 +1,13 @@
 # Copyright 2019 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
+#
 # These seccomp rules specify only the syscalls used by elan_i2chid_iap
 # tool when updating the firmware.
 # IOCTL Information:
 #  elani2chid_tools:
 #   HIDIOCGRAWINFO: 0x80084803
+#   futex: 202
 #  termios
 #   TCGETS: 0x00005401
 # syscall Information from jouralctrl:
@@ -39,3 +40,4 @@ time: 1
 gettimeofday: 1
 openat: 1
 dup2: 1
+futex: 1
