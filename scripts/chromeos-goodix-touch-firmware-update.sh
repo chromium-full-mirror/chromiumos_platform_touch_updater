@@ -138,7 +138,7 @@ main() {
 
   # Wait 500ms to allow firmware to get ready to provide version number.
   # TODO(teravest): Remove this once firmware no longer needs this delay.
-  usleep 500000
+  sleep 0.5
   active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
       "${active_product_id}")"
 
