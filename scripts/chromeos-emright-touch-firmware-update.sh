@@ -60,6 +60,7 @@ main() {
   local fw_name=""
   local hardware_id=""
   local update_needed="${FLAGS_FALSE}"
+  local product_id_matches="${FLAGS_FALSE}"
 
   if [ -z "${FLAGS_device}" ]; then
     die "Please specify a device using -d"
@@ -93,22 +94,28 @@ main() {
   fw_version=${fw_name%_*}
   fw_version=${fw_version##*_}
 
-  # Check to make sure we found the device we're expecting. If the product
-  # IDs don't match, abort immediately to avoid flashing the wrong device.
-
-  if [ "${product_id}" != "${active_product_id}" ]; then
-    log_msg "Current product id: ${active_product_id}"
-    log_msg "Updater product id: ${product_id}"
+  # Make sure the product ID is what the updater expects.
+  log_msg "Hardware product id : ${active_product_id}"
+  log_msg "Updater product id  : ${product_id}"
+  if [ "${product_id}" = "${active_product_id}" ]; then
+    product_id_matches=${FLAGS_TRUE}
+  elif [ "${active_product_id}" = "E639" ] && \
+       [ "${product_id}" = "E635" ]; then
+    product_id_matches=${FLAGS_TRUE}
+  elif [ "${active_product_id}" = "E635" ] && \
+       [ "${product_id}" = "E639" ]; then
+    product_id_matches=${FLAGS_TRUE}
+  fi
+  if [ "${product_id_matches}" -ne "${FLAGS_TRUE}" ]; then
     die "Touch firmware updater: Product ID mismatch!"
   fi
 
   # Compare the two versions, and see if an update is needed.
-  log_msg "Product ID: ${active_product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
 
-  #If active_fw_version is "1001" always update to cover programming mode
-  #Programming mode version is "1001"
+  # If active_fw_version is "1001" always update to cover programming mode.
+  # Programming mode version is "1001".
   if [ "${active_fw_version}" = "1001" ]; then
     update_needed="${FLAGS_TRUE}"
   else
