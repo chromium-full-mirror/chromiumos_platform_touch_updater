@@ -16,6 +16,8 @@ ELAN_I2C_PRODUCT_ID_SYSFS="product_id"
 ELANTS_I2C_FW_NAME="elants_i2c"
 ELANTS_I2C_FW_VERSION_SYSFS="fw_version"
 ELANTS_I2C_PRODUCT_ID_SYSFS="hw_version"
+ELANTS_I2C_CALIBRATE_SYSFS="calibrate"
+ELANTS_I2C_CALIBRATION_COUNT_SYSFS="calibration_count"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -149,7 +151,9 @@ main() {
   local update_type=""
   local product_id=""
   local fw_version=""
-  local board=`grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}'`
+  local calibration_count=""
+  local board=""
+  board=$(grep CHROMEOS_RELEASE_BOARD= /etc/lsb-release | awk -F = '{print $2}')
   log_msg "Board detected as '${board}'"
 
   # Find the device in the filesystem.
@@ -231,6 +235,21 @@ main() {
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
 
     rebind_driver "${touch_device_path}"
+  fi
+
+  if [ -f "${touch_device_path}/${ELANTS_I2C_CALIBRATION_COUNT_SYSFS}" ]; then
+    calibration_count="$(cat "${touch_device_path}/${ELANTS_I2C_CALIBRATION_COUNT_SYSFS}")"
+    log_msg "Current calibration count: ${calibration_count}"
+    if [ "${calibration_count}" = "0xffff" ]; then
+      log_msg "Calibration need, previous calibration fail"
+      printf 1 > "${touch_device_path}/${ELANTS_I2C_CALIBRATE_SYSFS}"
+      calibration_count="$(cat "${touch_device_path}/${ELANTS_I2C_CALIBRATION_COUNT_SYSFS}")"
+      if [ "${calibration_count}" = "0x0000" ]; then
+        log_msg "Calibrate success, Current calibration count: ${calibration_count}"
+      else
+        log_msg "Calibrate fail, Current calibration count: ${calibration_count}"
+      fi
+    fi
   fi
 
   exit 0
