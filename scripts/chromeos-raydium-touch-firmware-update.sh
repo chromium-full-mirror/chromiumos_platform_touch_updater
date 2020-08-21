@@ -106,7 +106,7 @@ main() {
   fw_folder="$(dirname "$(readlink -f "${fw_link_path}")")"
   fw_file_cnt=$(find "${fw_folder}" -type f -name "*${active_hw_version}*" | wc -l)
 
-  if [ "${fw_file_cnt}" != "1" ]; then
+  if [ "${fw_file_cnt}" > "1" ]; then
     die "Multiple fw with same hw version found in ${fw_folder}."
   fi
 
