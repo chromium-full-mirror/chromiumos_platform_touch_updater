@@ -107,7 +107,8 @@ main() {
   fw_file_cnt=$(find "${fw_folder}" -type f -name "*${active_hw_version}*" | wc -l)
 
   if [ "${fw_file_cnt}" != "1" ]; then
-    die "Multiple fw with same hw version found in ${fw_folder}."
+    die "Expected exactly one FW file for this HW version in ${fw_folder},"\
+        "instead found ${fw_file_cnt}."
   fi
 
   log_msg "Attempting to load FW: '${fw_link_path}'"
