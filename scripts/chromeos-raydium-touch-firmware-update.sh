@@ -106,7 +106,7 @@ main() {
   fw_folder="$(dirname "$(readlink -f "${fw_link_path}")")"
   fw_file_cnt=$(find "${fw_folder}" -type f -name "*${active_hw_version}*" | wc -l)
 
-  if [ "${fw_file_cnt}" != "1" ]; then
+  if [ "${fw_file_cnt}" -ne 1 ]; then
     die "Expected exactly one FW file for this HW version in ${fw_folder},"\
         "instead found ${fw_file_cnt}."
   fi
