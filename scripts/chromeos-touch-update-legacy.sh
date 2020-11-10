@@ -153,6 +153,10 @@ check_update() {
         -p "${hid_link_path}" -r || \
       logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
+     "${ELAN_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh || \
+      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
                 "unknown vid '${vendor_id}'"
