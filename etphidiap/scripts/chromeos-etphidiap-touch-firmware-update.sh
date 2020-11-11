@@ -196,7 +196,7 @@ main() {
 "${active_fw_ver}"
 
     # Rebind the whole I2C adapter.  https://issuetracker.google.com/142598087
-    # Important: This touch device should be the only slave on its I2C bus!
+    # Important: This touch device should be the only peripheral on its I2C bus!
     rebind_driver "$(cd -P "${FLAGS_device_path}/../.." && pwd)"
   fi
 }
