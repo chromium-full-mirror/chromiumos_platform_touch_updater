@@ -27,7 +27,8 @@ check_update() {
   local driver_name="$(basename "$(readlink -f "${dev}/driver")")"
   local device_name="$(cat "${dev}/name")"
 
-  if [ "${driver_name}" = "i2c_hid" ]; then
+  if [ "${driver_name}" = "i2c_hid" ] ||
+       [ "${driver_name}" = "i2c_hid_acpi" ]; then
     local hidpath="$(echo "${dev}"/*:*:*.*)"
     local hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
