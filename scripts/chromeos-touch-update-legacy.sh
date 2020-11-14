@@ -22,6 +22,17 @@ G2TOUCH_VENDOR_ID="2A94"
 ST_VENDOR_ID="0483"
 EMRIGHT_VENDOR_ID="2C68"
 
+log_updater_run() {
+  local vendor_id="$1"
+  local product_id="$2"
+  local device_name="$3"
+
+  # This log message is load-bearing, in that the touch_UpdateErrors test
+  # checks for this exact message to confirm that the updater has run.
+  logger -t "${LOGGER_TAG}" \
+    "Running updater for ${device_name} (${vendor_id}:${product_id})"
+}
+
 check_update() {
   local dev="$1"
   local driver_name="$(basename "$(readlink -f "${dev}/driver")")"
@@ -46,6 +57,7 @@ check_update() {
 
     case "${vendor_id}" in
     "${WACOM_VENDOR_ID_1}"|"${WACOM_VENDOR_ID_2}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-wacom-touch-firmware-update.sh \
         -d "${i2c_device}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
@@ -70,11 +82,13 @@ check_update() {
       echo Update elan device: "${elan_device}"
       case "${elan_device}" in
       "touchpad")
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
         /opt/google/touch/scripts/chromeos-etphidiap-touch-firmware-update.sh \
           -d "${i2c_device}" -p "${i2c_path}" -r \
           || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
         ;;
       "touchscreen")
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
         /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
           -d "${dev}" -p "${product_id}" \
           || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
@@ -85,36 +99,43 @@ check_update() {
       esac
       ;;
     "${SYNAPTICS_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-synaptics-touch-firmware-update.sh \
         -d "${hidname}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${WEIDA_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-weida-hid-touch-firmware-update.sh \
         -d "${i2c_device}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${GOOGLE_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-google-touch-firmware-update.sh \
         -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${GOODIX_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update.sh \
         -d "${hidname}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${PIXART_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-pixart-hid-touch-firmware-update.sh \
         -h "${hidname}" -i "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${ST_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-st-touch-firmware-update.sh \
         -d "${i2c_device}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${EMRIGHT_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-emright-touch-firmware-update.sh \
         -d "${hidname}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
@@ -133,6 +154,7 @@ check_update() {
     local hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
     local vendor_id="${hidname#*-}"
+    local product_id="${vendor_id#*_}"
     vendor_id="${vendor_id%_*}"
 
     # Make sure the HID driver successfully bound to the device.
@@ -144,16 +166,19 @@ check_update() {
 
     case "${vendor_id}" in
     "${SIS_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-sis-touch-firmware-update.sh \
         -p "${hid_link_path}" -r \
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     "${G2TOUCH_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-g2touch-touch-firmware-update.sh \
         -p "${hid_link_path}" -r \
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     "${ELAN_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
