@@ -48,8 +48,8 @@ check_update() {
     case "${vendor_id}" in
     "${WACOM_VENDOR_ID_1}"|"${WACOM_VENDOR_ID_2}")
       /opt/google/touch/scripts/chromeos-wacom-touch-firmware-update.sh \
-        -d "${i2c_device}" -p "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -d "${i2c_device}" -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${ELAN_VENDOR_ID}")
       # Select Elan Device
@@ -72,13 +72,13 @@ check_update() {
       case "${elan_device}" in
       "touchpad")
         /opt/google/touch/scripts/chromeos-etphidiap-touch-firmware-update.sh \
-          -d "${i2c_device}" -p "${i2c_path}" -r || \
-        logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+          -d "${i2c_device}" -p "${i2c_path}" -r \
+          || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
         ;;
       "touchscreen")
         /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
-          -d "${dev}" -p "${product_id}" || \
-        logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+          -d "${dev}" -p "${product_id}" \
+          || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
         ;;
       *)
         logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
@@ -87,38 +87,38 @@ check_update() {
       ;;
     "${SYNAPTICS_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-synaptics-touch-firmware-update.sh \
-        -d "${hidname}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -d "${hidname}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${WEIDA_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-weida-hid-touch-firmware-update.sh \
-        -d "${i2c_device}" -p "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -d "${i2c_device}" -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${GOOGLE_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-google-touch-firmware-update.sh \
-        -p "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${GOODIX_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update.sh \
-        -d "${hidname}" -p "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -d "${hidname}" -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${PIXART_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-pixart-hid-touch-firmware-update.sh \
-        -h "${hidname}" -i "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -h "${hidname}" -i "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${ST_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-st-touch-firmware-update.sh \
-        -d "${i2c_device}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -d "${i2c_device}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${EMRIGHT_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-emright-touch-firmware-update.sh \
-        -d "${hidname}" -p "${i2c_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        -d "${hidname}" -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
@@ -146,17 +146,17 @@ check_update() {
     case "${vendor_id}" in
     "${SIS_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-sis-touch-firmware-update.sh \
-        -p "${hid_link_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+        -p "${hid_link_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
-     "${G2TOUCH_VENDOR_ID}")
+    "${G2TOUCH_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-g2touch-touch-firmware-update.sh \
-        -p "${hid_link_path}" -r || \
-      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+        -p "${hid_link_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
-     "${ELAN_VENDOR_ID}")
-      /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh || \
-      logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+    "${ELAN_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
+        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
@@ -174,36 +174,36 @@ check_update() {
   case "${driver_name}" in
   raydium_ts)
     /opt/google/touch/scripts/chromeos-raydium-touch-firmware-update.sh \
-      -d "${device_name}" -r ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      -d "${device_name}" -r \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
     ;;
   cyapa)
     /opt/google/touch/scripts/chromeos-cyapa-touch-firmware-update.sh \
-      -d "${device_name}" -r ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      -d "${device_name}" -r \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
     ;;
   elan_i2c)
     /opt/google/touch/scripts/chromeos-elan-touch-firmware-update.sh \
-      -d "${device_name}" -n elan_i2c -r ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      -d "${device_name}" -n elan_i2c -r \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
     ;;
   elants_i2c)
     /opt/google/touch/scripts/chromeos-elan-touch-firmware-update.sh \
-      -d "${device_name}" -n elants_i2c -r ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      -d "${device_name}" -n elants_i2c -r \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
     ;;
   mip4_ts)
     /opt/google/touch/scripts/chromeos-melfas-touch-firmware-update.sh \
-      -d "${device_name}" -r ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      -d "${device_name}" -r \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
     ;;
   wdt87xx_i2c)
     /opt/google/touch/scripts/chromeos-weida-touch-firmware-update.sh \
-      -d "${device_name}" -r ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed.";
+      -d "${device_name}" -r \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed.";
     /opt/google/touch/scripts/chromeos-weida-touch-config-update.sh \
-      -d "${device_name}" ||
-      logger -t "${LOGGER_TAG}" "${device_name} config update failed."
+      -d "${device_name}" \
+      || logger -t "${LOGGER_TAG}" "${device_name} config update failed."
     ;;
   atmel_mxt_ts)
     # Both Atmel screens and pads use the same driver.  Use the device name
@@ -225,11 +225,11 @@ check_update() {
 
     # Atmel mXT touchpad firmware and config must be updated in tandem.
     /opt/google/touch/scripts/chromeos-atmel-touch-firmware-update.sh \
-      -d "${device_name}" -r -n "${fw_name}" ||
-      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed.";
+      -d "${device_name}" -r -n "${fw_name}" \
+      || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed.";
     /opt/google/touch/scripts/chromeos-atmel-touch-config-update.sh \
-      -d "${device_name}" ||
-      logger -t "${LOGGER_TAG}" "${device_name} config update failed."
+      -d "${device_name}" \
+      || logger -t "${LOGGER_TAG}" "${device_name} config update failed."
     ;;
   esac
 }
