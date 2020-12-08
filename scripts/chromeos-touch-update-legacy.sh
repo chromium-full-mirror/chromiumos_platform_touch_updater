@@ -179,9 +179,16 @@ check_update() {
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     "${ELAN_VENDOR_ID}")
-      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
-      /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
-        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      if [ $((0x${product_id})) -eq $((0x2C07)) ] ; then
+        # Lazor's Elan touchscreen controller appears with the hid-multitouch
+        # driver instead of i2c_hid. To avoid running the updater twice for
+        # Delbin's touchscreen (which appears with both), we check for the
+        # Lazor PID.
+        # TODO(b/175166912): figure out why Delbin uses both drivers.
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+        /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update.sh \
+          || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      fi
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
