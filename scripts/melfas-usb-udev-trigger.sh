@@ -17,7 +17,7 @@ fi
 
 logger -t melfas-usb-udev-trigger \
   "Running touch_updater after Melfas udev rule triggered."
-/opt/google/touch/scripts/chromeos-melfas-hid-touch-firmware-update.sh -r \
+/opt/google/touch/scripts/chromeos-melfas-hid-touch-firmware-update-legacy.sh -r \
   -d "$1"
 
 # If the update is successful, write the dedup file to prevent further checks to
