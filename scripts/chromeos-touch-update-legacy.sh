@@ -66,16 +66,20 @@ check_update() {
     "${ELAN_VENDOR_ID}")
       # Select Elan Device
       local elan_device=
-      product_id=$((0x${product_id}))
-      if [ ${product_id} -eq $((0x0732)) ] ; then
+      local product_id_decimal=$((0x${product_id}))
+      if [ "${product_id_decimal}" -eq $((0x0732)) ] ; then
         elan_device="touchscreen"
-      elif [ ${product_id} -ge $((0x0400)) ] && [ ${product_id} -le $((0x04FF)) ] ; then
+      elif [ "${product_id_decimal}" -ge $((0x0400)) ] \
+        && [ "${product_id_decimal}" -le $((0x04FF)) ] ; then
         elan_device="touchpad"
-      elif [ ${product_id} -ge $((0x2000)) ] && [ ${product_id} -le $((0x2FFF)) ] ; then
+      elif [ "${product_id_decimal}" -ge $((0x2000)) ] \
+        && [ "${product_id_decimal}" -le $((0x2FFF)) ] ; then
         elan_device="touchscreen"
-      elif [ ${product_id} -ge $((0x3000)) ] && [ ${product_id} -le $((0x3FFF)) ] ; then
+      elif [ "${product_id_decimal}" -ge $((0x3000)) ] \
+        && [ "${product_id_decimal}" -le $((0x3FFF)) ] ; then
         elan_device="touchpad"
-      elif [ ${product_id} -ge $((0x4000)) ] && [ ${product_id} -le $((0x4FFF)) ] ; then
+      elif [ "${product_id_decimal}" -ge $((0x4000)) ] \
+        && [ "${product_id_decimal}" -le $((0x4FFF)) ] ; then
         elan_device="touchscreen"
       fi
 
