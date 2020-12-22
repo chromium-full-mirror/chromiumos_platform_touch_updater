@@ -6,8 +6,8 @@
 #
 # USAGE: ./chromeos-elan-hid-touch-firmware-update-legacy.sh -p ${product_id}
 # The value of product_id is HID PID of touch device.
-# For example: (if HID PID of touch device is 1842)
-# ./chromeos-elan-hid-touch-firmware-update-legacy.sh -p 1842
+# For example: (if HID PID of touch device is 732)
+# ./chromeos-elan-hid-touch-firmware-update-legacy.sh -p 732
 
 . /usr/share/misc/shflags
 . /opt/google/touch/scripts/chromeos-touch-common.sh
@@ -15,14 +15,14 @@
 # Define parameters to pass to script.
 # ${device_path}: Device path of the touch device, e.g. "/sys/bus/i2c/devices/i2c-ELAN900C:00"
 # Example:
-#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 10755
+#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2A03
 DEFINE_string 'device_path' '' "device path of the touch device, e.g. /sys/bus/i2c/devices/i2c-ELAN900C:00" "d"
-# ${hid_pid}: HID product ID of the touch device, in decimal (e.g. 10755)
+# ${hid_pid}: HID product ID of the touch device, in heximal (e.g. 2A03)
 # Example:
-#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 10755 (with INX panel)
-#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 12234 (with AUO panel)
-#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 1842  (Device in recovery mode)
-DEFINE_string "hid_pid" "" "HID product ID of the touch device, in decimal (e.g. 10755)" "p"
+#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2A03 (with INX panel)
+#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2FCA (with AUO panel)
+#  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 732  (Device in recovery mode)
+DEFINE_string "hid_pid" "" "HID product ID of the touch device, in decimal (e.g. 2A03)" "p"
 
 CONSOLETOOL_DIR=/usr/sbin
 FWREAD_TOOL="${CONSOLETOOL_DIR}/elan_i2chid_read_fwid"
@@ -178,7 +178,7 @@ main() {
   local recovery_mode=
   local ret=
 
-  hid_pid="$( printf "%x" "${FLAGS_hid_pid}" )"
+  hid_pid="${FLAGS_hid_pid}"
   echo "hid_pid: ${hid_pid}"
   echo "update_needed: ${update_needed}"
 
