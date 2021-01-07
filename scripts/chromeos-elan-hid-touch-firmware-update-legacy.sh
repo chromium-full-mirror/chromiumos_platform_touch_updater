@@ -22,7 +22,7 @@ DEFINE_string 'device_path' '' "device path of the touch device, e.g. /sys/bus/i
 #  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2A03 (with INX panel)
 #  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2FCA (with AUO panel)
 #  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 732  (Device in recovery mode)
-DEFINE_string "hid_pid" "" "HID product ID of the touch device, in decimal (e.g. 2A03)" "p"
+DEFINE_string "hid_pid" "" "HID product ID of the touch device, in hexadecimal (e.g. 2A03)" "p"
 
 CONSOLETOOL_DIR=/usr/sbin
 FWREAD_TOOL="${CONSOLETOOL_DIR}/elan_i2chid_read_fwid"
