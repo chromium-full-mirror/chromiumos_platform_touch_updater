@@ -38,8 +38,8 @@ check_update() {
   local driver_name="$(basename "$(readlink -f "${dev}/driver")")"
   local device_name="$(cat "${dev}/name")"
 
-  if [ "${driver_name}" = "i2c_hid" ] ||
-       [ "${driver_name}" = "i2c_hid_acpi" ]; then
+  case "${driver_name}" in
+  i2c_hid*)
     local hidpath="$(echo "${dev}"/*:*:*.*)"
     local hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
@@ -151,7 +151,8 @@ check_update() {
     esac
 
     return
-  fi
+    ;;
+  esac
 
   if [ "${driver_name}" = "hid-multitouch" ] \
         || [ "${driver_name}" = "hid-generic" ]; then

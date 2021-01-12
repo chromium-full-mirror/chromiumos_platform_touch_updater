@@ -72,15 +72,16 @@ find_i2c_hid_device() {
 
   for dev in "${I2C_DEVICES_PATH}"/*/; do
     local driver_name="$(readlink -f ${dev}/driver | xargs basename)"
-    if [ "i2c_hid" = "${driver_name}" ] ||
-        [ "i2c_hid_acpi" = "${driver_name}" ]; then
+    case "${driver_name}" in
+    i2c_hid*)
       local hid_path=$(echo ${dev}/*:${vid}:${pid}.*)
       if [ -d "${hid_path}" ]; then
         local hidraw_sysfs_path=$(echo ${hid_path}/hidraw/hidraw*)
         path="/dev/${hidraw_sysfs_path##*/}"
         break
       fi
-    fi
+      ;;
+    esac
   done
   echo "${path}"
 }
