@@ -15,6 +15,7 @@ GOODIX_VENDOR_ID="27C6"
 SIS_VENDOR_ID="0457"
 G2TOUCH_VENDOR_ID="2A94"
 EMRIGHT_VENDOR_ID="2C68"
+ZINITIX_VENDOR_ID="14E5"
 
 restore_power_paths=""
 
@@ -67,6 +68,11 @@ check_update() {
       ;;
     "${EMRIGHT_VENDOR_ID}")
       /opt/google/touch/scripts/chromeos-emright-touch-firmware-update.sh \
+        -d "${hidname}" -p "${i2c_path}" -r || \
+      logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${ZINITIX_VENDOR_ID}")
+      /opt/google/touch/scripts/chromeos-zinitix-tp-firmware-update.sh \
         -d "${hidname}" -p "${i2c_path}" -r || \
       logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
