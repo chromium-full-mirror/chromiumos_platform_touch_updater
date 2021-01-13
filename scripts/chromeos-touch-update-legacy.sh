@@ -21,6 +21,7 @@ PIXART_VENDOR_ID="093A"
 G2TOUCH_VENDOR_ID="2A94"
 ST_VENDOR_ID="0483"
 EMRIGHT_VENDOR_ID="2C68"
+ZINITIX_VENDOR_ID="14E5"
 
 log_updater_run() {
   local vendor_id="$1"
@@ -142,6 +143,12 @@ check_update() {
     "${EMRIGHT_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-emright-touch-firmware-update-legacy.sh \
+        -d "${hidname}" -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${ZINITIX_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+      /opt/google/touch/scripts/chromeos-zinitix-tp-firmware-update-legacy.sh \
         -d "${hidname}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
