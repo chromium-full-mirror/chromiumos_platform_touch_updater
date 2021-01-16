@@ -12,7 +12,6 @@ read: 1
 select: 1
 getdents: 1
 close: 1
-openat: 1
 readlinkat: 1
 ioctl: 1
 open: 1

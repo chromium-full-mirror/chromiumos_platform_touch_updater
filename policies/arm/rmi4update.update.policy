@@ -12,7 +12,6 @@ read: 1
 _newselect: 1
 getdents: 1
 close: 1
-openat: 1
 readlinkat: 1
 ioctl: 1
 open: 1
@@ -33,6 +32,5 @@ fcntl: 1
 execve: 1
 exit_group: 1
 ARM_set_tls: 1
-readlink: 1
 clock_gettime: 1
 getpid: 1
