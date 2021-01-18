@@ -66,15 +66,13 @@ compare_fw_versions() {
 
   local minor_build_tmp=""
 
-  # Synaptics FWs are in the format major.minor.build (eg: 1.7.1e4aa0) so
+  # Synaptics FWs are in the format major.minor.build (eg: 1.7.3235244) so
   # the next step is to parse those values out.
-  # Note: that due to an unfortunate quirk, the "active" build number is in hex
-  #       but the other is not, so we must covert it here to compare them
+
   active_fw_version_major=${active_fw_version%%.*}
   minor_build_tmp=${active_fw_version#$active_fw_version_major.}
   active_fw_version_minor=${minor_build_tmp%.*}
-  active_fw_version_build_hex=${minor_build_tmp#*.}
-  active_fw_version_build=$(hex_to_decimal "${active_fw_version_build_hex}")
+  active_fw_version_build=${minor_build_tmp#*.}
 
   fw_version_major=${fw_version%%.*}
   minor_build_tmp=${fw_version#$fw_version_major.}
