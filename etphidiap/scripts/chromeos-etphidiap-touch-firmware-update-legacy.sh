@@ -6,7 +6,14 @@
 
 . /usr/share/misc/shflags
 . /opt/google/touch/scripts/chromeos-touch-common.sh
-. /opt/google/touch/scripts/chromeos-etphidiap-overlay.sh
+
+overlay_sh_exist=0
+OVERLAY_FILE=/opt/google/touch/scripts/chromeos-etphidiap-overlay.sh
+if [ -f "${OVERLAY_FILE}" ]; then
+  overlay_sh_exist=1
+  # shellcheck source=/opt/google/touch/scripts/chromeos-etphidiap-overlay.sh
+  . "${OVERLAY_FILE}"
+fi
 
 DEFINE_string 'device' '' "i2c-dev device name e.g. i2c-7" 'd'
 DEFINE_string 'device_path' '' "device path in /sys" 'p'
@@ -41,10 +48,13 @@ update_firmware() {
 }
 
 # The on-disk firmware version is determined by parsing the filename of the
-# actual firmware file passed as $1, after resolving any symlinks.  The filename
-# should be in the format "elan_0xVER.bin" e.g. "elan_0x0A.bin".  The 0x prefix
-# is preserved, e.g. if the file is named "elan_0x0A.bin" this function will
-# print "0x0A" to stdout.
+# actual firmware file passed as $1, after resolving any symlinks. The filename
+# should be in the format "elan_0xVER.bin" e.g. "elan_0x0A.bin", or without
+# board overlay script file then compatible with elan_i2c driver firmware file
+# format "elan_i2c_{module_id}_{fw_ver}.bin" e.g "elan_i2c_182.0_1.0.bin".
+# The 0x prefix is preserved, e.g. if the file is named "elan_0x0A.bin" this
+# function will print "0x0A" to stdout, or if the file is named
+# "elan_i2c_182.0_1.0.bin" the function will print "0x1" to stdout.
 get_fw_version_from_disk() {
   local fw_link=
   local fw_filepath=
@@ -61,6 +71,9 @@ get_fw_version_from_disk() {
   fw_filename="$(basename "${fw_filepath}")"
   fw_ver="${fw_filename#*_}"
   fw_ver="${fw_ver%.*}"
+  if [ "${overlay_sh_exist}" -eq 0 ]; then
+    fw_ver="${fw_ver%.*}"
+  fi
   printf '0x%X\n' "${fw_ver}"
 }
 
@@ -82,7 +95,11 @@ get_active_info() {
 
   ret="$?"
   if [ "${ret}" -eq 0 ]; then
-    printf '0x%X\n' "0x${output}"
+    if [ "${output}" = "-1" ]; then
+      printf '0xFFFFFFFF\n'
+    else
+      printf '0x%X\n' "0x${output}"
+    fi
   else
     echo 1>&2 "Exit status ${ret} retrieving touchpad ${description}: ${output}"
   fi
@@ -154,11 +171,16 @@ main() {
 "Unable to determine active firmware version."
   log_msg "Active firmware version: ${active_fw_ver}"
 
-  assert_is_function_from_overlay get_fw_basename
-  fw_basename="$(get_fw_basename "${chassis_id}" "${board_rev}" \
-"${device_module_id}" "${device_hwid}" "${active_fw_ver}")"
-  [ -n "${fw_basename}" ] || die \
-"Unable to determine which on-disk firmware to consider flashing."
+  if [ "${overlay_sh_exist}" -ne 0 ]; then
+    assert_is_function_from_overlay get_fw_basename
+    fw_basename="$(get_fw_basename "${chassis_id}" "${board_rev}" \
+      "${device_module_id}" "${device_hwid}" "${active_fw_ver}")"
+    [ -n "${fw_basename}" ] || die \
+      "Unable to determine which on-disk firmware to consider flashing."
+  else
+    module_id=$((device_module_id))
+    fw_basename="elan_i2c_${module_id}.0.bin"
+  fi
 
   fw_link="$(find_fw_link_path "${fw_basename}" "${chassis_id}")"
   [ -n "${fw_link}" ] || die "Unable to determine path of on-disk firmware."
