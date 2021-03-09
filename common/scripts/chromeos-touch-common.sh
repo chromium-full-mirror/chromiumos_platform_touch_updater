@@ -34,10 +34,10 @@ run_cmd_and_block_powerd() {
   trap - EXIT
 }
 
-# Find touchscreen/pad path in i2c devices given it's device name and a list
-# of the sysfs entries it is expect to have (this can help skip over some
-# bogus devices that have already been disconnected)
-# The required sysfs filenames could be supplied as a space-delimited string
+# Find touchscreen/pad path in /sys/bus/i2c/devices given its device name and a
+# list of the sysfs entries it is expect to have (this can help skip over some
+# bogus devices that have already been disconnected).
+# The required sysfs filenames should be supplied as a space-delimited string.
 find_i2c_device_by_name() {
   local dev=""
   local name_to_find="$1"
