@@ -13,8 +13,11 @@
 # limitations under the License.
 
 nanosleep: 1
+clock_nanosleep: 1
+clock_nanosleep_time64: 1
 ioctl: 1
 clock_gettime: 1
+clock_gettime64: 1
 write: 1
 read: 1
 openat: 1

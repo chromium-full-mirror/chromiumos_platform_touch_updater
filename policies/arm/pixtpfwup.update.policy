@@ -13,6 +13,8 @@ stat64: 1
 read: 1
 mmap2: arg2 == PROT_READ || arg2 == PROT_READ|PROT_WRITE || arg2 == PROT_READ|PROT_EXEC
 nanosleep: 1
+clock_nanosleep: 1
+clock_nanosleep_time64: 1
 mprotect: arg2 == PROT_NONE || arg2 == PROT_READ
 write: 1
 fstat64: 1

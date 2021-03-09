@@ -8,6 +8,7 @@
 # ioctl: arg1 == I2C_RDWR
 ioctl: arg1 == 0x0707
 nanosleep: 1
+clock_nanosleep: 1
 openat: 1
 stat: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE

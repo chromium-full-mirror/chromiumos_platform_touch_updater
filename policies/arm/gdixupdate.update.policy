@@ -8,6 +8,8 @@
 openat: 1
 ioctl: 1
 nanosleep: 1
+clock_nanosleep: 1
+clock_nanosleep_time64: 1
 brk: 1
 open: 1
 lseek: 1

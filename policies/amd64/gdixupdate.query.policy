@@ -30,3 +30,4 @@ access: 1
 munmap: 1
 getpid: 1
 nanosleep: 1
+clock_nanosleep: 1

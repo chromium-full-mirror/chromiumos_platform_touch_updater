@@ -19,6 +19,7 @@ open: 1
 openat: 1
 lseek: 1
 nanosleep: 1
+clock_nanosleep: 1
 uname: 1
 arch_prctl: 1
 readlink: 1

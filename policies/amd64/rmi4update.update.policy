@@ -22,6 +22,7 @@ lseek: 1
 readlink: 1
 inotify_init: 1
 nanosleep: 1
+clock_nanosleep: 1
 inotify_add_watch: 1
 restart_syscall: 1
 exit: 1
