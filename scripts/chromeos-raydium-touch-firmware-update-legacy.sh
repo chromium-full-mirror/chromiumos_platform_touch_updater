@@ -141,6 +141,8 @@ main() {
     echo "Unable to determine active FW version."
   fi
 
+  report_initial_version "${touch_device_path}" "Raydium" "${active_fw_version}"
+
   # Parse the firmware versions to see if the firmware should be updated
   log_msg "Device boot mode : ${active_boot_mode}"
   log_msg "HW version : ${active_hw_version}"
@@ -167,12 +169,16 @@ main() {
         log_msg "Firmware update failed, try # ${i}, wait to retry..."
         sleep 6
         if [ "${i}" -ge $((${RAYDIUM_NUM_RETRIES} - 1))  ]; then
+          report_update_result "${touch_device_path}" \
+            "${REPORT_RESULT_FAILURE}" "${fw_version}"
           die "Firmware update failed. Current Firmware: ${active_fw_version}"
         fi
       fi
     done
 
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    report_update_result "${touch_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_version}"
     rebind_driver "${touch_device_path}"
   fi
 

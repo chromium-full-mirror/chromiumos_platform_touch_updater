@@ -9,6 +9,7 @@
 
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
+DEFINE_string 'i2c_path' '' "I2C device path" 'p'
 
 RMI4UPDATE="/usr/sbin/rmi4update"
 SYNAPTICS_VENDOR_ID="06CB"
@@ -109,6 +110,8 @@ main() {
   active_product_id="${trackpad_device_name##*_}"
   active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
 
+  report_initial_version "${FLAGS_i2c_path}" "Synaptics" "${active_fw_version}"
+
   # Find the fw version and product ID on disk
   fw_path="$(find_fw_path ${active_product_id} ${FLAGS_device})"
   if [ -z "${fw_path}" ] || [ ! -e "${fw_path}" ]; then
@@ -144,9 +147,13 @@ main() {
     active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    report_update_result "${FLAGS_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_version}"
   fi
 
   exit 0

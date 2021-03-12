@@ -122,6 +122,10 @@ main() {
   if [ -z "${active_fw_ver}" ]; then
     die "Unable to detect the active FW version."
   fi
+
+  report_initial_version "${FLAGS_device_path}" "Google" \
+    "$(extract_numerical_fw_version "${active_fw_ver}")"
+
   if [ -z "${updater_fw_ver}" ]; then
     die "Unable to detect the updater's FW version on disk."
   fi
@@ -152,9 +156,13 @@ main() {
     active_fw_ver="$(get_active_fw_version)"
     update_type="$(compare_fw_versions "${active_fw_ver}" "${updater_fw_ver}")"
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "$(extract_numerical_fw_version "${updater_fw_ver}")"
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "$(extract_numerical_fw_version "${active_fw_ver}")"
 
     rebind_driver "${FLAGS_device_path}"
     if [ "$?" -ne "0" ]; then

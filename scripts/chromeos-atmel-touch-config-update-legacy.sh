@@ -82,11 +82,15 @@ update_config() {
   log_msg "Device config checksum : ${device_config_csum}"
   log_msg "New config checksum : ${file_config_csum}"
 
+  report_initial_config "${touch_device_path}" "${device_config_csum}"
+
   if [ "${device_config_csum}" != "${file_config_csum}" ] ||
      [ ${FLAGS_force} -eq ${FLAGS_TRUE} ]; then
     printf 1 > "${touch_device_path}/update_config"
     local ret=$?
     if [ ${ret} -ne 0 ]; then
+      report_config_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${file_config_csum}"
       die "Config update failed. ret=${ret}"
     fi
 
@@ -99,9 +103,13 @@ update_config() {
       log_msg "Try #${i}: Checking new device csum ${device_config_csum}"
       if [ "${device_config_csum}" = "${file_config_csum}" ]; then
         log_msg "Config update succeeded"
+        report_config_result "${touch_device_path}" "${REPORT_RESULT_SUCCESS}" \
+          "${device_config_csum}"
         exit 0
       fi
     done
+    report_config_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${file_config_csum}"
     die "Config update failed. config_sum mismatched after update."
   else
     log_msg "Config is up-to-date, no need to update"

@@ -175,6 +175,10 @@ main() {
   log_msg "Product ID : ${hw_version}"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
+
+  report_initial_version "${touch_device_path}" "Atmel firmware" \
+    "${active_fw_version}"
+
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
@@ -193,9 +197,19 @@ main() {
     active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      # Transform the build number to hex for consistency in the report.
+      local fw_version_major="$(get_major_version_number "${fw_version}")"
+      local fw_version_minor="$(get_minor_version_number "${fw_version}")"
+      local fw_version_build="$(
+        printf '%X' $(get_build_number "${fw_version}" ${FLAGS_FALSE}))"
+      report_update_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version_major}.${fw_version_minor}.${fw_version_build}"
+
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    report_update_result "${touch_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_version}"
 
     rebind_driver "${touch_device_path}"
   fi

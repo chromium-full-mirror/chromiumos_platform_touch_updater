@@ -222,6 +222,9 @@ main() {
   if [ -z "${active_fw_ver}" ]; then
     die "Unable to determine active FW version."
   fi
+
+  report_initial_version "${FLAGS_device_path}" "Wacom" "${active_fw_ver}"
+
   if [ -z "${new_fw_ver}" ]; then
     die "Unable to find new FW version on disk."
   fi
@@ -247,9 +250,13 @@ main() {
     update_type="$(compare_multipart_version "${active_fw_ver}" "${new_fw_ver}")"
 
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${new_fw_ver}"
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_ver}"
 
     wacom_rebind_driver "${FLAGS_device_path}"
   fi

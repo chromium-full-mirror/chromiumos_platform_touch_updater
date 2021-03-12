@@ -340,3 +340,114 @@ check_i2c_chardev_driver() {
     sleep 15
   fi
 }
+
+REPORT_FILE="/run/touch-fw-versions"
+
+# Adds an entry to the report file for a touch device. Update scripts should
+# generally use the report_* functions below instead.
+# Parameters (in order):
+#   sysfs_path: the sysfs path for the entry, beginning either /sys/devices or
+#               /sys/bus/i2c/devices.
+#   json_fields: a string containing the JSON fields to include in the object,
+#                without curly braces (e.g. "\"foo\": \"bar\"")
+#   extra_json_fields: more JSON fields to be added to the object. Optional.
+add_report_entry() {
+  local sysfs_path="$1"
+  local json_fields="$2"
+  local extra_json_fields="$3"
+
+  case "${sysfs_path}" in
+  /sys/bus/i2c/devices/*) sysfs_path=$(readlink -f "${sysfs_path}");;
+  esac
+
+  if [ -n "${extra_json_fields}" ]; then
+    json_fields="${json_fields}, ${extra_json_fields}"
+  fi
+  echo "${sysfs_path}" '{'"${json_fields}"'}' >> $REPORT_FILE
+}
+
+# Makes an untrusted string safe to include in a JSON object (by removing
+# quotes and newlines).
+make_json_safe() {
+  echo "$1" | tr --delete '\n"'
+}
+
+# Adds a report entry giving the initial state of a touch device.
+# Parameters:
+#   sysfs_path: a path to the device in sysfs (see add_report_entry).
+#   updater: a name identifying the updater in use.
+#   initial_version: the firmware version found on the touch device.
+#   optional_extra_fields: extra JSON fields to be added to the object. **When
+#                          creating, use make_json_safe on any value from an
+#                          untrusted binary (e.g. an updater).** Optional.
+report_initial_version() {
+  local sysfs_path="$1"
+  local updater
+  local initial_version
+  local optional_extra_fields="$4"
+
+  updater="$(make_json_safe "$2")"
+  initial_version="$(make_json_safe "$3")"
+
+  local json_fields="\"updater\": \"${updater}\","
+  json_fields="${json_fields} \"initial_version\": \"${initial_version}\""
+  add_report_entry "${sysfs_path}" "${json_fields}" "${optional_extra_fields}"
+}
+
+REPORT_RESULT_FAILURE="FAILURE"
+REPORT_RESULT_SUCCESS="SUCCESS"
+
+# Adds a report entry describing the result of an update attempt.
+# Parameters:
+#   sysfs_path: a path to the device in sysfs (see add_report_entry).
+#   update_status: one of $REPORT_RESULT_{FAILURE,SUCCESS}
+#   flashed_version: the firmware version that the updater attempted to flash
+#                    (whether or not it was successful).
+report_update_result() {
+  local sysfs_path="$1"
+  local update_status
+  local flashed_version
+
+  update_status="$(make_json_safe "$2")"
+  flashed_version="$(make_json_safe "$3")"
+
+  local json_fields="\"update_status\": \"${update_status}\","
+  json_fields="${json_fields} \"flashed_version\": \"${flashed_version}\""
+  add_report_entry "${sysfs_path}" "${json_fields}"
+}
+
+# Adds a report entry stating the config version found on a touch device.
+# Parameters:
+#   sysfs_path: a path to the device in sysfs (see add_report_entry).
+#   initial_config: the config version or hash on the touch device initially.
+report_initial_config() {
+  local sysfs_path="$1"
+  local initial_config
+  initial_config="$(make_json_safe "$2")"
+  add_report_entry "${sysfs_path}" "\"initial_config\": \"${initial_config}\""
+}
+
+# Adds a report entry describing the result of a config update attempt.
+# Parameters:
+#   sysfs_path: a path to the device in sysfs (see add_report_entry).
+#   update_status: one of $REPORT_RESULT_{FAILURE,SUCCESS}
+#   flashed_config: the config version that the updater attempted to flash
+#                   (whether or not it was successful).
+report_config_result() {
+  local sysfs_path="$1"
+  local update_status
+  local flashed_config
+
+  update_status="$(make_json_safe "$2")"
+  flashed_config="$(make_json_safe "$3")"
+
+  local extra_fields=""
+  if [ "${update_status}" = "${REPORT_RESULT_FAILURE}" ]; then
+    # We only want to override the update_status if the config flash failed (so
+    # as not to hide firmware update failures with config update successes).
+    extra_fields="\"update_status\": \"${REPORT_RESULT_FAILURE}\""
+  fi
+
+  add_report_entry "${sysfs_path}" "\"flashed_config\": \"${flashed_config}\"" \
+    "${extra_fields}"
+}
