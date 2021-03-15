@@ -11,6 +11,7 @@ write: 1
 read: 1
 _newselect: 1
 getdents: 1
+getdents64: 1
 close: 1
 readlinkat: 1
 ioctl: 1

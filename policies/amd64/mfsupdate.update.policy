@@ -26,6 +26,7 @@ stat: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 rt_sigaction: 1
 getdents: 1
+getdents64: 1
 fcntl: 1
 brk: 1
 recvmsg: 1

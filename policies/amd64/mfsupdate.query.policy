@@ -23,6 +23,7 @@ poll: 1
 stat: 1
 write: 1
 getdents: 1
+getdents64: 1
 fcntl: 1
 brk: 1
 uname: 1

@@ -34,6 +34,7 @@ unlink: 1
 access: 1
 uname: 1
 getdents: 1
+getdents64: 1
 time: 1
 gettimeofday: 1
 openat: 1
