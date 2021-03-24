@@ -23,6 +23,7 @@ eval set -- "${FLAGS_ARGV}"
 update_firmware() {
   local hidraw="$1"
   local fw_path="$2"
+  local fw_version="$3"
   local ret
 
   for i in $(seq 3); do
@@ -38,6 +39,8 @@ update_firmware() {
     log_msg "FW update attempt #${i} failed: ${cmd_log}"
     sleep 1
   done
+  report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+    "${fw_version}"
   die "Error updating touch firmware. ${ret}"
 }
 get_active_fw_ver() {
@@ -174,6 +177,9 @@ main() {
   log_msg "[Pix TP]Product ID: ${product_id}"
   log_msg "[Pix TP]Current Firmware: ${active_fw_ver}"
   log_msg "[Pix TP]Updater Firmware: ${fw_version}"
+
+  report_initial_version "${FLAGS_dev_i2c_path}" "PixArt" "${active_fw_ver}"
+
   # Determine if an update is needed, and if we do, trigger it now
   update_type="$(compare_fw_versions "${active_fw_ver}" \
                                      "${fw_version}")"
@@ -181,15 +187,19 @@ main() {
   update_needed="$(is_update_needed "${update_type}")"
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "[Pix TP]Updating FW to ${fw_filename}..."
-    update_firmware "${touch_dev_hidraw}" "${fw_path}"
+    update_firmware "${touch_dev_hidraw}" "${fw_path}" "${fw_version}"
     active_fw_ver="$(get_active_fw_ver "${touch_dev_hidraw}")"
     log_msg "[Pix TP]Current Firmware (after update attempt): ${active_fw_ver}"
     update_type="$(compare_fw_versions "${active_fw_ver}" \
                                        "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "[Pix TP]Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
     log_msg "[Pix TP]Update FW succeded. Current Firmware: ${active_fw_ver}"
+    report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_ver}"
     rebind_driver "${FLAGS_dev_i2c_path}"
   fi
   exit 0

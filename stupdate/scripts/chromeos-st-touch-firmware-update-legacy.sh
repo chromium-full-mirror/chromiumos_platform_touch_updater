@@ -25,16 +25,16 @@ STUPDATE_USER="fwupdate-i2c"
 STUPDATE_GROUP="fwupdate-i2c"
 
 update_firmware() {
-  local i2c_dev_path=
-
-  # POSIX allows, but does not require, shift to exit a non-interactive shell.
-  i2c_dev_path="$1"; [ "$#" -gt 0 ] || return; shift
+  local i2c_dev_path="$1"
+  local fw_version="$2"
 
   ret="$(minijail0 -u "$STUPDATE_USER" -g "$STUPDATE_GROUP" -G -n \
     -S /opt/google/touch/policies/stupdate.update.policy \
     "$BINARY_PATH" "flash_program" "$i2c_dev_path" "$FIRMWARE_FILE_PATH")"
 
   if [ "$?" -ne 0 ]; then
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${fw_version}"
     die "firmware update failed, error_code=$ret"
   fi
 }
@@ -107,6 +107,8 @@ main() {
   log_msg "device info $FLAGS_device - HW:$device_hw_id FW:$device_fw_version "\
 "CFG:$device_config_id"
 
+  report_initial_version "${FLAGS_device_path}" "ST" "${device_fw_version}"
+
   # Compare fw and config version and perform the update if needed
   update_type="$(compare_multipart_version \
       "$device_fw_version" "$ftb_fw_version" \
@@ -119,8 +121,10 @@ main() {
     # Update splash disabled due to https://issuetracker.google.com/133452184
     # TODO(https://issuetracker.google.com/129713045): Enable this when safe.
     #chromeos-boot-alert update_touchscreen_firmware
-    run_cmd_and_block_powerd update_firmware "$i2c_dev_path"
+    run_cmd_and_block_powerd update_firmware "$i2c_dev_path" "${ftb_fw_version}"
     log_msg "firmware updated successfully"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${ftb_fw_version}"
 
     rebind_driver "${FLAGS_device_path}" /sys/bus/i2c/drivers/i2c_hid
   fi

@@ -34,6 +34,7 @@ update_firmware() {
   local ret=""
   local fw_path="$2"
   local dev_path="$1"
+  local update_fw_ver="$3"
 
   for i in $(seq 3); do
     minijail_update "32" "${dev_path}" "${fw_path}"
@@ -43,6 +44,8 @@ update_firmware() {
     fi
     log_msg "FW update attempt #${i} failed... retrying. ${ret}"
   done
+  report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+    "${update_fw_ver}"
   die "Error updating zinitix firmware. ${ret}"
 }
 
@@ -86,6 +89,8 @@ main() {
     die "Failed to get the active version. Aborting update."
   fi
 
+  report_initial_version "${FLAGS_dev_i2c_path}" "Zinitix" "${active_fw_ver}"
+
   fw_link_path="$(find_fw_link_path "${FW_LINK_BASE}" "${hardware_id}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink -f "${fw_link_path}")"
@@ -127,7 +132,8 @@ main() {
   #If the device number is the same, the update proceeds.
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_name} ${touch_dev_path} ${fw_path}"
-    run_cmd_and_block_powerd update_firmware "${touch_dev_path}" "${fw_path}"
+    run_cmd_and_block_powerd update_firmware "${touch_dev_path}" "${fw_path}" \
+      "${update_fw_ver}"
 
     rebind_driver "${FLAGS_dev_i2c_path}"
 
@@ -137,9 +143,13 @@ main() {
     update_type="$(compare_multipart_version "${active_minor_ver}" \
                 "${update_minor_ver}")"
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+        "${update_fw_ver}"
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
-    log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+    log_msg "Update FW succeeded. Current Firmware: ${active_fw_ver}"
+    report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_ver}"
   fi
 
   exit 0

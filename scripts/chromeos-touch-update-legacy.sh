@@ -137,7 +137,7 @@ check_update() {
     "${ST_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-st-touch-firmware-update-legacy.sh \
-        -d "${i2c_device}" -r \
+        -d "${i2c_device}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${EMRIGHT_VENDOR_ID}")

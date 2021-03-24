@@ -375,6 +375,9 @@ make_json_safe() {
   echo "$1" | tr --delete '\n"'
 }
 
+# The version value that represents a device being in recovery mode.
+REPORT_VERSION_RECOVERY="(recovery)"
+
 # Adds a report entry giving the initial state of a touch device.
 # Parameters:
 #   sysfs_path: a path to the device in sysfs (see add_report_entry).

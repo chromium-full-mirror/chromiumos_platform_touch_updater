@@ -22,6 +22,7 @@ eval set -- "${FLAGS_ARGV}"
 
 update_firmware() {
   local fw_path="$1"
+  local fw_param_ver="$2"
   local ret
   local cmd_log=""
 
@@ -38,6 +39,8 @@ update_firmware() {
     log_msg "FW update attempt #${i} failed: ${cmd_log}"
     sleep 1
   done
+  report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+    "${fw_param_ver}"
   die "Error updating touch firmware. ${ret}"
 }
 
@@ -133,6 +136,9 @@ main() {
   log_msg "Current Firmware_parameters: ${active_fw_param_ver}"
   log_msg "Updater Firmware_parameters: ${fw_param_ver}"
 
+  report_initial_version "${FLAGS_device_path}" "Weida HID" \
+    "${active_fw_param_ver}"
+
   # Determine if an update is needed, and if we do, trigger it now
   update_type="$(compare_fw_versions "${active_fw_param_ver}" \
                                      "${fw_param_ver}")"
@@ -140,7 +146,7 @@ main() {
   update_needed="$(is_update_needed "${update_type}")"
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "Updating FW to ${fw_filename}..."
-    update_firmware "${fw_path}"
+    update_firmware "${fw_path}" "${fw_param_ver}"
 
     active_fw_param_ver="$(get_active_fw_param_ver)"
     log_msg "Current Firmware (after update attempt): ${active_fw_param_ver}"
@@ -148,9 +154,13 @@ main() {
     update_type="$(compare_fw_versions "${active_fw_param_ver}" \
                                        "${fw_param_ver}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_param_ver}"
       die "Firmware update failed. Current Firmware: ${active_fw_param_ver}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_param_ver}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_param_ver}"
 
     rebind_driver "${FLAGS_device_path}"
   fi

@@ -61,7 +61,8 @@ The JSON objects may contain any of these fields:
 *   `updater`: a name for the updater making the report
 *   `update_status`: either `"NOT_NEEDED"`, `"SUCCESS"`, or `"FAILURE"`
     (defaults to "NOT_NEEDED" if unspecified)
-*   `initial_version`: the version found on the device at boot
+*   `initial_version`: the version found on the device at boot (or `(recovery)`
+    if it was in a recovery mode)
 *   `flashed_version`: if an update or downgrade was *attempted* (whether
     successful or not), the new firmware version
 *   `initial_config`: the config found on the device at boot, typically

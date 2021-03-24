@@ -26,12 +26,10 @@ eval set -- "${FLAGS_ARGV}"
 # Actually trigger a firmware update by running the ELAN update tool in minijail
 # to limit the syscalls it can access.
 update_firmware() {
-  local fw_link=
+  local fw_link="$1"
+  local fw_version="$2"
   local cmd_log=
   local ret=
-
-  # POSIX allows, but does not require, shift to exit a non-interactive shell.
-  fw_link="$1"; [ "$#" -gt 0 ] || return; shift
 
   cmd_log="$(
     minijail0 -u fwupdate-i2c -g fwupdate-i2c \
@@ -42,6 +40,8 @@ update_firmware() {
 
   ret="$?"
   if [ "${ret}" -ne 0 ]; then
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${fw_version}"
     die "Exit status ${ret} updating touchpad firmware: ${cmd_log}"
   fi
   return "${ret}"
@@ -171,6 +171,9 @@ main() {
 "Unable to determine active firmware version."
   log_msg "Active firmware version: ${active_fw_ver}"
 
+  report_initial_version "${FLAGS_device_path}" "Elan Touchpad I2C HID" \
+    "${active_fw_ver}"
+
   if [ "${overlay_sh_exist}" -ne 0 ]; then
     assert_is_function_from_overlay get_fw_basename
     fw_basename="$(get_fw_basename "${chassis_id}" "${board_rev}" \
@@ -204,7 +207,7 @@ main() {
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Updating firmware to ${new_fw_ver}"
     chromeos-boot-alert update_touchpad_firmware
-    run_cmd_and_block_powerd update_firmware "${fw_link}"
+    run_cmd_and_block_powerd update_firmware "${fw_link}" "${new_fw_ver}"
 
     # Check if update was successful
     active_fw_ver="$(get_active_fw_version)"
@@ -212,10 +215,14 @@ main() {
       "${new_fw_ver}")"
 
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${new_fw_ver}"
       die "Firmware update failed.  Current firmware version: ${active_fw_ver}"
     fi
     log_msg "Updating firmware succeded.  Firmware version is now: "\
 "${active_fw_ver}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_ver}"
 
     # Rebind the whole I2C adapter.  https://issuetracker.google.com/142598087
     # Important: This touch device should be the only peripheral on its I2C bus!

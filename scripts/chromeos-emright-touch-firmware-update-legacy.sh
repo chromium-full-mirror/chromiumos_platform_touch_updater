@@ -28,6 +28,7 @@ update_firmware() {
   local fw_path="$2"
   local cmd_log=""
   local dev_path="$1"
+  local fw_version="$3"
 
   for i in $(seq 3); do
     cmd_log="$(minijail_tool "${dev_path}" "3" "${fw_path}")"
@@ -37,6 +38,8 @@ update_firmware() {
     fi
     log_msg "FW update attempt #${i} failed... retrying."
   done
+  report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+    "${fw_version}"
   die "Error updating emr firmware. ${ret}"
 }
 
@@ -114,6 +117,9 @@ main() {
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
 
+  report_initial_version "${FLAGS_dev_i2c_path}" "EMRight" \
+    "${active_fw_version}"
+
   # If active_fw_version is "1001" always update to cover programming mode.
   # Programming mode version is "1001".
   if [ "${active_fw_version}" = "1001" ]; then
@@ -127,7 +133,8 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_name}"
-    run_cmd_and_block_powerd update_firmware "${touch_device_path}" "${fw_path}"
+    run_cmd_and_block_powerd update_firmware "${touch_device_path}" \
+      "${fw_path}" "${fw_version}"
 
     rebind_driver "${FLAGS_dev_i2c_path}"
 
@@ -136,9 +143,13 @@ main() {
     update_type="$(compare_multipart_version "${active_fw_version}" \
                 "${fw_version}")"
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_version}"
   fi
 
   exit 0

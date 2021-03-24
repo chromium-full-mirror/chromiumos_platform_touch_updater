@@ -221,6 +221,9 @@ main() {
     log_msg "Switch to recovery flow."
     update_type="${UPDATE_NEEDED_RECOVERY}"
     log_update_type "${update_type}"
+
+    report_initial_version "${FLAGS_device_path}" "Elan HID" \
+      "${REPORT_VERSION_RECOVERY}"
   else
     # Query the device to get the active FW version.
     active_fw_ver="$(get_active_fw_ver "${hid_pid}")"
@@ -235,9 +238,15 @@ main() {
       log_msg "Switch to recovery flow."
       update_type="${UPDATE_NEEDED_RECOVERY}"
       log_update_type "${update_type}"
+
+      report_initial_version "${FLAGS_device_path}" "Elan HID" \
+        "${REPORT_VERSION_RECOVERY}"
     else
       log_msg "Current Firmware: ${active_fw_ver}"
       log_msg "Updater Firmware: ${fw_version}"
+
+      report_initial_version "${FLAGS_device_path}" "Elan HID" \
+        "${active_fw_ver}"
 
       # Determine if an update is needed, and if we do, trigger it now
       update_type="$(compare_multipart_version "$((0x${active_fw_ver}))" "$((0x${fw_version}))")"
@@ -255,6 +264,8 @@ main() {
     # Check that the update was successful.
     ret="$?"
     if [ "${ret}" -ne 0 ] ; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "Firmware update failed, error_code: ${ret}"
     fi
 
@@ -262,9 +273,13 @@ main() {
     active_fw_ver="$(get_active_fw_ver "${hid_pid}")"
     update_type="$(compare_multipart_version "$((0x${active_fw_ver}))" "$((0x${fw_version}))")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_ver}"
 
     # Reset touch with 300 ms for re-enumeration
     rebind_driver "${FLAGS_device_path}"
