@@ -17,6 +17,7 @@ readlinkat: 1
 ioctl: 1
 open: 1
 openat: 1
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 clock_gettime: 1
 brk: 1
 lseek: 1
