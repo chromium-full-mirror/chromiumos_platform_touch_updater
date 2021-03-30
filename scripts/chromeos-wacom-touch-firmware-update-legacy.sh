@@ -26,6 +26,7 @@ update_firmware() {
   # Actually trigger a firmware update by running the Wacom update tool
   # in minijail to limit the syscalls it can access.
   local fw_link="$1"
+  local new_fw_ver="$2"
   local cmd_log=""
   cmd_log="$(
     minijail0 -S /opt/google/touch/policies/wacom_flash.update.policy \
@@ -33,6 +34,8 @@ update_firmware() {
   )"
 
   if [ "$?" -ne 0 ]; then
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${new_fw_ver}"
     die "Error updating touch firmware: ${cmd_log}"
   fi
 }
@@ -243,7 +246,7 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${new_fw_ver}"
-    run_cmd_and_block_powerd update_firmware "${fw_link}"
+    run_cmd_and_block_powerd update_firmware "${fw_link}" "${new_fw_ver}"
 
     # Check if update was successful
     active_fw_ver="$(get_active_fw_version)"

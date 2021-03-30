@@ -25,6 +25,7 @@ FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
 update_firmware() {
+  local fw_version="$4"
   local i
   local ret
 
@@ -39,6 +40,8 @@ update_firmware() {
     fi
     log_msg "FW update attempt #${i} failed... retrying."
   done
+  report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+    "${fw_version}"
   die "Error updating touch firmware. ${ret}"
 }
 
@@ -185,7 +188,8 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_name}"
-    update_firmware "${touch_device_path}" "${fw_path}" "${active_product_id}"
+    update_firmware "${touch_device_path}" "${fw_path}" "${active_product_id}" \
+      "${fw_version}"
 
     rebind_driver "${FLAGS_dev_i2c_path}"
     sleep 0.3
