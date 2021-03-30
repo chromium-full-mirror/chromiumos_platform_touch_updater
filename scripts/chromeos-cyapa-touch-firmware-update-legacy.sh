@@ -111,6 +111,8 @@ main() {
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
 
+  report_initial_version "${device_path}" "Cypress" "${active_fw_version}"
+
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
@@ -118,16 +120,20 @@ main() {
   # If an update is needed, start it now and confirm it worked.
   if [ "${update_needed}" -eq ${FLAGS_TRUE} ]; then
     log_msg "Update FW to ${fw_name}"
-    standard_update_firmware "${device_path}" "${fw_path}"
+    standard_update_firmware "${device_path}" "${fw_version}"
 
     # Confirm that the FW was updated by checking the current FW version again
     active_fw_version="$(get_active_firmware_version_from_sysfs \
                            "${CYAPA_FW_VERSION_SYSFS}" "${device_path}")"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    report_update_result "${device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_version}"
 
     rebind_driver "${device_path}"
   fi

@@ -187,24 +187,23 @@ main() {
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_name}"
 
+    # Transform the build number to hex for consistency in failure reports.
+    local fw_version_hexxed="$(
+      printf '%d.%d.%X' $(get_major_version_number "${fw_version}") \
+                        $(get_minor_version_number "${fw_version}") \
+                        $(get_build_number "${fw_version}" ${FLAGS_FALSE}))"
+
     # Configure the touch driver to know which fw file to load, then update
     fw_link_name="$(basename "${fw_link_path}")"
     set_fw_file "${touch_device_path}" "${fw_link_name}"
-    standard_update_firmware "${touch_device_path}" "${touch_device_name}" \
-                             "${fw_path}"
+    standard_update_firmware "${touch_device_path}" "${fw_version_hexxed}"
 
     # Confirm that the update succeded, by re-reading the fw version
     active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
-      # Transform the build number to hex for consistency in the report.
-      local fw_version_major="$(get_major_version_number "${fw_version}")"
-      local fw_version_minor="$(get_minor_version_number "${fw_version}")"
-      local fw_version_build="$(
-        printf '%X' $(get_build_number "${fw_version}" ${FLAGS_FALSE}))"
       report_update_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
-        "${fw_version_major}.${fw_version_minor}.${fw_version_build}"
-
+        "${fw_version_hexxed}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"

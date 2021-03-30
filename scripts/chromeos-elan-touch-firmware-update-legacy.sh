@@ -105,9 +105,10 @@ elan_update_firmware() {
   local reported_product_id="$2"
   local corrected_product_id="$3"
   local fw_path="$4"
+  local fw_version="$5"
 
   if [ "${reported_product_id}" = "${corrected_product_id}" ]; then
-    standard_update_firmware "${touch_device_path}"
+    standard_update_firmware "${touch_device_path}" "${fw_version}"
   else
     log_msg "Warning - The product ID of this device has been corrected (it " \
             "reported ${reported_product_id}).  Attempting to recover now."
@@ -129,7 +130,7 @@ elan_update_firmware() {
     mount --bind "${tmp_fw_dir}" /opt/google/touch/firmware
 
     # Now that the symlink is set up, continue as normal
-    standard_update_firmware "${touch_device_path}"
+    standard_update_firmware "${touch_device_path}" "${fw_version}"
 
     # Remove the newly mounted directory to return /lib/firmware to normal
     umount /opt/google/touch/firmware
@@ -227,7 +228,7 @@ main() {
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "Update FW to ${fw_name}"
     elan_update_firmware "${touch_device_path}" "${reported_product_id}" \
-                         "${active_product_id}" "${fw_path}"
+                         "${active_product_id}" "${fw_path}" "${fw_version}"
 
     active_fw_version="$(get_active_firmware_version_from_sysfs \
                        "${FW_VERSION_SYSFS}" "${touch_device_path}")"

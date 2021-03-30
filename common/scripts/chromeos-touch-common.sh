@@ -133,6 +133,7 @@ standard_update_firmware() {
   # This is a common method for triggering a FW update, and it used by several
   # different touch vendors.
   local touch_device_path="$1"
+  local fw_version="$2"
   local i=""
   local ret=""
 
@@ -144,6 +145,8 @@ standard_update_firmware() {
     fi
     log_msg "update_firmware try #${i} failed... retrying."
   done
+  report_update_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
+    "${fw_version}"
   die "Error updating touch firmware. ${ret}"
 }
 

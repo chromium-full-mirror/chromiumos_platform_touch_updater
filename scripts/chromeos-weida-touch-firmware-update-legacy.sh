@@ -100,6 +100,7 @@ main() {
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
 
+  report_initial_version "${touch_device_path}" "Weida" "${active_fw_version}"
 
   # Determine if an update is needed, and if we do, trigger it now
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
@@ -107,7 +108,7 @@ main() {
   update_needed="$(is_update_needed "${update_type}")"
   if [ ${update_needed} -eq ${FLAGS_TRUE} ]; then
     log_msg "Updating FW to ${fw_filename}..."
-    standard_update_firmware "${touch_device_path}"
+    standard_update_firmware "${touch_device_path}" "${fw_version}"
 
     active_fw_version="$(get_active_firmware_version_from_sysfs \
                        "${WEIDA_FW_VERSION_SYSFS}" "${touch_device_path}")"
@@ -115,9 +116,13 @@ main() {
 
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    report_update_result "${touch_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_version}"
 
     # Rebind the driver incase there is setup that will be different with the
     # new firmware we just loaded.

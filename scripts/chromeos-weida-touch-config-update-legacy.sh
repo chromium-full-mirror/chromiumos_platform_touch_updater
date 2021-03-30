@@ -49,15 +49,21 @@ update_config() {
   log_msg "Device config checksum : ${device_config_csum}"
   log_msg "New config checksum : ${file_config_csum}"
 
+  report_initial_config "${touch_device_path}" "${device_config_csum}"
+
   if [ "${device_config_csum}" != "${file_config_csum}" ]; then
     printf 1 > "${touch_device_path}/update_config"
 
     local ret=$?
     if [ ${ret} -ne 0 ]; then
+      report_config_result "${touch_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${file_config_csum}"
       die "Config update failed. ret=${ret}"
     else
       local new_config_csum="$(get_device_config_csum "${touch_device_path}")"
       log_msg "Updated config checksum : ${new_config_csum}"
+      report_config_result "${touch_device_path}" "${REPORT_RESULT_SUCCESS}" \
+        "${new_config_csum}"
     fi
   else
     log_msg "Config is up-to-date, no need to update"

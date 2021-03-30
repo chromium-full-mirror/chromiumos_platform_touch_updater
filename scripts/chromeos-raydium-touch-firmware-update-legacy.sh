@@ -158,8 +158,7 @@ main() {
     log_msg "Update FW to ${fw_name}"
 
     for i in $(seq "${RAYDIUM_NUM_RETRIES}"); do
-      standard_update_firmware "${touch_device_path}" "${touch_device_name}" \
-                             "${fw_path}"
+      standard_update_firmware "${touch_device_path}" "${fw_version}"
       # Confirm that the update succeded, by re-reading the fw version
       active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
       update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
