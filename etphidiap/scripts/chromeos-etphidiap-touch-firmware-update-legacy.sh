@@ -203,7 +203,8 @@ main() {
 
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Updating firmware to ${new_fw_ver}"
-    chromeos-boot-alert update_touchpad_firmware
+    # Update splash disabled to https://issuetracker.google.com/183679238
+    # chromeos-boot-alert update_touchpad_firmware
     run_cmd_and_block_powerd update_firmware "${fw_link}"
 
     # Check if update was successful
