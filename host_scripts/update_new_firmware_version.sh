@@ -626,7 +626,7 @@ action_manifest() {
 # 1. build chromeos-touch-firmware-"${FLAGS_board}"
 # 2. install this package into the DUT by cros deploy.
 # 3. reboot the DUT
-# 4. Extract logs from DUT and verify the keyword - "Update FW succeded"
+# 4. Extract logs from DUT and verify the keyword - "Update FW succeeded"
 #
 # This function works on the folder contained the ebuild file in order to call
 # emerge command to build the package.

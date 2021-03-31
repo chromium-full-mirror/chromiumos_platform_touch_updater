@@ -159,7 +159,7 @@ main() {
 
     for i in $(seq "${RAYDIUM_NUM_RETRIES}"); do
       standard_update_firmware "${touch_device_path}" "${fw_version}"
-      # Confirm that the update succeded, by re-reading the fw version
+      # Confirm that the update succeeded, by re-reading the fw version
       active_fw_version="$(get_active_firmware_version "${touch_device_path}")"
       update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
       if  [ "${update_type}" -eq "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
@@ -175,7 +175,7 @@ main() {
       fi
     done
 
-    log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    log_msg "Update FW succeeded. Current Firmware: ${active_fw_version}"
     report_update_result "${touch_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_version}"
     rebind_driver "${touch_device_path}"

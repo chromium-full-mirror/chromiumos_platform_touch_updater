@@ -88,7 +88,7 @@ update_firmware() {
 
   # Show info for the exit-value of executing "updateFW"
   if [ "${ret}" -eq 0 ]; then
-    log_msg "UpdateFW succeded"
+    log_msg "UpdateFW succeeded"
   else
     # Some error occurred when executing "updateFW"
     log_msg "error: UpdateFW failed, code=${ret}"
@@ -189,7 +189,7 @@ main() {
 
   # Create g2touch hidraw
   g2touch_touch_hidraw="$(create_g2touch_hidraw)"
-  log_msg "Create node succeded: '${g2touch_touch_hidraw}'."
+  log_msg "Create node succeeded: '${g2touch_touch_hidraw}'."
 
   # Get device's fw version.
   active_fw_version="$(get_active_firmware_version "${g2touch_touch_hidraw}")"
@@ -219,7 +219,7 @@ main() {
 
     # Recreate hidraw. The /dev/hidrawX may be changed after device reset.
     g2touch_touch_hidraw="$(create_g2touch_hidraw)"
-    log_msg "Recreate node succeded: '${g2touch_touch_hidraw}'."
+    log_msg "Recreate node succeeded: '${g2touch_touch_hidraw}'."
 
     # Confirm that the FW was updated by checking the current FW version again
     active_fw_version="$(get_active_firmware_version "${g2touch_touch_hidraw}")"
@@ -231,7 +231,7 @@ main() {
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
 
-    log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    log_msg "Update FW succeeded. Current Firmware: ${active_fw_version}"
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_version}"
   fi

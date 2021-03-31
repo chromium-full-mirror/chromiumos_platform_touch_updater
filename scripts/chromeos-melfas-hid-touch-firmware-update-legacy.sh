@@ -235,7 +235,7 @@ main() {
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
-    log_msg "Update FW succeded. Current Firmware: ${active_fw_version}"
+    log_msg "Update FW succeeded. Current Firmware: ${active_fw_version}"
   fi
 
   exit 0

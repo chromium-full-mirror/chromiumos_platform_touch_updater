@@ -257,7 +257,7 @@ main() {
         "${new_fw_ver}"
       die "Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
-    log_msg "Update FW succeded. Current Firmware: ${active_fw_ver}"
+    log_msg "Update FW succeeded. Current Firmware: ${active_fw_ver}"
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_ver}"
 

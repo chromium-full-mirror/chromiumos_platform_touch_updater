@@ -197,7 +197,7 @@ main() {
         "${fw_version}"
       die "[Pix TP]Firmware update failed. Current Firmware: ${active_fw_ver}"
     fi
-    log_msg "[Pix TP]Update FW succeded. Current Firmware: ${active_fw_ver}"
+    log_msg "[Pix TP]Update FW succeeded. Current Firmware: ${active_fw_ver}"
     report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_ver}"
     rebind_driver "${FLAGS_dev_i2c_path}"
