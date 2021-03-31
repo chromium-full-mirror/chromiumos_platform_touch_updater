@@ -128,7 +128,7 @@ assert_is_function_from_overlay() {
   func_name="$1"; [ "$#" -gt 0 ] || return; shift
 
   type "${func_name}" | head -n 1 | grep -q -E ' ?function$' || die \
-"No ${func_name}() function is defined, this is a bug in the board overlay."
+    "No ${func_name}() function is defined, this is a bug in the board overlay."
 }
 
 main() {
@@ -158,17 +158,17 @@ main() {
 
   device_module_id="$(get_device_module_id)"
   [ -n "${device_module_id}" ] || die \
-"Unable to determine hardware module of the touchpad device."
+    "Unable to determine hardware module of the touchpad device."
   log_msg "Hardware module of the touchpad device: ${device_module_id}"
 
   device_hwid="$(get_device_hwid)"
   [ -n "${device_hwid}" ] || die \
-"Unable to determine hardware revision of the touchpad device."
+    "Unable to determine hardware revision of the touchpad device."
   log_msg "Hardware revision of the touchpad device: ${device_hwid}"
 
   active_fw_ver="$(get_active_fw_version)"
   [ -n "${active_fw_ver}" ] || die \
-"Unable to determine active firmware version."
+    "Unable to determine active firmware version."
   log_msg "Active firmware version: ${active_fw_ver}"
 
   report_initial_version "${FLAGS_device_path}" "Elan Touchpad I2C HID" \
@@ -192,14 +192,14 @@ main() {
   new_fw_ver="$(get_fw_version_from_disk "${fw_link}")"
   log_msg "On-disk firmware version: ${new_fw_ver}"
   [ -n "${new_fw_ver}" ] || die \
-"Unable to determine version of on-disk firmware."
+    "Unable to determine version of on-disk firmware."
 
   if [ "$(( ${active_fw_ver} == 0xFFFFFFFF ))" -gt 0 ]; then
     log_msg "Active firmware appears to be corrupt, will update firmware."
     update_needed="${FLAGS_TRUE}"
   else
     update_type="$(compare_multipart_version "${active_fw_ver}" \
-"${new_fw_ver}")"
+      "${new_fw_ver}")"
     log_update_type "${update_type}"
     update_needed="$(is_update_needed "${update_type}")"
   fi
@@ -219,8 +219,8 @@ main() {
         "${new_fw_ver}"
       die "Firmware update failed.  Current firmware version: ${active_fw_ver}"
     fi
-    log_msg "Updating firmware succeded.  Firmware version is now: "\
-"${active_fw_ver}"
+    log_msg \
+      "Updating firmware succeeded.  Firmware version is now: ${active_fw_ver}"
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_ver}"
 
