@@ -10,6 +10,7 @@ stat: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 fstat: 1
+newfstatat: 1
 close: 1
 read: 1
 # ioctl: arg1 == I2C_SLAVE || arg1 == I2C_SLAVE_FORCE

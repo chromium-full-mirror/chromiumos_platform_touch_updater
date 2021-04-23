@@ -62,6 +62,7 @@ write: 1
 ioctl: arg1 == 0x80084803 || arg1 == 0xc04064aa || arg1 == 0xc01064ac || arg1 == 0xc01464a6 || arg1 == 0xc01064b5 || arg1 == 0xc06864a1 || arg1 == 0xc02064b6 || arg1 == 0xc0106401 || arg1 == 0xc05064a7 || arg1 == 0xc04064a0 || arg1 == 0xc0406400 || arg1 == 0x4010640d || arg1 == 0xc02064b9 || arg1 == 0x00005401
 stat: 1
 fstat: 1
+newfstatat: 1
 lseek: 1
 readlink: 1
 unlink: 1

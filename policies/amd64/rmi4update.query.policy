@@ -26,6 +26,7 @@ open: 1
 openat: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 fstat: 1
+newfstatat: 1
 execve: 1
 getdents: 1
 getdents64: 1

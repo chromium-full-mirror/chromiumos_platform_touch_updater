@@ -21,6 +21,7 @@ openat: 1
 close: 1
 read: 1
 fstat: 1
+newfstatat: 1
 brk: 1
 lseek: 1
 restart_syscall: 1

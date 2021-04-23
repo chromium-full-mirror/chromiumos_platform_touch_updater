@@ -31,6 +31,7 @@ write: 1
 ioctl: arg1 == 0x80084803 || arg1 == 0x00005401
 stat: 1
 fstat: 1
+newfstatat: 1
 lseek: 1
 access: 1
 uname: 1
