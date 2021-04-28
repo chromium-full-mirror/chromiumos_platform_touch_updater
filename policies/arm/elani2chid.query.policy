@@ -68,6 +68,8 @@ uname: 1
 getdents: 1
 getdents64: 1
 gettimeofday: 1
+clock_gettime: 1
+clock_gettime64: 1
 openat: 1
 dup2: 1
 mmap2: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
