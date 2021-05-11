@@ -18,7 +18,8 @@ get_dev_list() {
   # Filter camera devices to avoid activating them.
   # https://issuetracker.google.com/132838666
   local camera_pattern='/i2c-(INT3478|INT3499):'
-  find /sys/bus/i2c/devices /sys/bus/hid/devices -mindepth 1 -maxdepth 1 \
+  # Include the psmouse/trackpoint devices in serio bus driver.
+  find /sys/bus/i2c/devices /sys/bus/hid/devices /sys/bus/serio/devices -mindepth 1 -maxdepth 1 \
     | grep --invert-match -E \
       "(${failed_glob_pattern}|${pixart_pattern}|${camera_pattern})"
 }

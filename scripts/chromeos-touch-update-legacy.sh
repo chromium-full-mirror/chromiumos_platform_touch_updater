@@ -38,6 +38,15 @@ check_update() {
   local dev="$1"
   local driver_name="$(basename "$(readlink -f "${dev}/driver")")"
   local device_name="$(cat "${dev}/name")"
+  local device_description="$(cat "${dev}/description")"
+
+  if [ "${driver_name}" = "psmouse" ] || \
+    [ "${device_description}" = "i8042 AUX port" ]; then
+    /opt/google/touch/scripts/chromeos-eps2pstiap-touch-firmware-update-legacy.sh \
+    -r \
+    || logger -t "${LOGGER_TAG}" "elan trackpoint firmware update failed.";
+    return
+  fi
 
   case "${driver_name}" in
   i2c_hid*)
