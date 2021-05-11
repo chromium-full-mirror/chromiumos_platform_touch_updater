@@ -1,0 +1,29 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# These seccomp rules specify only the syscalls used by the eps2pstiap firmware
+# updater tool when getting the current firmware version.
+
+poll: 1
+read: 1
+write: 1
+openat: 1
+fstat: 1
+stat: 1
+access: 1
+close: 1
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+brk: 1
+execve: 1
+arch_prctl: 1
+munmap: 1
+getdents: 1
+exit_group: 1
+restart_syscall: 1
+exit: 1
+rt_sigreturn: 1
+lseek: 1
+nanosleep: 1
+clock_nanosleep: 1
