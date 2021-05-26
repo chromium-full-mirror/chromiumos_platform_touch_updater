@@ -11,6 +11,7 @@
 #   TCGETS: 0x00005401
 # syscall Information from jouralctrl:
 #  elani2chid_tools:
+#   mprotect: 125
 #   openat: 257
 #   ARM_set_tls: 983045
 
@@ -42,6 +43,7 @@ readlink: 1
 gettimeofday: 1
 openat: 1
 mmap2: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 munmap: 1
 ARM_set_tls: 1
 clock_gettime: 1
