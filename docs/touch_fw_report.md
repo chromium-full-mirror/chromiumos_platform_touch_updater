@@ -1,9 +1,9 @@
 # Touch firmware report
 
 Every time the touch update scripts are run, they produce a report file at
-`/run/touch-fw-versions`, containing a summary of the run. This is useful for
-including in feedback reports, but is also machine-readable for use by
-diagnostics and other code.
+`/run/touch-updater/firmware-versions`, containing a summary of the run. This
+is useful for including in feedback reports, but is also machine-readable for
+use by diagnostics and other code.
 
 [TOC]
 
