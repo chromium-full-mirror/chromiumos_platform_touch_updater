@@ -97,9 +97,6 @@ main() {
   local update_needed="${FLAGS_FALSE}"
   local product_id=""
   local fw_link_path=""
-
-  die "TODO(crbug.com/1203870): touch firmware update temporarily disabled"
-
   if [ -z "${FLAGS_device}" ]; then
     die "Please specify a device using -d"
   fi
