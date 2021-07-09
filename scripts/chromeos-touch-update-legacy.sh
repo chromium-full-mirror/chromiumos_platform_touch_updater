@@ -41,7 +41,7 @@ check_update() {
 
   case "${driver_name}" in
   i2c_hid*)
-    local hidpath="$(echo "${dev}"/*:*:*.*)"
+    local hidpath="$(echo "${dev}"/*:[0-9A-F][0-9A-F][0-9A-F][0-9A-F]:*.*)"
     local hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
     local vendor_id="${hidname#*-}"
