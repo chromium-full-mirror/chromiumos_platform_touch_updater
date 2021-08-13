@@ -126,7 +126,27 @@ main() {
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${ftb_fw_version}"
 
-    rebind_driver "${FLAGS_device_path}" /sys/bus/i2c/drivers/i2c_hid
+    # TODO(https://issuetracker.google.com/177350937): After AP FW uprev with
+    # rebind enumeration fix is merged, stop hardcoding driver names and switch
+    # to rebinding the parent I2C adapter.  This is implemented in
+    # https://crrev.com/c/3093379
+    local hid_driver=
+    local skip_reboot=0
+    for hid_driver in /sys/bus/i2c/drivers/i2c_hid_acpi \
+                      /sys/bus/i2c/drivers/i2c_hid; do
+      if [ -e "$hid_driver" ]; then
+        rebind_driver "${FLAGS_device_path}" "$hid_driver" && skip_reboot=1
+        break
+      fi
+    done
+    # If we cannot find an expected driver, or the rebind failed, then fall back
+    # on a reboot.  This is bad UX but better than risking booting up with a
+    # non-functional input device.  Most likely this "if" branch will never be
+    # entered, and as mentioned in https://issuetracker.google.com/177350937
+    # we can remove the driver name dependency with the next AP firmware update.
+    if [ "$skip_reboot" -eq 0 ]; then
+      touch /tmp/force_reboot_after_fw_update
+    fi
   fi
 }
 
