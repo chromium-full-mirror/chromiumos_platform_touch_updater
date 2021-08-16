@@ -10,6 +10,7 @@
 write: 1
 read: 1
 select: 1
+pselect6: 1
 ioctl: 1
 brk: 1
 restart_syscall: 1

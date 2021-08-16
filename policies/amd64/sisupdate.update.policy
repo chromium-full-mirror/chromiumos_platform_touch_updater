@@ -10,6 +10,7 @@ ioctl: 1
 write: 1
 read: 1
 select: 1
+pselect6: 1
 mmap: 1
 brk: 1
 fstat: 1
