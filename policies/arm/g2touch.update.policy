@@ -8,6 +8,8 @@ write: 1
 read: 1
 _newselect: 1
 fstat64: 1
+fstatat64: 1
+statx: 1
 nanosleep: 1
 clock_nanosleep: 1
 clock_nanosleep_time64: 1
