@@ -18,6 +18,8 @@ clock_nanosleep_time64: 1
 mprotect: arg2 == PROT_NONE || arg2 == PROT_READ
 write: 1
 fstat64: 1
+fstatat64: 1
+statx: 1
 close: 1
 _llseek: 1
 brk: 1

@@ -60,6 +60,8 @@ write: 1
 ioctl: 1
 stat64: 1
 fstat64: 1
+fstatat64: 1
+statx: 1
 lseek: 1
 _llseek: 1
 readlink: 1
