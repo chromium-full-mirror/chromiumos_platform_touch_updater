@@ -53,3 +53,4 @@ set_tid_address: 1
 getpid: 1
 geteuid: 1
 getppid: 1
+fstatfs: 1

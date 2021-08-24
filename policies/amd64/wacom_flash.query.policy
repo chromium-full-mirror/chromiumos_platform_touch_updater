@@ -27,3 +27,4 @@ execve: 1
 nanosleep: 1
 clock_nanosleep: 1
 getpid: 1
+fstatfs: 1

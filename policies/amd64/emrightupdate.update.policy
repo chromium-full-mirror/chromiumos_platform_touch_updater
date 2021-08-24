@@ -39,3 +39,4 @@ time: 1
 gettimeofday: 1
 openat: 1
 dup2: 1
+fstatfs: 1

@@ -89,3 +89,5 @@ geteuid32: 1
 getppid: 1
 ARM_set_tls: 1
 ugetrlimit: 1
+fstatfs: 1
+fstatfs64: 1

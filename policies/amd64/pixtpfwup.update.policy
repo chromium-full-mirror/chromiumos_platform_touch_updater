@@ -28,3 +28,4 @@ arch_prctl: 1
 access: 1
 munmap: 1
 openat: 1
+fstatfs: 1

@@ -28,3 +28,4 @@ rt_sigreturn: 1
 stat: 1
 write: 1
 getpid: 1
+fstatfs: 1
