@@ -50,3 +50,5 @@ munmap: 1
 ARM_set_tls: 1
 clock_gettime: 1
 clock_gettime64: 1
+fstatfs: 1
+fstatfs64: 1

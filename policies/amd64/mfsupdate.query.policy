@@ -51,3 +51,4 @@ restart_syscall: 1
 set_tid_address: 1
 getsockname: 1
 rt_sigreturn: 1
+fstatfs: 1

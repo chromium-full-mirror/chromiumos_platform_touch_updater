@@ -25,4 +25,4 @@ exit_group: 1
 arch_prctl: 1
 access: 1
 munmap: 1
-
+fstatfs: 1

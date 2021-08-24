@@ -88,3 +88,4 @@ getpid: 1
 geteuid: 1
 getppid: 1
 futex: 1
+fstatfs: 1

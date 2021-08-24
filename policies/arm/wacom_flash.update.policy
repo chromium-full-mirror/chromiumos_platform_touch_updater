@@ -34,3 +34,5 @@ uname: 1
 execve: 1
 _llseek: 1
 getpid: 1
+fstatfs: 1
+fstatfs64: 1

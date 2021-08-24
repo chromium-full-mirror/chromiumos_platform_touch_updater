@@ -32,3 +32,4 @@ munmap: 1
 getpid: 1
 nanosleep: 1
 clock_nanosleep: 1
+fstatfs: 1

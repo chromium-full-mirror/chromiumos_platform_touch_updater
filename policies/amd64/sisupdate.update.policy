@@ -40,3 +40,4 @@ getpid: 1
 prlimit64: arg2 == 0 && arg3 != 0
 gettid: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+fstatfs: 1

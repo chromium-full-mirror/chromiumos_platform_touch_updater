@@ -33,3 +33,5 @@ clock_gettime: 1
 clock_nanosleep: 1
 clock_nanosleep_time64: 1
 getpid: 1
+fstatfs: 1
+fstatfs64: 1
