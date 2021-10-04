@@ -20,6 +20,7 @@ close: 1
 ioctl: arg1 == 0x703 || arg1 == 0x706
 brk: 1
 access: 1
+lseek: 1
 arch_prctl: 1
 munmap: 1
 exit_group: 1
