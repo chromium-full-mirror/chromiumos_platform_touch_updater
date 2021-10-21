@@ -13,7 +13,8 @@ DEFINE_string 'dev_i2c_path' '' "device i2c path" 'p'
 
 GOODIX_FW_UPDATE_USER="goodixfwupdate"
 GOODIX_FW_UPDATE_GROUP="goodixfwupdate"
-GOODIX_TOUCHSCREEN_HIDRAW="/dev/goodix_touchscreen_hidraw"
+GOODIX_TOUCHSCREEN_HIDRAW="/dev/goodix_ts_hidraw"
+GOODIX_NODE_NAME=""
 FW_LINK_NAME="goodix_firmware.bin"
 FW_LINK_PATH="/lib/firmware/goodix-ts.bin"
 GDIXUPDATE="/usr/sbin/gdixupdate"
@@ -77,31 +78,33 @@ create_goodix_hidraw() {
   local dev_t_major=""
   local dev_t_minor=""
 
-  if [ -e "${GOODIX_TOUCHSCREEN_HIDRAW}" ]; then
-    log_msg "Remove existing touchscreen hidraw device."
-    rm "${GOODIX_TOUCHSCREEN_HIDRAW}"
-  fi
-
   if [ -c "${touch_device}" ]; then
     # create a device node for touchscreen firmware update
     dev_t_major="$(ls -l "${touch_device}" | awk '{print $5}')"
     dev_t_major=${dev_t_major%%,}
     dev_t_minor="$(ls -l "${touch_device}" | awk '{print $6}')"
-    mknod "${GOODIX_TOUCHSCREEN_HIDRAW}" c "${dev_t_major}" "${dev_t_minor}"
+    GOODIX_NODE_NAME="${GOODIX_TOUCHSCREEN_HIDRAW}${dev_t_minor}"
+
+    if [ -e "${GOODIX_NODE_NAME}" ]; then
+        log_msg "${GOODIX_NODE_NAME} already exist, remove it."
+        rm ${GOODIX_NODE_NAME}
+    fi
+
+    mknod "${GOODIX_NODE_NAME}" c "${dev_t_major}" "${dev_t_minor}"
     if [ $? -ne 0 ]; then
-      die "Failed create node: '${GOODIX_TOUCHSCREEN_HIDRAW}'."
+      die "Failed create node: '${GOODIX_NODE_NAME}'."
     fi
 
     # Change ownership and access mode for goodix touchscreen device
     chown "${GOODIX_FW_UPDATE_USER}":"${GOODIX_FW_UPDATE_GROUP}" \
-          "${GOODIX_TOUCHSCREEN_HIDRAW}"
+          "${GOODIX_NODE_NAME}"
     if [ $? -ne 0 ]; then
-      die "Failed change owner of node: '${GOODIX_TOUCHSCREEN_HIDRAW}'."
+      die "Failed change owner of node: '${GOODIX_NODE_NAME}'."
     fi
 
-    chmod 0660 ${GOODIX_TOUCHSCREEN_HIDRAW}
+    chmod 0660 ${GOODIX_NODE_NAME}
     if [ $? -ne 0 ]; then
-      die "Failed change mode of node: '${GOODIX_TOUCHSCREEN_HIDRAW}'."
+      die "Failed change mode of node: '${GOODIX_NODE_NAME}'."
     fi
   else
     die "Not a legal node: '${touch_device}'."
@@ -133,7 +136,7 @@ main() {
   fi
 
   create_goodix_hidraw "${touch_device_path}"
-  touch_device_path="${GOODIX_TOUCHSCREEN_HIDRAW}"
+  touch_device_path="${GOODIX_NODE_NAME}"
   log_msg "Touch device path: '${touch_device_path}'"
 
   # Find the active fw version and the product ID currently in use.
