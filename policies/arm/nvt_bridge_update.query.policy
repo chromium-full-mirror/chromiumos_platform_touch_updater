@@ -1,0 +1,20 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# ioctl: arg1 == HIDIOCSFEATURE(66) || arg1 == HIDIOCGFEATURE(66)
+ioctl: arg1 == 0xc0424806 || arg1 == 0xc0424807
+brk: 1
+clock_nanosleep_time64: 1
+write: 1
+execve: 1
+ARM_set_tls: 1
+uname: 1
+readlink: 1
+mprotect: arg2 in 0xfffffffb || arg2 in 0xfffffffd
+openat: 1
+statx: 1
+exit_group: 1
+restart_syscall: 1
+exit: 1
+rt_sigreturn: 1
