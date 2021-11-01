@@ -23,6 +23,7 @@ ST_VENDOR_ID="0483"
 EMRIGHT_VENDOR_ID="2C68"
 ZINITIX_VENDOR_ID="14E5"
 HIMAX_VENDOR_ID="4858"
+NVT_VENDOR_ID="0603"
 
 log_updater_run() {
   local vendor_id="$1"
@@ -166,6 +167,12 @@ check_update() {
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-himax-touch-firmware-update-legacy.sh \
         -d "${i2c_device}" -p "${i2c_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      ;;
+    "${NVT_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+      /opt/google/touch/scripts/chromeos-nvt-touch-firmware-update-legacy.sh \
+        -d "${hidname}" -p "${i2c_path}" -i "${product_id}" \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
