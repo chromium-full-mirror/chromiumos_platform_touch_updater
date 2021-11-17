@@ -91,3 +91,4 @@ ARM_set_tls: 1
 ugetrlimit: 1
 fstatfs: 1
 fstatfs64: 1
+pread64: 1
