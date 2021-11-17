@@ -93,3 +93,4 @@ fstatfs: 1
 fstatfs64: 1
 pselect6: 1
 pselect6_time64: 1
+pread64: 1
