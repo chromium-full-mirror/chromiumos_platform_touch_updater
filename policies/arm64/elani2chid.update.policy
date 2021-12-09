@@ -1,0 +1,46 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# These seccomp rules specify only the syscalls used by elan_i2chid_iap
+# tool when updating the firmware.
+# IOCTL Information:
+#  elani2chid_tools:
+#   HIDIOCGRAWINFO: 0x80084803
+#  termios
+#   TCGETS: 0x00005401
+# syscall Information from jouralctrl:
+#  elani2chid_tools:
+#   mprotect: 125
+#   openat: 257
+
+execve: 1
+nanosleep: 1
+clock_nanosleep: 1
+restart_syscall: 1
+rt_sigreturn: 1
+exit: 1
+exit_group: 1
+brk: 1
+fcntl: 1
+close: 1
+read: 1
+write: 1
+ioctl: arg1 == 0x80084803 || arg1 == 0x00005401
+fstat: 1
+newfstatat: 1
+statx: 1
+lseek: 1
+faccessat: 1
+faccessat2: 1
+uname: 1
+getdents64: 1
+readlinkat: 1
+gettimeofday: 1
+openat: 1
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+munmap: 1
+clock_gettime: 1
+fstatfs: 1
+pselect6: 1
