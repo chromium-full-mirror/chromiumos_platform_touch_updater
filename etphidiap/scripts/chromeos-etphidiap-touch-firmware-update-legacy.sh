@@ -47,14 +47,36 @@ update_firmware() {
   return "${ret}"
 }
 
+update_eeprom_firmware() {
+  local fw_link="$1"
+  local fw_version="$2"
+  local cmd_log=
+  local ret=
+
+  cmd_log="$(
+    minijail0 -u fwupdate-i2c -g fwupdate-i2c \
+      -G -I -N -n -p -v --uts \
+      -S /opt/google/touch/policies/etphidiap.update.policy -- \
+      /usr/sbin/etphid_updater -i "${FLAGS_device#i2c-}" -E "${fw_link}" 2>&1
+  )"
+
+  ret="$?"
+  if [ "${ret}" -ne 0 ]; then
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${fw_version}"
+    die "Exit status ${ret} updating touchpad EEPROM firmware: ${cmd_log}"
+  fi
+  return "${ret}"
+}
+
 # The on-disk firmware version is determined by parsing the filename of the
 # actual firmware file passed as $1, after resolving any symlinks. The filename
 # should be in the format "elan_0xVER.bin" e.g. "elan_0x0A.bin", or without
 # board overlay script file then compatible with elan_i2c driver firmware file
-# format "elan_i2c_{module_id}_{fw_ver}.bin" e.g "elan_i2c_182.0_1.0.bin".
+# format "{module_id}_{fw_ver}.bin" e.g "182.0_1.0.bin".
 # The 0x prefix is preserved, e.g. if the file is named "elan_0x0A.bin" this
 # function will print "0x0A" to stdout, or if the file is named
-# "elan_i2c_182.0_1.0.bin" the function will print "0x1" to stdout.
+# "182.0_1.0.bin" the function will print "0x1" to stdout.
 get_fw_version_from_disk() {
   local fw_link=
   local fw_filepath=
@@ -121,6 +143,11 @@ get_device_module_id() {
   get_active_info "module ID" -m
 }
 
+# Query the touchpad controller for its current EEPROM firmware version.
+get_active_eeprom_fw_version() {
+  get_active_info "eeprom firmware version" -G
+}
+
 assert_is_function_from_overlay() {
   local func_name=
 
@@ -129,6 +156,74 @@ assert_is_function_from_overlay() {
 
   type "${func_name}" | head -n 1 | grep -q -E ' ?function$' || die \
     "No ${func_name}() function is defined, this is a bug in the board overlay."
+}
+
+
+# Touchpad EEPROM Firmware Update
+eeprom_update() {
+  local active_fw_ver=
+  local new_fw_ver=
+  local update_type=
+  local update_needed=
+  local fw_link=
+  local chassis_id=$1
+  local module_id=$2
+
+  log_msg "We are now attempting to update EEPROM firmware."
+
+  fw_basename="elan_eeprom_${module_id}.0.bin"
+
+  fw_link="$(find_fw_link_path "${fw_basename}" "${chassis_id}")"
+  if [ -z "${fw_link}" ]; then
+    log_msg "Unable to determine path of on-disk EEPROM firmware."
+    exit
+  fi
+  log_msg "Attempting to load on-disk EEPROM firmware: ${fw_link}"
+
+  new_fw_ver="$(get_fw_version_from_disk "${fw_link}")"
+  log_msg "On-disk EEPROM firmware version: ${new_fw_ver}"
+  if [ -z "${new_fw_ver}" ]; then
+    log_msg "Unable to determine version of on-disk EEPROM firmware."
+    exit
+  fi
+
+  active_fw_ver="$(get_active_eeprom_fw_version)"
+  [ -n "${active_fw_ver}" ] || die \
+    "Unable to determine active EEPROM firmware version."
+  log_msg "Active EEPROM firmware version: ${active_fw_ver}"
+
+  report_initial_version "${FLAGS_device_path}" \
+    "Elan Touchpad EEPROM I2C HID" "${active_fw_ver}"
+
+  update_type="$(compare_multipart_version "${active_fw_ver}" \
+    "${new_fw_ver}")"
+  log_update_type "${update_type}"
+  update_needed="$(is_update_needed "${update_type}")"
+
+  if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
+    log_msg "Updating EEPROM firmware to ${new_fw_ver}"
+    chromeos-boot-alert update_touchpad_firmware
+    run_cmd_and_block_powerd update_eeprom_firmware "${fw_link}" "${new_fw_ver}"
+
+    # Check if update was successful
+    active_fw_ver="$(get_active_eeprom_fw_version)"
+    update_type="$(compare_multipart_version "${active_fw_ver}" \
+      "${new_fw_ver}")"
+
+    if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${new_fw_ver}"
+      die "EEPROM firmware update failed. Current EEPROM firmware version: " \
+      "${active_fw_ver}"
+    fi
+    log_msg \
+      "Updating EEPROM firmware succeeded. EEPROM firmware version is now: " \
+      "${active_fw_ver}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+      "${active_fw_ver}"
+
+  fi
+
 }
 
 main() {
@@ -186,13 +281,28 @@ main() {
   fi
 
   fw_link="$(find_fw_link_path "${fw_basename}" "${chassis_id}")"
-  [ -n "${fw_link}" ] || die "Unable to determine path of on-disk firmware."
+
+  if [ -z "${fw_link}" ]; then
+    log_msg "Unable to determine path of on-disk firmware."
+
+    # If we don't find a firmware file to flash,
+    # we may still want to flash a new EEPROM firmware.
+    eeprom_update ${chassis_id} ${module_id}
+    exit
+  fi
+
   log_msg "Attempting to load on-disk firmware: ${fw_link}"
 
   new_fw_ver="$(get_fw_version_from_disk "${fw_link}")"
   log_msg "On-disk firmware version: ${new_fw_ver}"
-  [ -n "${new_fw_ver}" ] || die \
-    "Unable to determine version of on-disk firmware."
+  if [ -z "${new_fw_ver}" ]; then
+    log_msg "Unable to determine version of on-disk firmware."
+
+    # If we don't find a firmware file to flash,
+    # we may still want to flash a new EEPROM firmware.
+    eeprom_update ${chassis_id} ${module_id}
+    exit
+  fi
 
   if [ "$(( ${active_fw_ver} == 0xFFFFFFFF ))" -gt 0 ]; then
     log_msg "Active firmware appears to be corrupt, will update firmware."
@@ -228,6 +338,9 @@ main() {
     # Important: This touch device should be the only peripheral on its I2C bus!
     rebind_driver "$(cd -P "${FLAGS_device_path}/../.." && pwd)"
   fi
+
+  eeprom_update ${chassis_id} ${module_id}
+
 }
 
 main "$@"
