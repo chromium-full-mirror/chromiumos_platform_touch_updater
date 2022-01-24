@@ -32,6 +32,11 @@ create_nvt_ts_hidraw() {
   local dev_t_major
   local dev_t_minor
 
+  if [ -e "${NVT_TOUCHSCREEN_HIDRAW}" ]; then
+    log_msg "${NVT_TOUCHSCREEN_HIDRAW} already exist, skipping..."
+    return 0
+  fi
+
   hidraw_path="$(find_i2c_hid_device "${FLAGS_dev_name##*-}")"
   if [ -e  "$hidraw_path" ]; then
     dev_t_major="$(stat -c "%t" "${hidraw_path}")"
