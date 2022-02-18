@@ -83,7 +83,8 @@ update_bridge_fw() {
 }
 
 update_ts_fw() {
-  chromeos-boot-alert update_touchscreen_firmware
+  # Update splash disabled to https://issuetracker.google.com/220233060
+  # chromeos-boot-alert update_touchscreen_firmware
   if minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
       -S /opt/google/touch/policies/nvt_ts_update.update.policy \
