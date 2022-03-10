@@ -20,8 +20,11 @@ close: 1
 fstat: 1
 newfstatat: 1
 getrandom: 1
+readlink: 1
 readlinkat: 1
 access: 1
+faccessat: 1
+faccessat2: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 stat: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
