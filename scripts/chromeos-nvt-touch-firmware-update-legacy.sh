@@ -57,6 +57,14 @@ create_nvt_ts_hidraw() {
   fi
 }
 
+# set 0/1 to disable/enable bridge handling interrupt requests
+bridge_interrupt_handle() {
+  minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
+      -n -N -l --uts -e \
+      -S /opt/google/touch/policies/nvt_bridge_interrupt_handle.policy \
+      ${BRIDGE_TOOL} ${NVT_TOUCHSCREEN_HIDRAW} "-z" "$1"
+}
+
 get_bridge_fw_ver() {
   minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
@@ -144,16 +152,21 @@ main() {
     bridge_bin_fw_ver=$(echo "${bridge_fw_path#*"${NVT_BRIDGE_PID}_"}" \
       | cut -d '.' -f 1)
     bridge_dev_fw_ver=$(get_bridge_fw_ver)
+    if ! bridge_interrupt_handle 0; then
+      die "Can not disable bridge interrupt handling"
+    fi
     log_msg "bridge_bin_fw_ver=$bridge_bin_fw_ver"
     log_msg "Before update bridge_dev_fw_ver=$bridge_dev_fw_ver"
     log_msg "Before update bridge PID=$FLAGS_dev_pid"
-    if [ "$bridge_dev_fw_ver" -ne "$bridge_bin_fw_ver" ] || \
+    if [ "$bridge_dev_fw_ver" != "$bridge_bin_fw_ver" ] || \
         ! [ "$device_pid" == "$FLAGS_dev_pid" ]; then
-      # Update bin and PID for bridge
-      update_bridge_fw "$bridge_fw_path" "$device_pid"
+      # Update bin and PID for bridge, it will also try to keep lock INT
+      if ! update_bridge_fw "$bridge_fw_path" "$device_pid"; then
+        die "Update failed or failed to lock bridge INT"
+      fi
       sleep 0.5
       bridge_dev_fw_ver=$(get_bridge_fw_ver)
-      if [ "$bridge_dev_fw_ver" -ne "$bridge_bin_fw_ver" ]; then
+      if [ "$bridge_dev_fw_ver" != "$bridge_bin_fw_ver" ]; then
         log_msg "After update bridge_dev_fw_ver=$bridge_dev_fw_ver"
         report_update_result "${FLAGS_dev_i2c_path}" \
           "${REPORT_RESULT_FAILURE}" "$bridge_bin_fw_ver"
@@ -181,12 +194,12 @@ main() {
   log_msg "ts_bin_fw_ver=$ts_bin_fw_ver"
   log_msg "Before update ts_dev_fw_ver=$ts_dev_fw_ver"
   report_initial_version "${FLAGS_dev_i2c_path}" "nvt_ts" "${ts_dev_fw_ver}"
-  if [ "$ts_dev_fw_ver" -ne "$ts_bin_fw_ver" ]; then
+  if [ "$ts_dev_fw_ver" != "$ts_bin_fw_ver" ]; then
     update_ts_fw "$ts_fw_path"
     sleep 0.5
     ts_dev_fw_ver=$(get_ts_fw_ver)
     log_msg "After update ts_dev_fw_ver=$ts_dev_fw_ver"
-    if [ "$ts_dev_fw_ver" -ne "$ts_bin_fw_ver" ]; then
+    if [ "$ts_dev_fw_ver" != "$ts_bin_fw_ver" ]; then
       report_update_result "${FLAGS_dev_i2c_path}" \
         "${REPORT_RESULT_FAILURE}" "$ts_bin_fw_ver"
       die "Touchscreen fw update failed "\
@@ -199,6 +212,12 @@ main() {
     fi
   else
     log_msg "No need to update touchscreen fw."
+  fi
+
+  if $with_bridge; then
+    if ! bridge_interrupt_handle 1; then
+      die "Can not enable bridge interrupt handling"
+    fi
   fi
   exit 0
 }
