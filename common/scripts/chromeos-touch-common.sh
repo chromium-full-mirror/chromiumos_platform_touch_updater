@@ -16,8 +16,9 @@ get_dev_list() {
   # Filter Pixart HID because it also shows up in I2C list.
   local pixart_pattern=':'"${PIXART_VENDOR_ID}"':[0-9A-F]{4}\.'
   # Filter camera devices to avoid activating them.
-  # https://issuetracker.google.com/132838666
-  local camera_pattern='/i2c-(INT3478|INT3499):'
+  # https://issuetracker.google.com/132838666 and
+  # https://issuetracker.google.com/231502693
+  local camera_pattern='/i2c-(INT3478|INT3499|INT3537|OVTI5675):'
   # Include the psmouse/trackpoint devices in serio bus driver.
   find /sys/bus/i2c/devices /sys/bus/hid/devices /sys/bus/serio/devices -mindepth 1 -maxdepth 1 \
     | grep --invert-match -E \
