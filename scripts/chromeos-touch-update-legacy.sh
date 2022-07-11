@@ -175,6 +175,21 @@ check_update() {
         -d "${hidname}" -p "${i2c_path}" -i "${product_id}" \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
+    "${ILITEK_VENDOR_ID}")
+      local product_id_decimal=$((0x${product_id}))
+      if [ "${product_id_decimal}" -ge $((0x0000)) ] \
+        && [ "${product_id_decimal}" -le $((0x2FFF)) ] ; then
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+        /opt/google/touch/scripts/chromeos-ili-tddi-touch-firmware-update-legacy.sh \
+          -i "${product_id}" -p "${i2c_path}" \
+          || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      else
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+        /opt/google/touch/scripts/chromeos-ili-its-touch-firmware-update-legacy.sh \
+          -p "${i2c_path}" -r \
+          || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+      fi
+      ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
                 "unknown vid '${vendor_id}'"
@@ -212,6 +227,10 @@ check_update() {
       /opt/google/touch/scripts/chromeos-g2touch-touch-firmware-update-legacy.sh \
         -p "${hid_link_path}" -r \
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
+    "${ILITEK_VENDOR_ID}")
+      logger -t "${LOGGER_TAG}" "${device_name}: ${driver_name} device with"\
+                "pid ${product_id} should be supported as an i2c-hid device."
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
