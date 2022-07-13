@@ -13,6 +13,8 @@
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 # Define parameters to pass to script.
+# shellcheck disable=SC2034
+DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
 # ${device_path}: Device path of the touch device, e.g. "/sys/bus/i2c/devices/i2c-ELAN900C:00"
 # Example:
 #  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2A03

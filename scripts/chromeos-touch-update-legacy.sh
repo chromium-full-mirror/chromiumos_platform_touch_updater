@@ -107,7 +107,7 @@ check_update() {
       "touchscreen")
         log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
         /opt/google/touch/scripts/chromeos-elan-hid-touch-firmware-update-legacy.sh \
-          -d "${dev}" -p "${product_id}" \
+          -d "${dev}" -p "${product_id}" -r \
           || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
         ;;
       *)
