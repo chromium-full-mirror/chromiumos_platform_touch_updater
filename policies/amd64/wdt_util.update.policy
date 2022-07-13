@@ -4,6 +4,9 @@
 # These seccomp rules specify only the syscalls used by the Weida wdt_util
 # tool.  The updater wdt_util should only be used through minijail with
 # these rules.
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 execve: 1
 brk: 1
 mmap: arg2 == 0x1 || arg2 == 0x3 || arg2 == 0x5

@@ -5,6 +5,9 @@
 # tool.  The updater Zinitix_FWupdate should only be used through minijail with
 # these rules.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 brk: 1
 ioctl: 1
 fstat: 1

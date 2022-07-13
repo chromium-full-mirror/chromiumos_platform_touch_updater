@@ -4,6 +4,9 @@
 # Policy file for g2touch touchscreen tools.
 # It is used to update touchscreen firmware.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 write: 1
 read: 1
 _newselect: 1

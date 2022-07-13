@@ -3,6 +3,9 @@
 # found in the LICENSE file.
 # These seccomp rules specify only the syscalls used by elan_i2chid_read_fwid
 # and elan_i2chid_iap tools when getting the current firmware ID and version.
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 # IOCTL Information:
 #  elani2chid_tools:
 #   HIDIOCGRAWINFO: 0x80084803

@@ -5,6 +5,9 @@
 # These seccomp rules specify only the syscalls used by st-touch-fw-updater
 # when reading a firmware image file to retrieve its version.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 openat: 1
 stat: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE

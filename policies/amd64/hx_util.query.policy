@@ -5,6 +5,9 @@
 # tool.  The updater hx_util should only be used through minijail with
 # these rules.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 openat: 1
 newfstatat: 1
 getdents64: 1

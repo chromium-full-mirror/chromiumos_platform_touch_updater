@@ -5,6 +5,9 @@
 # These seccomp rules specify only the syscalls used by st-touch-fw-updater
 # when updating firmware on the device.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 # ioctl: arg1 == I2C_RDWR
 ioctl: arg1 == 0x0707
 nanosleep: 1

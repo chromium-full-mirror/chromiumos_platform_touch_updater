@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 # ioctl: arg1 == HIDIOCSFEATURE(64) || arg1 == HIDIOCGFEATURE(64)
 ioctl: arg1 == 0xc0404806 || arg1 == 0xc0404807
 brk: 1

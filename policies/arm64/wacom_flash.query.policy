@@ -4,6 +4,9 @@
 # These seccomp rules specify only the syscalls used by the Wacom FW updater
 # tool.  The updater wacom_flash should only be used through minijail with
 # these rules.
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 openat: 1
 # Don't allow mmap or mprotect with both PROT_WRITE and PROT_EXEC
 mmap: arg2 in 0xfffffffb || arg2 in 0xfffffffd

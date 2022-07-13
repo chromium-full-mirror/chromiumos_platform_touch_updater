@@ -4,6 +4,9 @@
 #
 # These seccomp rules specify only the syscalls used by elan_i2chid_iap
 # tool when updating the firmware.
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 # IOCTL Information:
 #  elani2chid_tools:
 #   HIDIOCGRAWINFO: 0x80084803

@@ -6,6 +6,9 @@
 # tool. The updater tool SiSUpdateFW should only be used through
 # minijail with these rules.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 ioctl: 1
 write: 1
 read: 1

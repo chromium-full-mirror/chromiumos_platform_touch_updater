@@ -6,6 +6,9 @@
 # tool. The updater tool melfasfwupdate should only be used through
 # minijail with these rules.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 nanosleep: 1
 clock_nanosleep: 1
 futex: 1

@@ -6,6 +6,9 @@
 # tool.  The updater EMRight_FWupdate should only be used through minijail with
 # these rules.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 # TODO: replace "ioctl: 1" with arg1 list when seccomp support bytecode filter.
 # Because we encode buffer size in the arg1, so it's hard to list all the arg
 # values use in the updater code, you can fix it in the future.

@@ -5,6 +5,9 @@
 # These seccomp rules specify only the syscalls used by the eps2pstiap firmware
 # updater tool when getting the current firmware version.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 poll: 1
 read: 1
 write: 1

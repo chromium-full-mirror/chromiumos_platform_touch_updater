@@ -5,6 +5,9 @@
 # These seccomp rules specify only the syscalls used by gdixfwupdate
 # when updating firmware on the device.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 openat: 1
 ioctl: 1
 nanosleep: 1

@@ -5,6 +5,9 @@
 # These seccomp rules specify only the syscalls used by the etphidiap firmware
 # updater tool when updating the firmware.
 
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
 write: 1
 read: 1
 nanosleep: 1
