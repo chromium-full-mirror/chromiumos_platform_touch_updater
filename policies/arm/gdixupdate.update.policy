@@ -30,3 +30,4 @@ exit_group: 1
 read: 1
 fstatfs: 1
 fstatfs64: 1
+getrandom: 1

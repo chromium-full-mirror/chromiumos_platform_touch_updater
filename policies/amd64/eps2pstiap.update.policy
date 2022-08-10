@@ -31,3 +31,4 @@ lseek: 1
 nanosleep: 1
 clock_nanosleep: 1
 fstatfs: 1
+getrandom: 1

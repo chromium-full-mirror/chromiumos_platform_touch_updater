@@ -32,6 +32,7 @@ ioctl: 1
 stat: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 lseek: 1
 access: 1
 uname: 1

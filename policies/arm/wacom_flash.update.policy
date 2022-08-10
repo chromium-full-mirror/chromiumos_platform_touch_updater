@@ -22,6 +22,7 @@ fstat64: 1
 fstatat64: 1
 faccessat: 1
 faccessat2: 1
+getrandom: 1
 mprotect: 1
 close: 1
 ioctl: arg1 == 0x706 || arg1 == 0x707

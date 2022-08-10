@@ -14,6 +14,7 @@ brk: 1
 read: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 close: 1
 gettimeofday: 1
 open: 1

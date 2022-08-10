@@ -12,6 +12,7 @@ brk: 1
 ioctl: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 execve: 1
 arch_prctl: 1
 uname: 1

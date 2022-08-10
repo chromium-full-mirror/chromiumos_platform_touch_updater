@@ -60,6 +60,7 @@ write: 1
 ioctl: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 statx: 1
 lseek: 1
 readlinkat: 1

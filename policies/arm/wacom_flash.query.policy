@@ -27,6 +27,7 @@ ARM_set_tls: 1
 read: 1
 faccessat: 1
 faccessat2: 1
+getrandom: 1
 uname: 1
 munmap: 1
 brk: 1

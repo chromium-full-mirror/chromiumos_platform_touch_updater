@@ -15,6 +15,7 @@ mmap: arg2 in 0xfffffffb || arg2 in 0xfffffffd
 mprotect: arg2 in 0xfffffffb || arg2 in 0xfffffffd
 write: 1
 newfstatat: 1
+getrandom: 1
 fstat: 1
 close: 1
 brk: 1

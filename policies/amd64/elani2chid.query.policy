@@ -67,6 +67,7 @@ ioctl: arg1 == 0x80084803 || arg1 == 0xc04064aa || arg1 == 0xc01064ac || arg1 ==
 stat: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 lseek: 1
 readlink: 1
 unlink: 1

@@ -16,6 +16,7 @@ exit: 1
 exit_group: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 ioctl: 1
 lseek: 1
 mmap: 1

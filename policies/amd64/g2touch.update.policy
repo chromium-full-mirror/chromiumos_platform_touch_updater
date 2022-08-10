@@ -18,6 +18,7 @@ gettimeofday: 1
 stat: 1
 fstat: 1
 newfstatat: 1
+getrandom: 1
 brk: 1
 close: 1
 open: 1
