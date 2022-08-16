@@ -40,3 +40,4 @@ _llseek: 1
 getpid: 1
 fstatfs: 1
 fstatfs64: 1
+set_tid_address: 1

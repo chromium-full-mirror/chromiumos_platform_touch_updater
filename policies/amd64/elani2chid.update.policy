@@ -51,3 +51,5 @@ dup2: 1
 futex: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 fstatfs: 1
+set_tid_address: 1
+munmap: 1

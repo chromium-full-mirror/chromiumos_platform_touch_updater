@@ -45,3 +45,5 @@ gettimeofday: 1
 openat: 1
 dup2: 1
 fstatfs: 1
+set_tid_address: 1
+munmap: 1

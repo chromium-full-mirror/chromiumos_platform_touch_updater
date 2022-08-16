@@ -35,3 +35,5 @@ stat: 1
 write: 1
 getpid: 1
 fstatfs: 1
+set_tid_address: 1
+uname: 1

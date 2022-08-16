@@ -31,3 +31,5 @@ faccessat2: 1
 exit: 1
 rt_sigreturn: 1
 fstatfs: 1
+set_tid_address: 1
+uname: 1

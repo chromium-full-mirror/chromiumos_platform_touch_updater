@@ -32,3 +32,5 @@ read: 1
 fstatfs: 1
 fstatfs64: 1
 getrandom: 1
+set_tid_address: 1
+munmap: 1

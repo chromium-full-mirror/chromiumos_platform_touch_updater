@@ -37,3 +37,5 @@ getpid: 1
 nanosleep: 1
 clock_nanosleep: 1
 fstatfs: 1
+set_tid_address: 1
+uname: 1

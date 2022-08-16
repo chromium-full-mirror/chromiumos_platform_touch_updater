@@ -30,3 +30,5 @@ arch_prctl: 1
 access: 1
 munmap: 1
 fstatfs: 1
+set_tid_address: 1
+uname: 1
