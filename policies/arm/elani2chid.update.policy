@@ -59,3 +59,4 @@ fstatfs64: 1
 pselect6: 1
 pselect6_time64: 1
 set_tid_address: 1
+set_robust_list: 1

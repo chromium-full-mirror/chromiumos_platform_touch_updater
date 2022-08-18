@@ -47,3 +47,4 @@ dup2: 1
 fstatfs: 1
 set_tid_address: 1
 munmap: 1
+set_robust_list: 1

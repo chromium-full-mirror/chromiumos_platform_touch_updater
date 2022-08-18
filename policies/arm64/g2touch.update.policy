@@ -33,3 +33,4 @@ getrandom: 1
 newfstatat: 1
 set_tid_address: 1
 uname: 1
+set_robust_list: 1
