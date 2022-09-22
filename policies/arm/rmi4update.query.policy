@@ -42,3 +42,5 @@ fstatfs: 1
 fstatfs64: 1
 set_tid_address: 1
 set_robust_list: 1
+getxattr: 1
+ugetrlimit: 1
