@@ -7,6 +7,7 @@ rseq: 1
 
 brk: 1
 ioctl: arg1 == 0xc0424807 || arg1 == 0x5401 || arg1 == 0xc0424806
+clock_nanosleep: 1
 clock_nanosleep_time64: 1
 execve: 1
 ARM_set_tls: 1
