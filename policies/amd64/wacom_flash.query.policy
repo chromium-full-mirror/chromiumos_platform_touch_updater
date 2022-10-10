@@ -9,10 +9,10 @@ rseq: 1
 
 open: 1
 openat: 1
-mmap: 1
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 stat: 1
 write: 1
-mprotect: 1
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 ioctl: 1
 brk: 1
 close: 1
