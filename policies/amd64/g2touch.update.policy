@@ -30,7 +30,7 @@ uname: 1
 arch_prctl: 1
 readlink: 1
 access: 1
-mmap: arg2 in 0xfffffffd || arg2 in 0xfffffffb
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 munmap: 1
 exit_group: 1
 restart_syscall: 1

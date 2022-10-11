@@ -18,7 +18,7 @@ execve: 1
 ARM_set_tls: 1
 uname: 1
 readlink: 1
-mprotect: arg2 in 0xfffffffb || arg2 in 0xfffffffd
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 statx: 1
 read: 1
 close: 1
