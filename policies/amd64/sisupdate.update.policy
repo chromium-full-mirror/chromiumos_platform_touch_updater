@@ -14,7 +14,7 @@ write: 1
 read: 1
 select: 1
 pselect6: 1
-mmap: 1
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 brk: 1
 fstat: 1
 newfstatat: 1
