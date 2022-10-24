@@ -36,3 +36,8 @@ set_robust_list: 1
 getxattr: 1
 readlinkat: 1
 getrlimit: 1
+pselect6: 1
+prlimit64: 1
+getdents64: 1
+gettid: 1
+clock_nanosleep: 1
