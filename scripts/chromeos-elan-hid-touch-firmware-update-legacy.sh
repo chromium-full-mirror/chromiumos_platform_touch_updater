@@ -164,6 +164,68 @@ get_active_fw_ver() {
   fi
 }
 
+get_calibration_counter() {
+  # Query the touchscreen and see the current counter of calibration.
+  # Args:
+  #  $1: hid_pid of touch device
+  # Returns:
+  #  0x000: Success
+  #  0x003: I/O timeout
+  #  0x005: Invalid data pattern
+  #  0x008: Invalid parameter
+  #  0x009: I/O error
+  #  0x104: Device not found
+  #  0x105: File not found
+  # Outputs:
+  #  ${calibration_counter}: A string of hexadecimal value, e.g.: 0000, 0001, 001e, ffff(not calibrated).
+  local hid_pid="$1"
+  local command_output=
+  local calibration_counter=
+  local ret=
+
+  command_output="$(
+    minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+      -G -I -N -n -p -v --uts \
+      -c 'cap_dac_override+eip' --ambient \
+      -S /opt/google/touch/policies/elani2chid.query.policy -- \
+      "${FWWRITE_TOOL}" -P "${hid_pid}" -c -q 2>&1
+  )"
+  ret="$?"
+
+  # Remove Carriage Return
+  calibration_counter="$( echo "${command_output}" | sed -e 's/\r//g' )"
+
+  if [ "${ret}" -eq 0 ]; then
+    echo "${calibration_counter}"
+  else
+    echo 1>&2 "Exit status ${ret} retrieving touchscreen calibration counter: ${calibration_counter}"
+  fi
+}
+
+calibrate() {
+  # Attempt to calibrate touch-screen device.
+  # Args:
+  #  $1: hid_pid of touch device
+  # Returns:
+  #  0x000: Success
+  #  0x003: I/O timeout
+  #  0x005: Invalid data pattern
+  #  0x008: Invalid parameter
+  #  0x009: I/O error
+  #  0x104: Device not found
+  #  0x105: File not found
+  # Outputs:
+  #  "Re-Calibration success." if calibration is successful.
+  #  "Re-Calibration failed! err=${error_code}." if calibration failed.
+  local hid_pid="$1"
+
+  minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+      -G -I -N -n -p -v --uts \
+      -c 'cap_dac_override+eip' --ambient \
+      -S /opt/google/touch/policies/elani2chid.query.policy -- \
+      "${FWWRITE_TOOL}" -P "${hid_pid}" -k 2>&1
+}
+
 main() {
   # Get the HID PID value from the device on the system
   local hid_pid=
@@ -179,6 +241,8 @@ main() {
   local update_needed=${FLAGS_FALSE}
   local recovery_mode=
   local ret=
+  local not_support_calibration_counter=
+  local calibration_counter=
 
   hid_pid="${FLAGS_hid_pid}"
   echo "hid_pid: ${hid_pid}"
@@ -286,6 +350,36 @@ main() {
     # Reset touch with 300 ms for re-enumeration
     rebind_driver "${FLAGS_device_path}"
     sleep 0.3
+  fi
+
+  # Check if support calibration counter request function
+  calibration_counter="$(get_calibration_counter "${hid_pid}")"
+  not_support_calibration_counter="$( echo "${calibration_counter}" | grep -c "invalid option -- 'c'" )"
+  if [ "${not_support_calibration_counter}" -eq 1 ] ; then
+    log_msg "Not support calibration counter function."
+  else
+    log_msg "Current calibration counter: ${calibration_counter}"
+
+    # Check if touch device has been calibrated
+    if [ $((0x${calibration_counter})) -eq $((0xffff)) ] ; then
+      log_msg "Re-calibration is needed since last calibration probably failed."
+      calibrate "${hid_pid}"
+
+      # Check that the update was successful.
+      ret="$?"
+      if [ "${ret}" -eq 0 ] ; then
+
+        # Check if current calibration counter is 0
+        calibration_counter="$(get_calibration_counter "${hid_pid}")"
+        if [ "${calibration_counter}" -eq 0 ] ; then
+          log_msg "Re-calibration is successful & current calibration counter: ${calibration_counter}"
+        else
+          log_msg "Re-calibration failed. Calibration counter: ${calibration_counter}"
+        fi
+      else
+        log_msg "Re-calibration failed. Error code: ${ret}"
+      fi
+    fi
   fi
 }
 
