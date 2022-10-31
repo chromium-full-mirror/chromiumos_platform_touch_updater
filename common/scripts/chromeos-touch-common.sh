@@ -310,7 +310,8 @@ compare_multipart_version() {
 get_chassis_id() {
   # Get an identifier of chassis that may need different touchpad firmware on
   # devices sharing same image, even same main logic board.
-  mosys platform chassis
+  # Note: chassis id is just the model name in uppercase.
+  cros_config / name | tr '[:lower:]' '[:upper:]'
 }
 
 get_platform_ver() {
