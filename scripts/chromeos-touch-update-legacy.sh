@@ -89,7 +89,12 @@ check_update() {
         elan_device="touchscreen"
       elif [ "${product_id_decimal}" -ge $((0x3000)) ] \
         && [ "${product_id_decimal}" -le $((0x3FFF)) ] ; then
-        elan_device="touchpad"
+        # Specially case of a touscreen PID assigned by mistake in this section
+        if [ "${product_id_decimal}" -eq $((0x3FDD)) ] ; then
+          elan_device="touchscreen"
+        else
+          elan_device="touchpad"
+        fi
       elif [ "${product_id_decimal}" -ge $((0x4000)) ] \
         && [ "${product_id_decimal}" -le $((0x4FFF)) ] ; then
         elan_device="touchscreen"
