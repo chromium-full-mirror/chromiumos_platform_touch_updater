@@ -8,7 +8,12 @@
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
-DEFINE_string 'device' '' "device name" 'd'
+# device_name is the generated unique id for the device. It encodes
+# the vid and pid for the current device.
+DEFINE_string 'device_name' '' "device name" 'd'
+# device_path is the /sys/bus/i2c path for the current device.
+DEFINE_string 'device_path' '' "device path" 'e'
+# i2c_path is the /sys/devices/ path for the current device.
 DEFINE_string 'i2c_path' '' "I2C device path" 'p'
 
 RMI4UPDATE="/usr/sbin/rmi4update"
@@ -89,7 +94,8 @@ compare_fw_versions() {
 }
 
 main() {
-  local trackpad_device_name="${FLAGS_device}"
+  local preferred_search_path="${FLAGS_device_path}"
+  local trackpad_device_name="${FLAGS_device_name}"
   local touch_device_path=""
   local active_product_id=""
   local active_fw_version=""
@@ -97,13 +103,14 @@ main() {
   local update_needed="${FLAGS_FALSE}"
   local product_id=""
   local fw_link_path=""
-  if [ -z "${FLAGS_device}" ]; then
+  if [ -z "${FLAGS_device_name}" ]; then
     die "Please specify a device using -d"
   fi
 
   modprobe -q hid-rmi || die "Not able to load hid-rmi kernel module"
   # Find the device path if it exists "/dev/hidrawX"
-  touch_device_path="$(find_i2c_hid_device ${trackpad_device_name##*-})"
+  touch_device_path="$(find_i2c_hid_device ${trackpad_device_name##*-} \
+                       "${preferred_search_path}")"
   log_msg "touch_device_path: '${touch_device_path}'"
   if [ -z "${touch_device_path}" ]; then
     die "${trackpad_device_name} not found on system. Aborting update."
@@ -116,9 +123,9 @@ main() {
   report_initial_version "${FLAGS_i2c_path}" "Synaptics" "${active_fw_version}"
 
   # Find the fw version and product ID on disk
-  fw_path="$(find_fw_path ${active_product_id} ${FLAGS_device})"
+  fw_path="$(find_fw_path ${active_product_id} ${FLAGS_device_name})"
   if [ -z "${fw_path}" ] || [ ! -e "${fw_path}" ]; then
-    die "No valid firmware for ${FLAGS_device} found."
+    die "No valid firmware for ${FLAGS_device_name} found."
   fi
   fw_name="$(basename "${fw_path}" | sed "s/.bin$//")"
 

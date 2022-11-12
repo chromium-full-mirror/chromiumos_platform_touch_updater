@@ -71,8 +71,9 @@ find_i2c_hid_device() {
   local path=""
   local vid="${1%_*}"
   local pid="${1#*_}"
+  local preferred_search_path="${2}"
 
-  for dev in "${I2C_DEVICES_PATH}"/*/; do
+  for dev in ${preferred_search_path} "${I2C_DEVICES_PATH}"/*/; do
     local driver_name="$(readlink -f ${dev}/driver | xargs basename)"
     case "${driver_name}" in
     i2c_hid*)

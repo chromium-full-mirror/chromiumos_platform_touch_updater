@@ -123,7 +123,7 @@ check_update() {
     "${SYNAPTICS_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-synaptics-touch-firmware-update-legacy.sh \
-        -d "${hidname}" -p "${i2c_path}" -r \
+        -d "${hidname}" -p "${i2c_path}" -e "${dev}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${WEIDA_VENDOR_ID}")
