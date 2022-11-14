@@ -45,5 +45,6 @@ set_tid_address: 1
 set_robust_list: 1
 getxattr: 1
 ugetrlimit: 1
+clock_nanosleep: 1
 clock_nanosleep_time64: 1
 rt_sigreturn: 1

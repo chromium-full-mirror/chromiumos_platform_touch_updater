@@ -53,3 +53,4 @@ pselect6: 1
 set_tid_address: 1
 set_robust_list: 1
 rt_sigreturn: 1
+ugetrlimit: 1
