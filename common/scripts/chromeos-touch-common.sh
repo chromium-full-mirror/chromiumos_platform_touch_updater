@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+# Copyright 2013 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -318,8 +318,7 @@ get_chassis_id() {
 get_platform_ver() {
   # Get platform version, since different boards (EVT, DVT etc) may need
   # different touchpad firmware on devices sharing same image.
-  local version="$(mosys platform version)"
-  echo "${version#rev}"
+  crossystem board_id
 }
 
 i2c_chardev_present() {
