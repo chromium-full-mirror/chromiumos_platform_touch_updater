@@ -8,7 +8,12 @@ newfstatat: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 munmap: 1
 close: 1
-ioctl: arg1 == 0xc00c4806 || arg1 == 0xc0414807
+# TODO: replace "ioctl: 1" with arg1 list when seccomp support bytecode filter.
+# Because we encode buffer size in the arg1, so it's hard to list all the arg
+# values use in the updater code, you can fix it in the future.
+# All the values of arg1 are generate by macros HIDIOCSFEATURE(size) and
+# HIDIOCGFEATURE(size) defined at linux/hidraw.h.
+ioctl: 1
 brk: 1
 fstatfs: 1
 read: 1

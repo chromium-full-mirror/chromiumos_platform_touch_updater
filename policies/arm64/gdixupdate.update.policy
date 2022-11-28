@@ -2,7 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-ioctl: arg1 == 0xc00c4806 || arg1 == 0xc0114806 || arg1 == 0xc0064806 || arg1 == 0xc0414806 || arg1 == 0xc0414807 || arg1 == 0xc01b4806 || arg1 == 0xc00f4806
+# TODO: replace "ioctl: 1" with arg1 list when seccomp support bytecode filter.
+# Because we encode buffer size in the arg1, so it's hard to list all the arg
+# values use in the updater code, you can fix it in the future.
+# All the values of arg1 are generate by macros HIDIOCSFEATURE(size) and
+# HIDIOCGFEATURE(size) defined at linux/hidraw.h.
+ioctl: 1
 clock_nanosleep: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 openat: 1
