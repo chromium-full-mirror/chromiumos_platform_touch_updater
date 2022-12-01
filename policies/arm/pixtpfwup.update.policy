@@ -43,3 +43,4 @@ set_robust_list: 1
 uname: 1
 fstatfs: 1
 fstatfs64: 1
+gettid: 1

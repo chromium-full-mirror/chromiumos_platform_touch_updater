@@ -53,3 +53,4 @@ getrlimit: 1
 getpid: 1
 prlimit64: arg2 == 0 && arg3 != 0
 fstatfs: 1
+gettid: 1

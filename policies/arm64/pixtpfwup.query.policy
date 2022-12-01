@@ -34,3 +34,4 @@ set_robust_list: 1
 rt_sigprocmask: 1
 exit: 1
 fstatfs: 1
+gettid: 1

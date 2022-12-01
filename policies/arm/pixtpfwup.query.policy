@@ -38,3 +38,4 @@ rt_sigprocmask: 1
 exit: 1
 fstatfs: 1
 fstatfs64: 1
+gettid: 1

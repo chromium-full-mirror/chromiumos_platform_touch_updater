@@ -88,3 +88,4 @@ prlimit64: 1
 fstatfs: 1
 pselect6: 1
 pread64: 1
+gettid: 1

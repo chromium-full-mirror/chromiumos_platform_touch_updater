@@ -32,3 +32,4 @@ set_tid_address: 1
 munmap: 1
 set_robust_list: 1
 ugetrlimit: 1
+gettid: 1
