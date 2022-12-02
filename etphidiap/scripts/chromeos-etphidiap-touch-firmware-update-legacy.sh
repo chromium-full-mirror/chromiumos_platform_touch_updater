@@ -69,6 +69,27 @@ update_eeprom_firmware() {
   return "${ret}"
 }
 
+update_firmware_region() {
+  local region_id="$1"
+  local cmd_log=
+  local ret=
+
+  cmd_log="$(
+    minijail0 -u fwupdate-i2c -g fwupdate-i2c \
+      -G -I -N -n -p -v --uts \
+      -S /opt/google/touch/policies/etphidiap.update.policy -- \
+      /usr/sbin/etphid_updater -i "${FLAGS_device#i2c-}" -R "${region_id}" 2>&1
+  )"
+
+  ret="$?"
+  if [ "${ret}" -ne 0 ]; then
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${region_id}"
+    die "Exit status ${ret} updating touchpad firmware region: ${cmd_log}"
+  fi
+  return "${ret}"
+}
+
 # The on-disk firmware version is determined by parsing the filename of the
 # actual firmware file passed as $1, after resolving any symlinks. The filename
 # should be in the format "elan_0xVER.bin" e.g. "elan_0x0A.bin", or without
@@ -119,6 +140,8 @@ get_active_info() {
   if [ "${ret}" -eq 0 ]; then
     if [ "${output}" = "-1" ]; then
       printf '0xFFFFFFFF\n'
+    elif [ -z "${output##*-*}" ]; then
+      printf '%d\n' "${output}"
     else
       printf '0x%X\n' "0x${output}"
     fi
@@ -146,6 +169,95 @@ get_device_module_id() {
 # Query the touchpad controller for its current EEPROM firmware version.
 get_active_eeprom_fw_version() {
   get_active_info "eeprom firmware version" -G
+}
+
+# Query the touchpad controller for its current region id.
+get_device_region_id() {
+  get_active_info "region ID" -r
+}
+
+# Query the System firmware for its current region id.
+get_system_region_id() {
+  local ret=
+
+  if [ ! -f "/sys/firmware/vpd/ro/region" ]; then
+    printf '-1\n'
+    return
+  fi
+
+  ret="$(cat /sys/firmware/vpd/ro/region)"
+  ret=$(
+  case "${ret}" in
+    ("fr") echo "1" ;;
+    ("be") echo "1" ;;
+    ("cz") echo "2" ;;
+    (*) echo "0" ;;
+  esac)
+  printf '%d\n' "${ret}"
+}
+
+# Touchpad Firmware Region ID Update
+region_id_update() {
+  local active_fw_ver=
+  local update_type=
+  local update_needed=
+  local system_region_id=
+  local device_region_id=
+  local region_id=
+  local firmware_ver=
+
+  log_msg "We are now attempting to update touchpad firmware region."
+
+  active_fw_ver="$(get_active_fw_version)"
+  [ -n "${active_fw_ver}" ] || die \
+    "Unable to determine active firmware version."
+  log_msg "Active firmware version: ${active_fw_ver}"
+
+  firmware_ver="$((active_fw_ver))"
+  if [ "${firmware_ver}" -lt "8" ]; then
+    log_msg "Unable to support the region id update of touchpad firmware."
+    return 0
+  fi
+
+  system_region_id="$(get_system_region_id)"
+  if [ "${system_region_id}" -lt "0" ]; then
+    log_msg "Unable to determine active region id of system firmware."
+    return 0
+  fi
+  log_msg "Active System firmware region id: ${system_region_id}"
+
+  device_region_id="$(get_device_region_id)"
+  region_id="$((device_region_id))"
+  if [ -z "${device_region_id}" ] || [ "${region_id}" -lt "0" ]; then
+    log_msg "Unable to determine active region id of touchpad firmware."
+    return 0
+  fi
+  log_msg "Active Touchpad firmware region id: ${region_id}"
+
+  if [ "${system_region_id}" -ne "${region_id}" ]; then
+    log_msg "Updating touchpad firmware region id to ${system_region_id}"
+    run_cmd_and_block_powerd update_firmware_region "${system_region_id}"
+
+    # Check if update was successful
+    device_region_id="$(get_device_region_id)"
+    region_id="$((device_region_id))"
+    update_type="$(compare_multipart_version "${region_id}" \
+      "${system_region_id}")"
+
+    if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+        "${system_region_id}"
+      log_msg \ "Touchpad firmware region id update failed. " \
+        "Current firmware region id: ${region_id}"
+    else
+      log_msg "Updating touchpad firmware region id succeeded. " \
+        "Current firmware region id is now: ${region_id}"
+      report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
+        "${region_id}"
+
+      rebind_driver "$(cd -P "${FLAGS_device_path}/../.." && pwd)"
+    fi
+  fi
 }
 
 assert_is_function_from_overlay() {
@@ -176,7 +288,7 @@ eeprom_update() {
   fw_link="$(find_fw_link_path "${fw_basename}" "${chassis_id}")"
   if [ -z "${fw_link}" ]; then
     log_msg "Unable to determine path of on-disk EEPROM firmware."
-    exit
+    return 0
   fi
   log_msg "Attempting to load on-disk EEPROM firmware: ${fw_link}"
 
@@ -184,7 +296,7 @@ eeprom_update() {
   log_msg "On-disk EEPROM firmware version: ${new_fw_ver}"
   if [ -z "${new_fw_ver}" ]; then
     log_msg "Unable to determine version of on-disk EEPROM firmware."
-    exit
+    return 0
   fi
 
   active_fw_ver="$(get_active_eeprom_fw_version)"
@@ -221,46 +333,23 @@ eeprom_update() {
       "${active_fw_ver}"
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_ver}"
-
   fi
-
 }
 
-main() {
+# Touchpad Firmware Update
+touchpad_update() {
   local active_fw_ver=
   local new_fw_ver=
   local update_type=
   local update_needed=
   local fw_link=
-  local device_hwid=
-  local device_module_id=
-  local active_fw_hw_rev=
-  local new_fw_hw_rev=
-  local chassis_id=
-  local board_rev=
+  local module_id=
+  local chassis_id=$1
+  local board_rev=$2
+  local device_module_id=$3
+  local device_hwid=$4
 
-  # This script runs early at bootup, so if the touch driver is mistakenly
-  # included as a module (as opposed to being compiled directly in) the i2c
-  # device may not be present yet. Pause long enough for for people to notice
-  # and fix the kernel config.
-  check_i2c_chardev_driver
-
-  chassis_id="$(get_chassis_id)"
-  log_msg "Chassis identifier detected as: ${chassis_id}"
-
-  board_rev="$(get_platform_ver)"
-  log_msg "Platform version detected as: ${board_rev}"
-
-  device_module_id="$(get_device_module_id)"
-  [ -n "${device_module_id}" ] || die \
-    "Unable to determine hardware module of the touchpad device."
-  log_msg "Hardware module of the touchpad device: ${device_module_id}"
-
-  device_hwid="$(get_device_hwid)"
-  [ -n "${device_hwid}" ] || die \
-    "Unable to determine hardware revision of the touchpad device."
-  log_msg "Hardware revision of the touchpad device: ${device_hwid}"
-
+  module_id="$((device_module_id))"
   active_fw_ver="$(get_active_fw_version)"
   [ -n "${active_fw_ver}" ] || die \
     "Unable to determine active firmware version."
@@ -268,7 +357,6 @@ main() {
 
   report_initial_version "${FLAGS_device_path}" "Elan Touchpad I2C HID" \
     "${active_fw_ver}"
-
   if [ "${overlay_sh_exist}" -ne 0 ]; then
     assert_is_function_from_overlay get_fw_basename
     fw_basename="$(get_fw_basename "${chassis_id}" "${board_rev}" \
@@ -276,7 +364,6 @@ main() {
     [ -n "${fw_basename}" ] || die \
       "Unable to determine which on-disk firmware to consider flashing."
   else
-    module_id=$((device_module_id))
     fw_basename="elan_i2c_${module_id}.0.bin"
   fi
 
@@ -284,24 +371,17 @@ main() {
 
   if [ -z "${fw_link}" ]; then
     log_msg "Unable to determine path of on-disk firmware."
-
-    # If we don't find a firmware file to flash,
-    # we may still want to flash a new EEPROM firmware.
-    eeprom_update ${chassis_id} ${module_id}
-    exit
+    return 0
   fi
 
   log_msg "Attempting to load on-disk firmware: ${fw_link}"
 
   new_fw_ver="$(get_fw_version_from_disk "${fw_link}")"
   log_msg "On-disk firmware version: ${new_fw_ver}"
+
   if [ -z "${new_fw_ver}" ]; then
     log_msg "Unable to determine version of on-disk firmware."
-
-    # If we don't find a firmware file to flash,
-    # we may still want to flash a new EEPROM firmware.
-    eeprom_update ${chassis_id} ${module_id}
-    exit
+    return 0
   fi
 
   if [ "$(( ${active_fw_ver} == 0xFFFFFFFF ))" -gt 0 ]; then
@@ -338,9 +418,49 @@ main() {
     # Important: This touch device should be the only peripheral on its I2C bus!
     rebind_driver "$(cd -P "${FLAGS_device_path}/../.." && pwd)"
   fi
+}
 
-  eeprom_update ${chassis_id} ${module_id}
+main() {
+  local active_fw_ver=
+  local new_fw_ver=
+  local update_type=
+  local update_needed=
+  local fw_link=
+  local device_hwid=
+  local device_module_id=
+  local chassis_id=
+  local board_rev=
 
+  # This script runs early at bootup, so if the touch driver is mistakenly
+  # included as a module (as opposed to being compiled directly in) the i2c
+  # device may not be present yet. Pause long enough for for people to notice
+  # and fix the kernel config.
+  check_i2c_chardev_driver
+
+  chassis_id="$(get_chassis_id)"
+  log_msg "Chassis identifier detected as: ${chassis_id}"
+
+  board_rev="$(get_platform_ver)"
+  log_msg "Platform version detected as: ${board_rev}"
+
+  device_module_id="$(get_device_module_id)"
+  [ -n "${device_module_id}" ] || die \
+    "Unable to determine hardware module of the touchpad device."
+  log_msg "Hardware module of the touchpad device: ${device_module_id}"
+  module_id="$((device_module_id))"
+
+  device_hwid="$(get_device_hwid)"
+  [ -n "${device_hwid}" ] || die \
+    "Unable to determine hardware revision of the touchpad device."
+  log_msg "Hardware revision of the touchpad device: ${device_hwid}"
+
+  touchpad_update "${chassis_id}" "${board_rev}" \
+      "${device_module_id}" "${device_hwid}"
+  eeprom_update "${chassis_id}" "${module_id}"
+
+  if [ "${module_id}" -eq "286" ]; then
+      region_id_update
+  fi
 }
 
 main "$@"
