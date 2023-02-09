@@ -62,3 +62,4 @@ set_tid_address: 1
 set_robust_list: 1
 prlimit64: 1
 gettid: 1
+ugetrlimit: 1
