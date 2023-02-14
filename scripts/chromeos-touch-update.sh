@@ -1,29 +1,24 @@
 #!/bin/sh
 #
-# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Copyright 2019 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# shellcheck source=../common/scripts/chromeos-touch-common.sh
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 LOGGER_TAG="chromeos-touch-update"
 
 # Touch firmware and config updater for Chromebooks
-WACOM_VENDOR_ID_1="056A"
-WACOM_VENDOR_ID_2="2D1F"
-SYNAPTICS_VENDOR_ID="06CB"
-WEIDA_VENDOR_ID="2575"
-GOOGLE_VENDOR_ID="18D1"
-GOODIX_VENDOR_ID="27C6"
-SIS_VENDOR_ID="0457"
 PIXART_VENDOR_ID="093A"
-G2TOUCH_VENDOR_ID="2A94"
-ST_VENDOR_ID="0483"
 
 # Current firmware status returned by compare_fw_versions in vendor scripts
 UP_TO_DATE="0"
+# shellcheck disable=SC2034  # Unused variables pending TODO(b/129671661).
 OUTDATED="1"
+# shellcheck disable=SC2034  # Unused variables pending TODO(b/129671661).
 ROLLBACK="2"
+# shellcheck disable=SC2034  # Unused variables pending TODO(b/129671661).
 CORRUPTED="3"
 
 # For devices supporting runtime power managment, the "auto" mode would have
@@ -44,19 +39,25 @@ power_on() {
 
 power_auto() {
   local power_path="$1"
-  if [ ! -z "${power_path}" ]; then
+  if [ -n "${power_path}" ]; then
     echo "auto" > "${power_path}" ||
     logger -t "${LOGGER_TAG}" "Restore ${power_path} to auto failed."
   fi
 }
 
 run() {
-  local vendor_scripts="\
-    $(echo /opt/google/touch/scripts/chromeos-*-touch-firmware-update.sh)"
-  local script=""
+  local active
+  local firmware_status
+  local latest
+  local vendor_scripts
+
   local action="$1"
   local dev="$2"
+  local script=""
   local vendor=""
+
+  vendor_scripts="\
+    $(echo /opt/google/touch/scripts/chromeos-*-touch-firmware-update.sh)"
 
   if [ ! -e "${dev}" ]; then
     printf "Device not found: %s\n" "${dev}"
@@ -65,7 +66,7 @@ run() {
 
   # Find the applicable vendor script for the device.
   for script in ${vendor_scripts}; do
-    source "${script}"
+    . "${script}"
     if check_applicability "${dev}"; then
       vendor="$(get_vendor_name)"
       break
@@ -77,12 +78,14 @@ run() {
     return 1
   fi
 
-  local active="$(get_active_fw_version "${dev}")"
-  local latest="$(get_latest_fw_version "${dev}")"
-  local firmware_status="$(compare_fw_versions "${active}" "${latest}")"
+  active="$(get_active_fw_version "${dev}")"
+  latest="$(get_latest_fw_version "${dev}")"
+  firmware_status="$(compare_fw_versions "${active}" "${latest}")"
 
-  if [ "${action}" = "update" -a "${firmware_status}" != "${UP_TO_DATE}" ]; then
-    local power_path="$(power_on "${dev}")"
+  if [ "${action}" = "update" ] && [ "${firmware_status}" != "${UP_TO_DATE}" ];
+  then
+    local power_path
+    power_path="$(power_on "${dev}")"
     update "${dev}"
     config "${dev}"
     power_auto "${power_path}"
@@ -107,7 +110,7 @@ main() {
   if [ "$#" -eq 0 ]; then
     devices="$(get_dev_list)"
   else
-    devices="$@"
+    devices="$*"
   fi
 
   for dev in ${devices}; do
@@ -119,4 +122,3 @@ main() {
 
 # main "$@"
 /opt/google/touch/scripts/chromeos-touch-update-legacy.sh
-
