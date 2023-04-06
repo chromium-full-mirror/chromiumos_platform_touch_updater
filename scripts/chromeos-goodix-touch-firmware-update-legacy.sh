@@ -1,13 +1,17 @@
 #!/bin/sh
 
-# Copyright 2018 The Chromium OS Authors. All rights reserved.
+# Copyright 2018 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# This isn't the exact copy that will be used in production, but it's better
+# than pointing shellcheck at /dev/null.
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
+# shellcheck source=../common/scripts/chromeos-touch-common.sh
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
-DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
+DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_string 'dev_i2c_path' '' "device i2c path" 'p'
 
@@ -16,9 +20,7 @@ GOODIX_FW_UPDATE_GROUP="goodixfwupdate"
 GOODIX_TOUCHSCREEN_HIDRAW="/dev/goodix_ts_hidraw"
 GOODIX_NODE_NAME=""
 FW_LINK_NAME="goodix_firmware.bin"
-FW_LINK_PATH="/lib/firmware/goodix-ts.bin"
 GDIXUPDATE="/usr/sbin/gdixupdate"
-GOODIX_VENDOR_ID="27C6"
 GET_BOARD_SPECIFIC_PID="/opt/google/touch/scripts/get_board_goodix_pid.sh"
 
 # Parse command line.
@@ -36,7 +38,7 @@ update_firmware() {
         "${GDIXUPDATE}" -f -t "$3" -d "$1" "$2"
 
     ret=$?
-    if [ ${ret} -eq 0 ]; then
+    if [ "${ret}" -eq 0 ]; then
       return 0
     fi
     log_msg "FW update attempt #${i} failed... retrying."
@@ -80,30 +82,27 @@ create_goodix_hidraw() {
 
   if [ -c "${touch_device}" ]; then
     # create a device node for touchscreen firmware update
-    dev_t_major="$(ls -l "${touch_device}" | awk '{print $5}')"
-    dev_t_major=${dev_t_major%%,}
-    dev_t_minor="$(ls -l "${touch_device}" | awk '{print $6}')"
+    dev_t_major="$(stat -c "%t" "${touch_device}")"
+    dev_t_minor="$(stat -c "%T" "${touch_device}")"
     GOODIX_NODE_NAME="${GOODIX_TOUCHSCREEN_HIDRAW}${dev_t_minor}"
 
     if [ -e "${GOODIX_NODE_NAME}" ]; then
         log_msg "${GOODIX_NODE_NAME} already exist, remove it."
-        rm ${GOODIX_NODE_NAME}
+        rm "${GOODIX_NODE_NAME}"
     fi
 
-    mknod "${GOODIX_NODE_NAME}" c "${dev_t_major}" "${dev_t_minor}"
-    if [ $? -ne 0 ]; then
+    if ! mknod "${GOODIX_NODE_NAME}" \
+        c "0x${dev_t_major}" "0x${dev_t_minor}"; then
       die "Failed create node: '${GOODIX_NODE_NAME}'."
     fi
 
     # Change ownership and access mode for goodix touchscreen device
-    chown "${GOODIX_FW_UPDATE_USER}":"${GOODIX_FW_UPDATE_GROUP}" \
-          "${GOODIX_NODE_NAME}"
-    if [ $? -ne 0 ]; then
+    if ! chown "${GOODIX_FW_UPDATE_USER}":"${GOODIX_FW_UPDATE_GROUP}" \
+        "${GOODIX_NODE_NAME}"; then
       die "Failed change owner of node: '${GOODIX_NODE_NAME}'."
     fi
 
-    chmod 0660 ${GOODIX_NODE_NAME}
-    if [ $? -ne 0 ]; then
+    if ! chmod 0660 "${GOODIX_NODE_NAME}"; then
       die "Failed change mode of node: '${GOODIX_NODE_NAME}'."
     fi
   else
