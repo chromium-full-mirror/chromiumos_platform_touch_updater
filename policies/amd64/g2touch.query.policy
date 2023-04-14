@@ -36,3 +36,5 @@ rt_sigreturn: 1
 fstatfs: 1
 set_tid_address: 1
 set_robust_list: 1
+nanosleep: 1
+clock_nanosleep: 1

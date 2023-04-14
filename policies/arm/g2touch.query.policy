@@ -33,3 +33,6 @@ set_tid_address: 1
 uname: 1
 set_robust_list: 1
 gettid: 1
+nanosleep: 1
+clock_nanosleep: 1
+clock_nanosleep_time64: 1

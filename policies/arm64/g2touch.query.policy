@@ -49,3 +49,5 @@ pselect6: 1
 lgetxattr: 1
 futex: 1
 readlinkat: 1
+nanosleep: 1
+clock_nanosleep: 1
