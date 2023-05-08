@@ -16,6 +16,7 @@ munmap: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 close: 1
 read: 1
+write: 1
 brk: 1
 fstatfs: 1
 lseek: 1
