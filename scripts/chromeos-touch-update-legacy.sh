@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2017 The Chromium OS Authors. All rights reserved.
+# Copyright 2017 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -171,7 +171,7 @@ check_update() {
     "${HIMAX_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-himax-touch-firmware-update-legacy.sh \
-        -d "${i2c_device}" -p "${i2c_path}" -r \
+        -d "${i2c_device}" -p "${i2c_path}" -i "${product_id}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${NVT_VENDOR_ID}")
