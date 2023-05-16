@@ -17,9 +17,16 @@ close: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 stat: 1
 pread64: 1
-ioctl: arg1 == 0x705 || arg1 == 0x707
+# ioctl:
+#   I2C_FUNCS: 0x705
+#   I2C_RDWR: 0x707
+#   HIDIOCGFEATURE(256): 0xc1004807
+#   HIDIOCGRAWINFO: 0x80084803
+ioctl: arg1 == 0x705 || arg1 == 0x707 || arg1 == 0xc1004807 || \
+        arg1 == 0x80084803
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 brk: 1
+execve: 1
 fstatfs: 1
 read: 1
 rt_sigaction: 1

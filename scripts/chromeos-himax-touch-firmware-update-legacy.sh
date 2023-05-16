@@ -1,44 +1,76 @@
 #!/bin/sh
-# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Copyright 2023 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
 . /usr/share/misc/shflags
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
-DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
+DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_string 'device_path' '' "device path" 'p'
+DEFINE_string 'product_id' '' "product id" 'i'
 
 FW_LINK_NAME="himax_i2chid.bin"
 HX_UTIL="/usr/sbin/hx_util"
-GET_ACTIVE_FW_VER="-v"
-GET_ACTIVE_PROD_ID="-p"
+I2C_GET_ACTIVE_FW_VER="-v"
+I2C_GET_ACTIVE_PROD_ID="-p"
+HID_GET_ACTIVE_FW_VER="-V"
+HID_GET_ACTIVE_PROD_ID="-P"
+I2C_ID="i2c"
 
 # Parse command line
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
+fw_update() {
+  local turn="$1"
+  local bus_type="$2"
+  local fw_path="$3"
+  local log=""
+  local i2c_flash_opt="-u"
+  local i2c_dev_opt="-d"
+  local hid_flash_opt="-A"
+  local hid_flash_log="-l"
+
+  if [ "${bus_type}" = "i2c" ]; then
+    log=$(minijail0 -u fwupdate-i2c -g fwupdate-i2c \
+    -G -I -N -n -p -v --uts -e \
+    -S /opt/google/touch/policies/hx_util.update.policy \
+    "${HX_UTIL}" "${i2c_flash_opt}" "${fw_path}" "${i2c_dev_opt}" \
+    "${FLAGS_device}")
+  else
+    log=$(minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+    -G -I -N -n -p -v --uts -e \
+    -S /opt/google/touch/policies/hx_util.update.policy \
+    "${HX_UTIL}" "${hid_flash_opt}" "${fw_path}" "${hid_flash_log}")
+  fi
+
+  if [ -z "${log##*succeed*}" ]; then
+    echo "fw_update by ${bus_type}: success"
+    return 0
+  else
+    echo "fw_update by ${bus_type} error:${log}"
+    return 1
+  fi
+}
+
 update_firmware() {
   local fw_path="$1"
   local fw_param_ver="$2"
+  local bus_type="$3"
   local i
   local ret
-  local cmd_log=""
 
   for i in $(seq 3); do
-    cmd_log="$(
-      minijail0 -u fwupdate-i2c -g fwupdate-i2c \
-          -G -I -N -n -p -v --uts -e \
-          -S /opt/google/touch/policies/hx_util.update.policy \
-          "${HX_UTIL}" -u "${fw_path}" -d "${FLAGS_device}"
-    )"
+    fw_update "${i}" "${bus_type}" "${fw_path}"
 
-    ret=$?
-    if [ ${ret} -eq 0 ]; then
+    ret="$?"
+    if [ "${ret}" -eq 0 ]; then
       return 0
+    else
+      log_msg "FW update attempt #${i} failed"
     fi
-    log_msg "FW update attempt #${i} failed: ${cmd_log}"
     sleep 1
   done
   report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
@@ -47,19 +79,35 @@ update_firmware() {
 }
 
 get_active_fw_param_ver() {
-  # Get the fw & param version of this device.
-  minijail0 -u fwupdate-i2c -g fwupdate-i2c \
-    -G -I -N -n -p -v --uts -e \
-    -S /opt/google/touch/policies/hx_util.query.policy \
-    "${HX_UTIL}" "${GET_ACTIVE_FW_VER}" -d "${FLAGS_device}"
+  local bus_type="$1"
+
+  if [ "${bus_type}" = "${I2C_ID}" ]; then
+    minijail0 -u fwupdate-i2c -g fwupdate-i2c \
+      -G -I -N -n -p -v --uts -e \
+      -S /opt/google/touch/policies/hx_util.query.policy \
+      "${HX_UTIL}" "${I2C_GET_ACTIVE_FW_VER}" "-d" "${FLAGS_device}"
+  else
+    minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+      -G -I -N -n -p -v --uts -e \
+      -S /opt/google/touch/policies/hx_util.query.policy \
+      "${HX_UTIL}" "${HID_GET_ACTIVE_FW_VER}"
+  fi
 }
 
 get_active_product_id() {
-  # Get the product id of this device.
-  minijail0 -u fwupdate-i2c -g fwupdate-i2c \
-    -G -I -N -n -p -v --uts -e \
-    -S /opt/google/touch/policies/hx_util.query.policy \
-    "${HX_UTIL}" "${GET_ACTIVE_PROD_ID}" -d "${FLAGS_device}"
+  local bus_type="$1"
+
+  if [ "${bus_type}" = "${I2C_ID}" ]; then
+    minijail0 -u fwupdate-i2c -g fwupdate-i2c \
+      -G -I -N -n -p -v --uts -e \
+      -S /opt/google/touch/policies/hx_util.query.policy \
+      "${HX_UTIL}" "${I2C_GET_ACTIVE_PROD_ID}" -d "${FLAGS_device}"
+  else
+    minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+      -G -I -N -n -p -v --uts -e \
+      -S /opt/google/touch/policies/hx_util.query.policy \
+      "${HX_UTIL}" "${HID_GET_ACTIVE_PROD_ID}"
+  fi
 }
 
 main() {
@@ -70,13 +118,21 @@ main() {
   local fw_filename=""
   local fw_name=""
   local update_type=""
-  local update_needed=${FLAGS_FALSE}
+  local update_needed="${FLAGS_FALSE}"
   local product_id=""
   local product_fw=""
   local fw_param_ver=""
+  local bus_type=""
+  local i2c_pid="121A"
+
+  if [ "${FLAGS_product_id}" != "${i2c_pid}" ]; then
+    bus_type="hidraw"
+  else
+    bus_type="i2c"
+  fi
 
   # Determine the product ID of the device we're considering updating
-  active_product_id="$(get_active_product_id)"
+  active_product_id="$(get_active_product_id "${bus_type}")"
 
   # Make sure there is a FW that looks like it's for the same product ID
   fw_link_path="$(find_fw_link_path "${FW_LINK_NAME}" "${active_product_id}")"
@@ -104,7 +160,7 @@ main() {
   fi
 
   # Get the current FW version that's loaded on the touch IC
-  active_fw_param_ver="$(get_active_fw_param_ver)"
+  active_fw_param_ver="$(get_active_fw_param_ver "${bus_type}")"
   log_msg "Product ID: ${product_id}"
   log_msg "Current Firmware_parameters: ${active_fw_param_ver}"
   log_msg "Updater Firmware_parameters: ${fw_param_ver}"
@@ -116,11 +172,11 @@ main() {
     "$((0x${fw_param_ver}))")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
-  if [ "${update_needed}" -eq ${FLAGS_TRUE} ]; then
+  if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Updating FW to ${fw_filename}..."
-    update_firmware "${fw_path}" "${fw_param_ver}"
+    update_firmware "${fw_path}" "${fw_param_ver}" "${bus_type}"
 
-    active_fw_param_ver="$(get_active_fw_param_ver)"
+    active_fw_param_ver="$(get_active_fw_param_ver "${bus_type}")"
     log_msg "Current Firmware (after update attempt): ${active_fw_param_ver}"
 
     update_type="$(compare_multipart_version "$((0x${active_fw_param_ver}))" \
