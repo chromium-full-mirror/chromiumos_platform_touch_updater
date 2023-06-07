@@ -29,6 +29,7 @@ exit: 1
 rt_sigreturn: 1
 lseek: 1
 nanosleep: 1
+clock_nanosleep: 1
 fstatfs: 1
 newfstatat: 1
 getrandom: 1
