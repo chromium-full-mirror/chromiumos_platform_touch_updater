@@ -1,0 +1,32 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+rseq: 1
+# ioctl: arg1 == HIDIOCGRAWINFO || arg1 == HIDIOCGRAWNAME(16)
+ioctl: arg1 == 0x80084803 || arg1 == 0xc0104806
+brk: 1
+execve: 1
+uname: 1
+sched_setaffinity: 1
+readlinkat: 1
+openat: 1
+newfstatat: 1
+fstat: 1
+write: 1
+close: 1
+exit_group: 1
+nanosleep: 1
+ppoll: 1
+read: 1
+mmap: 1
+lseek: 1
+munmap: 1
+faccessat: 1
+set_tid_address: 1
+set_robust_list: 1
+prlimit64: 1
+getrandom: 1
+mprotect: 1
+clock_nanosleep: 1
+getdents64: 1
