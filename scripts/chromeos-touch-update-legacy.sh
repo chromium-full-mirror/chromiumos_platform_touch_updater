@@ -24,6 +24,7 @@ EMRIGHT_VENDOR_ID="2C68"
 ZINITIX_VENDOR_ID="14E5"
 HIMAX_VENDOR_ID="4858"
 NVT_VENDOR_ID="0603"
+ILITEK_VENDOR_ID="222A"
 
 log_updater_run() {
   local vendor_id="$1"
@@ -212,6 +213,19 @@ check_update() {
       /opt/google/touch/scripts/chromeos-g2touch-touch-firmware-update-legacy.sh \
         -p "${hid_link_path}" -r \
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
+    "${ILITEK_VENDOR_ID}")
+      local product_id_decimal=$((0x${product_id}))
+      if [ "${product_id_decimal}" -ge $((0x0000)) ] \
+        && [ "${product_id_decimal}" -le $((0x2FFF)) ] ; then
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+        /opt/google/touch/scripts/chromeos-ili-tddi-touch-firmware-update-legacy.sh \
+          -i "${product_id}" -p "${hid_link_path}" \
+          || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      else
+        logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
+		        "unknown pid '${product_id}'"
+      fi
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
