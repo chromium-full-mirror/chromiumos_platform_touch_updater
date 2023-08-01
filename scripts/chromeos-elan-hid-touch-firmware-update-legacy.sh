@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Copyright 2019 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -9,16 +9,22 @@
 # For example: (if HID PID of touch device is 732)
 # ./chromeos-elan-hid-touch-firmware-update-legacy.sh -p 732
 
+# This isn't the exact copy that will be used in production, but it's better
+# than pointing shellcheck at /dev/null.
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
+# shellcheck source=../common/scripts/chromeos-touch-common.sh
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 # Define parameters to pass to script.
-# shellcheck disable=SC2034
+
 DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
+
 # ${device_path}: Device path of the touch device, e.g. "/sys/bus/i2c/devices/i2c-ELAN900C:00"
 # Example:
 #  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2A03
 DEFINE_string 'device_path' '' "device path of the touch device, e.g. /sys/bus/i2c/devices/i2c-ELAN900C:00" "d"
+
 # ${hid_pid}: HID product ID of the touch device, in heximal (e.g. 2A03)
 # Example:
 #  ./chromeos-elan-hid-touch-firmware-update-legacy.sh -d "/sys/bus/i2c/devices/i2c-ELAN900C:00" -p 2A03 (with INX panel)
@@ -238,7 +244,7 @@ main() {
   local fw_filename=
   local fw_path=
   local update_type=
-  local update_needed=${FLAGS_FALSE}
+  local update_needed="${FLAGS_FALSE}"
   local recovery_mode=
   local ret=
   local not_support_calibration_counter=
