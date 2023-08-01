@@ -141,11 +141,13 @@ main() {
 
     # Determine if WP is enabled
     local extra_flashrom_arg=""
-    local wp_status="$(flashrom -p "${PROGRAMMER}" --wp-status | \
-                       sed -n 's/WP: status: \(.*\)/\1/p' 2>/dev/null)"
+    local wp_status="$(ectool --name=cros_tp flashprotect | \
+                       sed -n 's/Flash protect flags:\s\+\(0x\S\+\).*/\1/p' \
+                       2>/dev/null)"
 
     # Only update RW section if WP is enabled
-    if [ "${wp_status}" != "0x00" ]; then
+    # EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_ALL_NOW
+    if [ $((${wp_status} & 6)) -ne 0 ]; then
       extra_flashrom_arg="-i EC_RW"
     fi
 
