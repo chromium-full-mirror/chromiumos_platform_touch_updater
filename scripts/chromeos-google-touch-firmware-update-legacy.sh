@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -18,9 +18,6 @@ FW_LINK="/lib/firmware/google_touchpad.bin"
 
 # Sysfs entry created by cros_ec driver.
 CROS_TP_SYSFS="/sys/class/chromeos/cros_tp"
-
-# Flashrom programmer argument, we are type "tp"
-PROGRAMMER="ec:type=tp"
 
 extract_numerical_fw_version() {
   # FW version string has the following format:
@@ -111,6 +108,56 @@ display_splash() {
   chromeos-boot-alert update_touchpad_firmware
 }
 
+region_data_str_to_dec() {
+  local region_str="$1"
+  local data_name="$2"
+  local data_hex
+
+  # The format looks like:
+  # area_offset="0x00000000" area_size="0x00040000" area_name="EC_RO"
+  # area_flags_raw="0x05" area_flags="static,ro"
+  data_hex=$(echo "${region_str}" | \
+             sed -n "s/.*${data_name}=\"\(0x\S\+\)\".*/\1/p")
+
+  # The number is in hexadecimal format, we need to convert it to decimal.
+  printf "%d" "${data_hex}"
+}
+
+get_and_flash_fw() {
+  local fw_name="$1"
+  local fw_str
+  local fw_offset
+  local fw_size
+  local tmp_file
+
+  log_msg "Update FW ${fw_name}..."
+
+  # Decode the $FW_LINK to help get the offset and size
+  fw_str=$(fmap_decode "${FW_LINK}" | grep "area_name=\"${fw_name}\"")
+  fw_offset=$(region_data_str_to_dec "${fw_str}" "area_offset")
+  fw_size=$(region_data_str_to_dec "${fw_str}" "area_size")
+
+  log_msg "FW ${fw_name}: offset=${fw_offset} size=${fw_size}"
+  if [ -z "${fw_offset}" ] || [ -z "${fw_size}" ]; then
+    die "Unable to derive the offset and size for FW ${fw_name}"
+  fi
+
+  # Extract the region from $FW_LINK to $tmp_file
+  if ! tmp_file=$(mktemp); then
+    die "Unable to create temporary file for flashing FW ${fw_name}"
+  fi
+  if ! dd if="${FW_LINK}" of="${tmp_file}" bs=1 \
+          count="${fw_size}" skip="${fw_offset}" 2>/dev/null; then
+    rm "${tmp_file}"
+    die "Unable to extract the FW ${fw_name} from ${FW_LINK}"
+  fi
+
+  # Erase and flash the region
+  log_msg "Erasing and writing flash chip..."
+  ectool --name=cros_tp flashwrite "${fw_offset}" "${tmp_file}"
+  rm "${tmp_file}"
+}
+
 main() {
   local ret
 
@@ -140,19 +187,42 @@ main() {
     display_splash
 
     # Determine if WP is enabled
-    local extra_flashrom_arg=""
     local wp_status="$(ectool --name=cros_tp flashprotect | \
                        sed -n 's/Flash protect flags:\s\+\(0x\S\+\).*/\1/p' \
                        2>/dev/null)"
 
     # Only update RW section if WP is enabled
     # EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_ALL_NOW
+    log_msg "WP flag: ${wp_status}"
     if [ $((${wp_status} & 6)) -ne 0 ]; then
-      extra_flashrom_arg="-i EC_RW"
-    fi
+      # Jump to RO and erase + flash RW
+      ectool --name=cros_tp reboot_ec RO
+      ectool --name=cros_tp rwsig action abort
+      if get_and_flash_fw "EC_RW"; then
+        log_msg "DENIED"
+      else
+        log_msg "SUCCESS"
+      fi
+    else
+      # Jump to RO and erase + flash RW
+      ectool --name=cros_tp reboot_ec RO
+      ectool --name=cros_tp rwsig action abort
+      if get_and_flash_fw "EC_RW"; then
+        log_msg "DENIED"
+      else
+        log_msg "SUCCESS"
+      fi
 
-    # Run the actual firmware update
-    flashrom -p "${PROGRAMMER}" ${extra_flashrom_arg} -w "${FW_LINK}"
+      # Jump back to RW and erase + flash RO
+      ectool --name=cros_tp reboot_ec RW
+      if get_and_flash_fw "EC_RO"; then
+        log_msg "DENIED"
+      else
+        log_msg "SUCCESS"
+      fi
+    fi
+    log_msg "RWSIG enabled: doing a cold reboot to enable WP."
+    ectool --name=cros_tp reboot_ec cold
 
     # Check if update was successful
     active_fw_ver="$(get_active_fw_version)"
