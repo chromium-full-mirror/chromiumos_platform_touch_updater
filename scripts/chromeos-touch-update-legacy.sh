@@ -196,7 +196,7 @@ check_update() {
         && [ "${product_id_decimal}" -le $((0x2FFF)) ] ; then
         log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
         /opt/google/touch/scripts/chromeos-ili-tddi-touch-firmware-update-legacy.sh \
-          -i "${product_id}" -p "${i2c_path}" \
+          -i "${product_id}" -p "${i2c_path}" -r \
           || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       else
         log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
