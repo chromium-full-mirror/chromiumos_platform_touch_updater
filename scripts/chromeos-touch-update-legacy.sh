@@ -4,6 +4,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# This isn't the exact copy that will be used in production, but it's better
+# than pointing shellcheck at /dev/null.
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 LOGGER_TAG="chromeos-touch-update"
@@ -39,9 +42,12 @@ log_updater_run() {
 
 check_update() {
   local dev="$1"
-  local driver_name="$(basename "$(readlink -f "${dev}/driver")")"
-  local device_name="$(cat "${dev}/name")"
-  local device_description="$(cat "${dev}/description")"
+  local driver_name
+  driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+  local device_name
+  device_name="$(cat "${dev}/name")"
+  local device_description
+  device_description="$(cat "${dev}/description")"
 
   if [ "${driver_name}" = "psmouse" ] || \
     [ "${device_description}" = "i8042 AUX port" ]; then
@@ -53,8 +59,10 @@ check_update() {
 
   case "${driver_name}" in
   i2c_hid*)
-    local hidpath="$(echo "${dev}"/*:[0-9A-F][0-9A-F][0-9A-F][0-9A-F]:*.*)"
-    local hidname="hid-$(echo "${hidpath##*/}" | \
+    local hidpath
+    hidpath="$(echo "${dev}"/*:[0-9A-F][0-9A-F][0-9A-F][0-9A-F]:*.*)"
+    local hidname
+    hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
     local vendor_id="${hidname#*-}"
     local product_id="${vendor_id#*_}"
@@ -65,7 +73,8 @@ check_update() {
       return
     fi
     local link_path="${hidpath%/*}"
-    local i2c_path="$(readlink -f "${link_path}")"
+    local i2c_path
+    i2c_path="$(readlink -f "${link_path}")"
     local i2c_device="${i2c_path%/*}"
     i2c_device="${i2c_device##*/}"
 
@@ -207,8 +216,9 @@ check_update() {
 
   if [ "${driver_name}" = "hid-multitouch" ] \
         || [ "${driver_name}" = "hid-generic" ]; then
-    local hidpath="$(echo "${dev}")"
-    local hidname="hid-$(echo "${hidpath##*/}" | \
+    local hidpath="${dev}"
+    local hidname
+    hidname="hid-$(echo "${hidpath##*/}" | \
                          awk -F'[:.]' '{ print $2 "_" $3 }')"
     local vendor_id="${hidname#*-}"
     local product_id="${vendor_id#*_}"
@@ -218,7 +228,8 @@ check_update() {
     if [ ! -d "${hidpath}" ]; then
       return
     fi
-    local hid_link_path="$(readlink -f "${hidpath}")"
+    local hid_link_path
+    hid_link_path="$(readlink -f "${hidpath}")"
     hid_link_path="${hid_link_path%/*}"
 
     case "${vendor_id}" in
