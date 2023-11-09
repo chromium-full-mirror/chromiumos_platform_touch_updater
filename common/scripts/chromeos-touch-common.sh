@@ -363,7 +363,7 @@ check_i2c_chardev_driver() {
   fi
 }
 
-REPORT_FILE="/run/touch-fw-versions"
+REPORT_FILE="/run/touch-updater/firmware-versions"
 
 # Adds an entry to the report file for a touch device. Update scripts should
 # generally use the report_* functions below instead.
