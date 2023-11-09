@@ -9,9 +9,6 @@
 
 LOGGER_TAG="chromeos-touch-update"
 
-# Touch firmware and config updater for Chromebooks
-PIXART_VENDOR_ID="093A"
-
 # Current firmware status returned by compare_fw_versions in vendor scripts
 UP_TO_DATE="0"
 # shellcheck disable=SC2034  # Unused variables pending TODO(b/129671661).

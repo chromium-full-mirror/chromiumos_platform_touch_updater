@@ -4,6 +4,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Touch firmware vendor ids.
+PIXART_VENDOR_ID="093A"
+
 I2C_DEVICES_PATH="/sys/bus/i2c/devices"
 
 # powerd will check this lock file and block device suspension.
@@ -46,12 +49,13 @@ find_i2c_device_by_name() {
   local required_sysfs="$2"
 
   for dev in "${I2C_DEVICES_PATH}"/*/name; do
-    local dev_name="$(cat "${dev}")"
+    local dev_name
+    dev_name="$(cat "${dev}")"
     if [ "${name_to_find}" = "${dev_name}" ]; then
       local missing_sysfs_entry=0
       local path="${dev%/name}"
 
-      for sysfs in $required_sysfs; do
+      for sysfs in ${required_sysfs}; do
         if [ ! -e "${path}/${sysfs}" ]; then
           missing_sysfs_entry=1
         fi
@@ -74,12 +78,15 @@ find_i2c_hid_device() {
   local preferred_search_path="${2}"
 
   for dev in ${preferred_search_path} "${I2C_DEVICES_PATH}"/*/; do
-    local driver_name="$(readlink -f ${dev}/driver | xargs basename)"
+    local driver_name
+    driver_name="$(readlink -f "${dev}"/driver | xargs basename)"
     case "${driver_name}" in
     i2c_hid*)
-      local hid_path=$(echo ${dev}/*:${vid}:${pid}.*)
+      local hid_path
+      hid_path=$(echo "${dev}"/*:"${vid}":"${pid}".*)
       if [ -d "${hid_path}" ]; then
-        local hidraw_sysfs_path=$(echo ${hid_path}/hidraw/hidraw*)
+        local hidraw_sysfs_path
+        hidraw_sysfs_path=$(echo "${hid_path}"/hidraw/hidraw*)
         path="/dev/${hidraw_sysfs_path##*/}"
         break
       fi
@@ -110,8 +117,9 @@ find_fw_link_path() {
   local specific_fw_link_path=""
   local specific_fw_link_path2=""
   local generic_fw_link_path=""
-  local fw_link_name_extension="`expr "$fw_link_name" : ".*\(\..*\)"`"
-  local fw_link_name_base="${fw_link_name%$fw_link_name_extension}"
+  local fw_link_name_extension
+  fw_link_name_extension="$(expr "${fw_link_name}" : ".*\(\..*\)")"
+  local fw_link_name_base="${fw_link_name%"${fw_link_name_extension}"}"
 
   case ${fw_link_name_base} in
   /*) fw_link_path="${fw_link_name_base}" ;;
@@ -143,7 +151,7 @@ standard_update_firmware() {
   for i in $(seq 5); do
     printf 1 > "${touch_device_path}/update_fw"
     ret=$?
-    if [ ${ret} -eq 0 ]; then
+    if [ "${ret}" -eq 0 ]; then
       return 0
     fi
     log_msg "update_firmware try #${i} failed... retrying."
@@ -184,7 +192,7 @@ rebind_driver() {
   driver_path="$1"; [ "$#" -eq 0 ] || shift
 
   # Fallback for updaters which do not specify the driver_path arg.
-  if [ -z "$driver_path" ]; then
+  if [ -z "${driver_path}" ]; then
     driver_path="$(readlink -f "${touch_device_path}/driver")"
   fi
 
@@ -193,15 +201,15 @@ rebind_driver() {
   log_msg "Attempting to re-bind '${bus_id}' to driver '${driver_path}'"
   echo "${bus_id}" > "${driver_path}/unbind"
   ret="$?"
-  if [ "$ret" -ne 0 ]; then
-    log_msg "Unable to unbind the device from the driver, error $ret.  This "\
-"is sometimes expected when recovering from corrupted firmware.  Continuing "\
-"with attempt to bind the device to the driver."
+  if [ "${ret}" -ne 0 ]; then
+    log_msg "Unable to unbind the device from the driver, error ${ret}. This " \
+      "is sometimes expected when recovering from corrupted firmware. " \
+      "Continuing with attempt to bind the device to the driver."
   fi
 
   echo "${bus_id}" > "${driver_path}/bind"
   ret="$?"
-  if [ "$ret" -ne 0 ]; then
+  if [ "${ret}" -ne 0 ]; then
     log_msg "Unable to bind the device to the driver."
     return 1
   fi
@@ -213,8 +221,16 @@ hex_to_decimal() {
   printf "%d" "0x""$1"
 }
 
+# Disable SC2145 due to the fact that there is no way to fix it without
+# side-effects. We would be guessing at the intent of the authors.
+# SC2154 is also disabled so that all the fixes for this function
+# can be done together.
+#
+# TODO: b/314386667 - Remove shellcheck disable.
+# shellcheck disable=SC2145,SC2154
 log_msg() {
-  local script_filename="$(basename $0)"
+  local script_filename
+  script_filename="$(basename "$0")"
   logger -t "${script_filename%.*}" --id=$$ "${FLAGS_device} $@"
   echo "$@"
 }
@@ -253,9 +269,9 @@ is_update_needed() {
   local update_type="$1"
   if [ "${update_type}" -eq "${UPDATE_NEEDED_OUT_OF_DATE}" ] ||
      [ "${update_type}" -eq "${UPDATE_NEEDED_RECOVERY}" ]; then
-    echo ${FLAGS_TRUE}
+    echo "${FLAGS_TRUE}"
   else
-    echo ${FLAGS_FALSE}
+    echo "${FLAGS_FALSE}"
   fi
 }
 
@@ -285,7 +301,7 @@ compare_multipart_version() {
 
   # Starting with the most significant values, compare them one
   # by one until we find a difference or run out of values.
-  for i in $(seq "$num_parts"); do
+  for i in $(seq "${num_parts}"); do
     active_component="$(_canonicalize_ver_num "$1")"; shift
     updater_component="$(_canonicalize_ver_num "$1")"; shift
     if [ "${active_component}" -lt "${updater_component}" ]; then
@@ -300,7 +316,7 @@ compare_multipart_version() {
 
   if [ -z "${update_type}" ]; then
     update_type="${UPDATE_NOT_NEEDED_UP_TO_DATE}"
-  elif [ "${FLAGS_recovery}" -eq "${FLAGS_TRUE}" ] &&
+  elif [ "${FLAGS_recovery:-}" -eq "${FLAGS_TRUE}" ] &&
        [ "${update_type}" = "${UPDATE_NOT_NEEDED_AHEAD_OF_DATE}" ]; then
     update_type="${UPDATE_NEEDED_RECOVERY}"
   fi
@@ -369,7 +385,7 @@ add_report_entry() {
   if [ -n "${extra_json_fields}" ]; then
     json_fields="${json_fields}, ${extra_json_fields}"
   fi
-  echo "${sysfs_path}" '{'"${json_fields}"'}' >> $REPORT_FILE
+  echo "${sysfs_path}" '{'"${json_fields}"'}' >> "${REPORT_FILE}"
 }
 
 # Makes an untrusted string safe to include in a JSON object (by removing
@@ -379,7 +395,7 @@ make_json_safe() {
 }
 
 # The version value that represents a device being in recovery mode.
-REPORT_VERSION_RECOVERY="(recovery)"
+export REPORT_VERSION_RECOVERY="(recovery)"
 
 # Adds a report entry giving the initial state of a touch device.
 # Parameters:
@@ -403,8 +419,8 @@ report_initial_version() {
   add_report_entry "${sysfs_path}" "${json_fields}" "${optional_extra_fields}"
 }
 
-REPORT_RESULT_FAILURE="FAILURE"
-REPORT_RESULT_SUCCESS="SUCCESS"
+export REPORT_RESULT_FAILURE="FAILURE"
+export REPORT_RESULT_SUCCESS="SUCCESS"
 
 # Adds a report entry describing the result of an update attempt.
 # Parameters:

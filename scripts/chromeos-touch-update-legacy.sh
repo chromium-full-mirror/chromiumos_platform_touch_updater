@@ -6,7 +6,7 @@
 
 # This isn't the exact copy that will be used in production, but it's better
 # than pointing shellcheck at /dev/null.
-# shellcheck source=../../../scripts/lib/shflags/shflags
+# shellcheck source=../common/scripts/chromeos-touch-common.sh
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 LOGGER_TAG="chromeos-touch-update"
