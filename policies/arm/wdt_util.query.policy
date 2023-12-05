@@ -29,6 +29,7 @@ fstat64: 1
 fstatat64: 1
 getrandom: 1
 statx: 1
+getdents64: 1
 write: 1
 close: 1
 exit_group: 1
