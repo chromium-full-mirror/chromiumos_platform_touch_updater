@@ -30,6 +30,7 @@ fstat64: 1
 fstatat64: 1
 getrandom: arg2 in ~GRND_RANDOM
 statx: 1
+getdents64: 1
 _llseek: 1
 close: 1
 getuid32: 1

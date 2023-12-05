@@ -31,6 +31,7 @@ fstat64: 1
 fstatat64: 1
 getrandom: arg2 in ~GRND_RANDOM
 statx: 1
+getdents64: 1
 write: 1
 close: 1
 exit_group: 1
