@@ -14,7 +14,7 @@ mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 write: 1
 newfstatat: 1
-getrandom: 1
+getrandom: arg2 in ~GRND_RANDOM
 fstat: 1
 close: 1
 brk: 1
@@ -22,6 +22,8 @@ brk: 1
 ioctl: 1
 exit_group: 1
 restart_syscall: 1
+# TODO (b/315515591): Remove execve from allow list after we have tests to
+# ensure no regression.
 execve: 1
 munmap: 1
 read: 1
