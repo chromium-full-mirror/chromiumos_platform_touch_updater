@@ -41,3 +41,4 @@ write: 1
 newfstatat: 1
 rseq: 1
 getrandom: 1
+readlinkat: 1
