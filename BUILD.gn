@@ -1,0 +1,125 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//touch_updater/install_touch_updater_seccomp.gni")
+
+_touch_updater_policies_dir = "/opt/google/touch/policies"
+
+group("all") {
+  deps = []
+
+  if (use.input_devices_elan_i2chid) {
+    # Policy for Elan i2chid touch controller firmware updater.
+    deps += [ ":elani2chid_policy" ]
+  }
+
+  if (use.input_devices_emright) {
+    # Policy for EMRight touch controller firmware updater.
+    deps += [ ":emrightupdate_policy" ]
+  }
+
+  if (use.input_devices_eps2pstiap) {
+    # Policy for Elan trackpoint controller firmware updater.
+    deps += [ ":eps2pstiap_policy" ]
+  }
+
+  if (use.input_devices_g2touch) {
+    deps += [ ":g2touch_policy" ]
+  }
+
+  if (use.input_devices_goodix) {
+    # Policy for Goodix touch controller firmware updater.
+    deps += [ ":gdixupdate_policy" ]
+  }
+
+  if (use.input_devices_himax) {
+    # Policy for Himax touch controller firmware updater.
+    deps += [ ":hx_util_policy" ]
+  }
+
+  if (use.input_devices_ilitek_its) {
+    # Policy for Ilitek ITS touch controller firmware updater.
+    deps += [ ":ilitek_ld_policy" ]
+  }
+
+  if (use.input_devices_ilitek_tddi) {
+    # Policy for Ilitek TDDI touch controller firmware updater.
+    deps += [ ":ilitek_tddi_policy" ]
+  }
+
+  if (use.input_devices_melfas) {
+    # Policy for Melfas touch controller firmware updater.
+    deps += [ ":mfsupdate_policy" ]
+  }
+
+  if (use.input_devices_nvt_ts) {
+    # Policy for Novatek touch controller firmware updater.
+    deps += [
+      ":nvt_bridge_interrupt_policy",
+      ":nvt_bridge_update_policy",
+      ":nvt_ts_update_policy",
+    ]
+  }
+
+  if (use.input_devices_pixart) {
+    # Policy for PixArt touch controller firmware updater.
+    deps += [ ":pixtpfwup_policy" ]
+  }
+
+  if (use.input_devices_sis) {
+    # Policy for Silicon Integrated Systems touch controller firmware updater.
+    deps += [ ":sisupdate_policy" ]
+  }
+
+  if (use.input_devices_synaptics) {
+    # Policy for Synaptics touch controller firmware updater.
+    deps += [ ":rmi4update_policy" ]
+  }
+
+  if (use.input_devices_wacom) {
+    # Policy for Wacom touch controller firmware updater.
+    deps += [ ":wacom_flash_policy" ]
+  }
+
+  if (use.input_devices_weida) {
+    # Policy for Weida touch controller firmware updater.
+    deps += [ ":wdt_util_policy" ]
+  }
+
+  if (use.input_devices_zinitix) {
+    # Policy for Zinitix touch controller firmware updater.
+    deps += [ ":zinitixupdate_policy" ]
+  }
+}
+
+touch_updaters = [
+  "elani2chid",
+  "emrightupdate",
+  "eps2pstiap",
+  "g2touch",
+  "gdixupdate",
+  "hx_util",
+  "ilitek_ld",
+  "ilitek_tddi",
+  "mfsupdate",
+  "nvt_bridge_update",
+  "nvt_ts_update",
+  "pixtpfwup",
+  "sisupdate",
+  "rmi4update",
+  "wacom_flash",
+  "wdt_util",
+  "zinitixupdate",
+]
+foreach(updater, touch_updaters) {
+  install_touch_updater_seccomp(updater) {
+  }
+}
+
+# Policy for nvt_bridge_interrupt.
+install_seccomp_policy("nvt_bridge_interrupt_policy") {
+  _arch = getenv("ARCH")
+  sources = [ "policies/${_arch}/nvt_bridge_interrupt_handle.policy" ]
+  install_path = "${_touch_updater_policies_dir}"
+}

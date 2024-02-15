@@ -1,0 +1,35 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//common-mk/install_seccomp_policy.gni")
+
+# Install touch updater seccomp policy files by `install_seccomp_policy`.
+# Handles boiler plate of making sure both a `${target}.query.policy` and
+# a `${target}.update.policy` are installed in the policies directory for
+# touch updaters.
+
+_touch_updater_policies_dir = "/opt/google/touch/policies"
+
+template("install_touch_updater_seccomp") {
+  target_policy_name = target_name + "_policy"
+  install_seccomp_policy(target_policy_name) {
+    forward_variables_from(invoker,
+                           "*",
+                           [
+                             "testonly",
+                             "visibility",
+                           ])
+    _arch = getenv("ARCH")
+    _tool = target_name
+    sources = [
+      "policies/${_arch}/${_tool}.query.policy",
+      "policies/${_arch}/${_tool}.update.policy",
+    ]
+    install_path = "${_touch_updater_policies_dir}"
+  }
+
+  group(target_name) {
+    deps = [ ":${target_policy_name}" ]
+  }
+}
