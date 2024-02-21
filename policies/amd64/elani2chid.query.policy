@@ -96,3 +96,4 @@ futex: 1
 fstatfs: 1
 pread64: 1
 gettid: 1
+readlinkat: 1
