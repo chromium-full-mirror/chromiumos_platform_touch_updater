@@ -56,3 +56,4 @@ munmap: 1
 set_robust_list: 1
 prlimit64: 1
 gettid: 1
+readlinkat: 1
