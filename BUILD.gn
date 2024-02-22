@@ -5,92 +5,239 @@
 import("//touch_updater/install_touch_updater_seccomp.gni")
 
 _touch_updater_policies_dir = "/opt/google/touch/policies"
+_touch_updater_scripts_dir = "/opt/google/touch/scripts"
 
 group("all") {
-  deps = []
+  deps = [
+    ":install_required_scripts",
+    ":install_sysfs_scripts",
+  ]
 
   if (use.input_devices_elan_i2chid) {
-    # Policy for Elan i2chid touch controller firmware updater.
-    deps += [ ":elani2chid_policy" ]
+    # Script and policy for Elan i2chid touch controller firmware updater.
+    deps += [ ":elani2chid_scripts" ]
   }
 
   if (use.input_devices_emright) {
-    # Policy for EMRight touch controller firmware updater.
-    deps += [ ":emrightupdate_policy" ]
+    # Script and policy for EMRight touch controller firmware updater.
+    deps += [ ":emright_scripts" ]
   }
 
   if (use.input_devices_eps2pstiap) {
-    # Policy for Elan trackpoint controller firmware updater.
-    deps += [ ":eps2pstiap_policy" ]
+    # Script and policy for Elan trackpoint controller firmware updater.
+    deps += [ ":eps2pstiap_scripts" ]
   }
 
   if (use.input_devices_g2touch) {
-    deps += [ ":g2touch_policy" ]
+    # Script and policy for G2Touch controller firmware updater.
+    deps += [ ":g2touch_scripts" ]
   }
 
   if (use.input_devices_goodix) {
-    # Policy for Goodix touch controller firmware updater.
-    deps += [ ":gdixupdate_policy" ]
+    # Script and policy for Goodix touch controller firmware updater.
+    deps += [ ":goodix_scripts" ]
   }
 
   if (use.input_devices_himax) {
-    # Policy for Himax touch controller firmware updater.
-    deps += [ ":hx_util_policy" ]
+    # Script and policy for Himax touch controller firmware updater.
+    deps += [ ":himax_scripts" ]
   }
 
   if (use.input_devices_ilitek_its) {
-    # Policy for Ilitek ITS touch controller firmware updater.
-    deps += [ ":ilitek_ld_policy" ]
+    # Script and policy for Ilitek ITS touch controller firmware updater.
+    deps += [ ":ilitek_its_scripts" ]
   }
 
   if (use.input_devices_ilitek_tddi) {
-    # Policy for Ilitek TDDI touch controller firmware updater.
-    deps += [ ":ilitek_tddi_policy" ]
+    # Script and policy for Ilitek TDDI touch controller firmware updater.
+    deps += [ ":ilitek_tddi_scripts" ]
   }
 
   if (use.input_devices_melfas) {
-    # Policy for Melfas touch controller firmware updater.
-    deps += [ ":mfsupdate_policy" ]
+    # Script and policy for Melfas touch controller firmware updater.
+    deps += [ ":melfas_scripts" ]
   }
 
   if (use.input_devices_nvt_ts) {
-    # Policy for Novatek touch controller firmware updater.
-    deps += [
-      ":nvt_bridge_interrupt_policy",
-      ":nvt_bridge_update_policy",
-      ":nvt_ts_update_policy",
-    ]
+    # Script and policy for Novatek touch controller firmware updater.
+    deps += [ ":nvt_ts_scripts" ]
   }
 
   if (use.input_devices_pixart) {
-    # Policy for PixArt touch controller firmware updater.
-    deps += [ ":pixtpfwup_policy" ]
+    # Script and policy for PixArt touch controller firmware updater.
+    deps += [ ":pixart_scripts" ]
   }
 
   if (use.input_devices_sis) {
-    # Policy for Silicon Integrated Systems touch controller firmware updater.
-    deps += [ ":sisupdate_policy" ]
+    # Script and policy for Silicon Integrated Systems touch controller firmware updater.
+    deps += [ ":sis_scripts" ]
   }
 
   if (use.input_devices_synaptics) {
-    # Policy for Synaptics touch controller firmware updater.
-    deps += [ ":rmi4update_policy" ]
+    # Scripts and policy for Synaptics touch controller firmware updater.
+    deps += [ ":synaptics_scripts" ]
   }
 
   if (use.input_devices_wacom) {
-    # Policy for Wacom touch controller firmware updater.
-    deps += [ ":wacom_flash_policy" ]
+    # Script and policy for Wacom touch controller firmware updater.
+    deps += [ ":wacom_scripts" ]
   }
 
   if (use.input_devices_weida) {
     # Policy for Weida touch controller firmware updater.
-    deps += [ ":wdt_util_policy" ]
+    deps += [ ":weida_scripts" ]
   }
 
   if (use.input_devices_zinitix) {
-    # Policy for Zinitix touch controller firmware updater.
-    deps += [ ":zinitixupdate_policy" ]
+    # Script and policy for Zinitix touch controller firmware updater.
+    deps += [ ":zinitix_scripts" ]
   }
+}
+
+# Install required scripts that are used by other scripts or are not enabled by a use flag.
+install_config("install_required_scripts") {
+  sources = [
+    "scripts/atmel_tools.sh",
+    "scripts/chromeos-google-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-touch-update-legacy.sh",
+    "scripts/chromeos-touch-update.sh",
+    "scripts/melfas-usb-udev-trigger.sh",
+  ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+# Install sysfs based update scripts that are not enabled by a use flag.
+install_config("install_sysfs_scripts") {
+  sources = [
+    "scripts/chromeos-atmel-touch-config-update-legacy.sh",
+    "scripts/chromeos-atmel-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-cyapa-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-elan-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-melfas-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-raydium-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-weida-touch-config-update-legacy.sh",
+    "scripts/chromeos-weida-touch-firmware-update-legacy.sh",
+  ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+# Install update scripts and policies that are enabled by a use flag.
+install_config("elani2chid_scripts") {
+  sources = [ "scripts/chromeos-elan-hid-touch-firmware-update-legacy.sh" ]
+  deps = [ ":elani2chid_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("emright_scripts") {
+  sources = [ "scripts/chromeos-emright-touch-firmware-update-legacy.sh" ]
+  deps = [ ":emrightupdate_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("eps2pstiap_scripts") {
+  sources = [ "scripts/chromeos-eps2pstiap-touch-firmware-update-legacy.sh" ]
+  deps = [ ":eps2pstiap_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("g2touch_scripts") {
+  sources = [ "scripts/chromeos-g2touch-touch-firmware-update-legacy.sh" ]
+  deps = [ ":g2touch_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("goodix_scripts") {
+  sources = [ "scripts/chromeos-goodix-touch-firmware-update-legacy.sh" ]
+  deps = [ ":gdixupdate_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("himax_scripts") {
+  sources = [ "scripts/chromeos-himax-touch-firmware-update-legacy.sh" ]
+  deps = [ ":hx_util_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("ilitek_its_scripts") {
+  sources = [ "scripts/chromeos-ili-its-touch-firmware-update-legacy.sh" ]
+  deps = [ ":ilitek_ld_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("ilitek_tddi_scripts") {
+  sources = [ "scripts/chromeos-ili-tddi-touch-firmware-update-legacy.sh" ]
+  deps = [ ":ilitek_tddi_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("melfas_scripts") {
+  sources = [ "scripts/chromeos-melfas-hid-touch-firmware-update-legacy.sh" ]
+  deps = [ ":mfsupdate_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("nvt_ts_scripts") {
+  sources = [ "scripts/chromeos-nvt-touch-firmware-update-legacy.sh" ]
+  deps = [
+    ":nvt_bridge_interrupt_policy",
+    ":nvt_bridge_update_policy",
+    ":nvt_ts_update_policy",
+  ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("pixart_scripts") {
+  sources = [ "scripts/chromeos-pixart-hid-touch-firmware-update-legacy.sh" ]
+  deps = [ ":pixtpfwup_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("sis_scripts") {
+  sources = [ "scripts/chromeos-sis-touch-firmware-update-legacy.sh" ]
+  deps = [ ":sisupdate_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("synaptics_scripts") {
+  sources = [ "scripts/chromeos-synaptics-touch-firmware-update-legacy.sh" ]
+  deps = [ ":rmi4update_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("wacom_scripts") {
+  sources = [ "scripts/chromeos-wacom-touch-firmware-update-legacy.sh" ]
+  deps = [ ":wacom_flash_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("weida_scripts") {
+  sources = [ "scripts/chromeos-weida-hid-touch-firmware-update-legacy.sh" ]
+  deps = [ ":wdt_util_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
+install_config("zinitix_scripts") {
+  sources = [ "scripts/chromeos-zinitix-tp-firmware-update-legacy.sh" ]
+  deps = [ ":zinitixupdate_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
 }
 
 touch_updaters = [
