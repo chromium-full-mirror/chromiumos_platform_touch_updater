@@ -9,10 +9,12 @@
 rseq: 1
 
 brk: 1
-ioctl: 1
+# HIDIOCGFEATURE(6): 0xc0064807
+# HIDIOCSFEATURE(18): 0xc0124806
+ioctl: arg1 == 0xc0064807 || arg1 == 0xc0124806
 fstat: 1
 newfstatat: 1
-getrandom: 1
+getrandom: arg2 in ~GRND_RANDOM
 execve: 1
 arch_prctl: 1
 uname: 1
@@ -31,3 +33,10 @@ set_tid_address: 1
 munmap: 1
 set_robust_list: 1
 gettid: 1
+readlinkat: 1
+clone: 1
+prlimit64: 1
+prctl: arg0 == PR_SET_KEEPCAPS || arg0 == PR_SET_NAME
+rt_sigaction: 1
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+wait4: 1
