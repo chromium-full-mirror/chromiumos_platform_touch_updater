@@ -18,14 +18,14 @@ eval set -- "${FLAGS_ARGV}"
 minijail_version() {
   local policy="/opt/google/touch/policies/zinitixupdate.query.policy"
   minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
-    -G -T dynamic -v -P /mnt/empty -b / -b /dev,,1 -b /sys -t \
+    -G -v -P /mnt/empty -b / -b /dev,,1 -b /sys -b /proc/ -t \
     --uts -e -l -p -N -n -S "${policy}" "${ZINITIXUPDATE}" "$@"
 }
 
 minijail_update() {
   local policy="/opt/google/touch/policies/zinitixupdate.update.policy"
   minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
-    -G -T dynamic -v -P /mnt/empty -b / -b /dev,,1 -b /sys -t \
+    -G -v -P /mnt/empty -b / -b /dev,,1 -b /sys -b /proc/ -t \
     --uts -e -l -p -N -n -S "${policy}" "${ZINITIXUPDATE}" "$@"
 }
 
