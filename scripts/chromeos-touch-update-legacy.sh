@@ -40,10 +40,32 @@ log_updater_run() {
     "Running updater for ${device_name} (${vendor_id}:${product_id})"
 }
 
+# Determines if a device is a touch device based on the driver name. It matches
+# the driver name against all the supported cases in `check_update`. This means
+# that any additional drivers to `check_update` will also need to be included
+# here.
+is_touch_device() {
+  local driver_name="$1"
+  case "${driver_name}" in
+    # Generic drivers.
+    i2c_hid* | hid-multitouch | hid-generic | psmouse)
+      true
+      return
+      ;;
+    # Vendor specific drivers.
+    atmel_mxt_ts | cyapa | elan_i2c | elants_i2c | mip4_ts | raydium_ts | \
+      wdt87xx_i2c)
+      true
+      return
+      ;;
+  esac
+  false
+}
+
+# **NOTE**: Make sure to also add any new drivers to `is_touch_device`.
 check_update() {
   local dev="$1"
-  local driver_name
-  driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+  local driver_name="$2"
   local device_name
   device_name="$(cat "${dev}/name")"
   local device_description
@@ -332,19 +354,22 @@ main() {
   fi
 
   local dev
+  local driver_name
   local power_path
   for dev in $(get_dev_list); do
+    driver_name="$(basename "$(readlink -f "${dev}/driver")")"
     # For devices supported runtime power managment, the "auto" mode would have
     # chance to let device go into runtime_suspend state. Which will prevent
     # touch updater from accessing that device. Here tries to move i2c devices's
     # state from "auto" to "on" then restoring them in the end of update
     # process.
     power_path="${dev}/power/control"
-    if [ -e "${power_path}" ] && [ "auto" = "$(cat "${power_path}")" ]; then
+    if is_touch_device "${driver_name}" && [ -e "${power_path}" ] && \
+        [ "auto" = "$(cat "${power_path}")" ]; then
       echo on > "${power_path}"
     fi
 
-    ( check_update "${dev}" ) &
+    ( check_update "${dev}" "${driver_name}" ) &
   done
 
   wait
@@ -354,8 +379,10 @@ main() {
   # Since rebinding a device to i2c_hid driver makes a new i2chid device created and the original one terminated,
   # thus get_dev_list is needed to get existed devices after firmware update process.
   for dev in $(get_dev_list); do
+    driver_name="$(basename "$(readlink -f "${dev}/driver")")"
     power_path="${dev}/power/control"
-    if [ -e "${power_path}" ] && [ "on" = "$(cat "${power_path}")" ]; then
+    if is_touch_device "${driver_name}" && [ -e "${power_path}" ] && \
+        [ "on" = "$(cat "${power_path}")" ]; then
       echo auto > "${power_path}" ||
       logger -t "${LOGGER_TAG}" "Restore ${power_path} to auto failed."
     fi
