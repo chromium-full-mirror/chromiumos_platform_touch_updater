@@ -19,6 +19,18 @@ FW_LINK="/lib/firmware/google_touchpad.bin"
 # Sysfs entry created by cros_ec driver.
 CROS_TP_SYSFS="/sys/class/chromeos/cros_tp"
 
+# Determine if this is a roach device.
+is_roach_device() {
+  local detachable_path
+  detachable_path=$(cros_config /detachable-base i2c-path)
+  local device_path="${1}"
+  if [ -n "${detachable_path}" ]; then
+    [ "${detachable_path}" = "$(basename "${device_path}")" ]
+    return
+  fi
+  false
+}
+
 extract_numerical_fw_version() {
   # FW version string has the following format:
   # rose_v1.1.6371-3fc259f2c
@@ -159,6 +171,13 @@ get_and_flash_fw() {
 }
 
 main() {
+  # Roach device is a detachable keyboard + touchpad that show up on the i2c bus
+  # instead of the traditional usb bus. They are still handled by hammerd and so
+  # we log and exit.
+  if is_roach_device "${FLAGS_device_path}"; then
+    log_msg "Firmware update supported by hammerd."
+    exit 0
+  fi
   local ret
 
   # Active firmware version (RW version)
