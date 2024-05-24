@@ -24,6 +24,7 @@ EMRIGHT_VENDOR_ID="2C68"
 ZINITIX_VENDOR_ID="14E5"
 HIMAX_VENDOR_ID="4858"
 NVT_VENDOR_ID="0603"
+PARADETECH_VENDOR_ID="1DA0"
 
 log_updater_run() {
   local vendor_id="$1"
@@ -189,6 +190,12 @@ check_update() {
           -p "${i2c_path}" -r \
           || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       fi
+      ;;
+      "${PARADETECH_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+/opt/google/touch/scripts/chromeos-paradetech-touch-firmware-update-legacy.sh \
+        -d "${hidname}" -p "${i2c_path}" -i "${product_id}" -r \
+        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
