@@ -63,6 +63,11 @@ group("all") {
     deps += [ ":nvt_ts_scripts" ]
   }
 
+  if (use.input_devices_paradetech) {
+    # Script and policy for Paradetech touch controller firmware updater.
+    deps += [ ":paradetech_scripts" ]
+  }
+
   if (use.input_devices_pixart) {
     # Script and policy for PixArt touch controller firmware updater.
     deps += [ ":pixart_scripts" ]
@@ -198,6 +203,13 @@ install_config("nvt_ts_scripts") {
   type = "executable"
 }
 
+install_config("paradetech_scripts") {
+  sources = [ "scripts/chromeos-paradetech-touch-firmware-update-legacy.sh" ]
+  deps = [ ":paradetech_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
 install_config("pixart_scripts") {
   sources = [ "scripts/chromeos-pixart-hid-touch-firmware-update-legacy.sh" ]
   deps = [ ":pixtpfwup_policy" ]
@@ -252,6 +264,7 @@ touch_updaters = [
   "mfsupdate",
   "nvt_bridge_update",
   "nvt_ts_update",
+  "paradetech",
   "pixtpfwup",
   "sisupdate",
   "rmi4update",
