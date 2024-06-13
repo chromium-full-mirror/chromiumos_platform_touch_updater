@@ -13,7 +13,11 @@ write: 1
 # HIDIOCSFEATURE(18): 0xc0124806
 # HIDIOCGFEATURE(2): 0xc0024807
 # HIDIOCGFEATURE(6): 0xc0064807
-ioctl: arg1 == 0xc0024806 || arg1 == 0xc0124806 || arg1 == 0xc0024807 || arg1 == 0xc0064807
+# HIDIOCGFEATURE(8): 0xc0084807
+# TCGETS : 0x00005401
+ioctl: arg1 == 0xc0024806 || arg1 == 0xc0124806 || arg1 == 0xc0124807 || \
+arg1 == 0xc0024807 || arg1 == 0xc0064807 || arg1 == 0xc0084807 || \
+arg1 == 0x00005401
 brk: 1
 clock_nanosleep: 1
 openat: 1
@@ -38,3 +42,5 @@ wait4: 1
 clone: 1
 prctl: arg0 == PR_SET_KEEPCAPS || arg0 == PR_SET_NAME
 rt_sigaction: 1
+dup : 1
+fcntl : 1

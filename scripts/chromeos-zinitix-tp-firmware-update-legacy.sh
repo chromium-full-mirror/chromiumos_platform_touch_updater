@@ -35,9 +35,10 @@ update_firmware() {
   local fw_path="$2"
   local dev_path="$1"
   local update_fw_ver="$3"
+  local update_option_ver="$4"
 
   for i in $(seq 3); do
-    minijail_update "32" "${dev_path}" "${fw_path}"
+    minijail_update "${update_option_ver}" "${dev_path}" "${fw_path}"
     ret="$?"
     if [ "${ret}" -eq "0" ]; then
       return 0
@@ -70,6 +71,7 @@ main() {
   local fw_name=""
   local hardware_id=""
   local update_needed="${FLAGS_FALSE}"
+  local update_option_ver=""
 
   if [ -z "${FLAGS_device}" ]; then
     die "Please specify a device using -d"
@@ -118,9 +120,9 @@ main() {
   fi
 
   # Compare the two versions, and see if an update is needed.
-  # If active_fw_ver is "BD01" always update to cover programming mode.
-  # Programming mode version is "BD01".
-  if [ "${active_fw_ver}" = "BD01" ]; then
+  # If active_fw_ver is "BD01" or "BD03" always update to cover programming mode.
+  # Programming mode version are  "BD01" or "BD03".
+  if [ "${active_fw_ver}" = "BD01" ] || [ "${active_fw_ver}" = "BD03" ]; then
     update_needed="${FLAGS_TRUE}"
   else
     update_type="$(compare_multipart_version "${active_minor_ver}" \
@@ -129,13 +131,17 @@ main() {
     update_needed="$(is_update_needed "${update_type}")"
   fi
 
+  if [ "${active_major_ver}" = "33" ]; then
+    update_option_ver="33"
+  else
+    update_option_ver="32"
+  fi
+
   #If the device number is the same, the update proceeds.
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_name} ${touch_dev_path} ${fw_path}"
     run_cmd_and_block_powerd update_firmware "${touch_dev_path}" "${fw_path}" \
-      "${update_fw_ver}"
-
-    rebind_driver "${FLAGS_dev_i2c_path}"
+      "${update_fw_ver}" "${update_option_ver}"
 
     # Check if update was successful
     active_fw_ver="$(get_active_firmware_version "${touch_dev_path}")"
@@ -151,6 +157,8 @@ main() {
     report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_ver}"
   fi
+
+  rebind_driver "${FLAGS_dev_i2c_path}"
 
   exit 0
 }

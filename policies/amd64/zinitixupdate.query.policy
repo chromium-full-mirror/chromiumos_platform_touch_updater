@@ -9,9 +9,10 @@
 rseq: 1
 
 brk: 1
-# HIDIOCGFEATURE(6): 0xc0064807
+# HIDIOCGFEATURE(8): 0xc0084807
 # HIDIOCSFEATURE(18): 0xc0124806
-ioctl: arg1 == 0xc0064807 || arg1 == 0xc0124806
+# TCGETS : 0x00005401
+ioctl: arg1 == 0xc0084807 || arg1 == 0xc0124806 || arg1 == 0x00005401
 fstat: 1
 newfstatat: 1
 getrandom: arg2 in ~GRND_RANDOM
@@ -40,3 +41,5 @@ prctl: arg0 == PR_SET_KEEPCAPS || arg0 == PR_SET_NAME
 rt_sigaction: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 wait4: 1
+dup : 1
+fcntl : 1
