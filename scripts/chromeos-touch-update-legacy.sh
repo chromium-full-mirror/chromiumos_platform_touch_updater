@@ -59,6 +59,11 @@ is_touch_device() {
       true
       return
       ;;
+    # Vendor specific drivers on the SPI bus.
+    goodix-spi-hid)
+      true
+      return
+      ;;
   esac
   false
 }
@@ -171,12 +176,6 @@ check_update() {
         -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
-    "${GOODIX_VENDOR_ID}")
-      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
-      /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update-legacy.sh \
-        -d "${hidname}" -p "${i2c_path}" -r \
-        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
-      ;;
     "${PIXART_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-pixart-hid-touch-firmware-update-legacy.sh \
@@ -277,6 +276,12 @@ check_update() {
     "${ILITEK_VENDOR_ID}")
       logger -t "${LOGGER_TAG}" "${device_name}: ${driver_name} device with"\
                 "pid ${product_id} should be supported as an i2c-hid device."
+      ;;
+    "${GOODIX_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+      /opt/google/touch/scripts/chromeos-goodix-touch-firmware-update-legacy.sh \
+        -d "${hidname}" -p "${hid_link_path}" -r \
+        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\

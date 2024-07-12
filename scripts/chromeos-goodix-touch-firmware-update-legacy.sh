@@ -13,7 +13,7 @@
 
 DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
-DEFINE_string 'dev_i2c_path' '' "device i2c path" 'p'
+DEFINE_string 'dev_path' '' "device path" 'p'
 
 GOODIX_FW_UPDATE_USER="goodixfwupdate"
 GOODIX_FW_UPDATE_GROUP="goodixfwupdate"
@@ -22,6 +22,7 @@ GOODIX_NODE_NAME=""
 FW_LINK_NAME="goodix_firmware.bin"
 GDIXUPDATE="/usr/sbin/gdixupdate"
 GET_BOARD_SPECIFIC_PID="/opt/google/touch/scripts/get_board_goodix_pid.sh"
+GOODIX_TOUCH_VID="27C6"
 
 # Parse command line.
 FLAGS "$@" || exit 1
@@ -43,7 +44,7 @@ update_firmware() {
     fi
     log_msg "FW update attempt #${i} failed... retrying."
   done
-  report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+  report_update_result "${FLAGS_dev_path}" "${REPORT_RESULT_FAILURE}" \
     "${fw_version}"
   die "Error updating touch firmware. ${ret}"
 }
@@ -113,7 +114,7 @@ create_goodix_hidraw() {
 
 main() {
   local touch_device_name="${FLAGS_device}"
-  local touch_device_path=""
+  local touch_device_path="${FLAGS_dev_path}"
   local active_product_id=""
   local active_fw_version=""
   local update_type=""
@@ -128,8 +129,13 @@ main() {
     die "Please specify a device using -d"
   fi
 
+  if [ -z "${FLAGS_dev_path}" ]; then
+    die "Please specify a device path using -p"
+  fi
+
   # Find the device path if it exists "/dev/hidrawX".
-  touch_device_path="$(find_i2c_hid_device "${touch_device_name##*-}")"
+  touch_device_path="$(echo "${FLAGS_dev_path}"/*:${GOODIX_TOUCH_VID}:*.*/hidraw/hidraw*)"
+  touch_device_path="/dev/${touch_device_path##*/}"
   if [ -z "${touch_device_path}" ]; then
     die "${touch_device_name} not found on system. Aborting update."
   fi
@@ -182,7 +188,7 @@ main() {
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
 
-  report_initial_version "${FLAGS_dev_i2c_path}" "Goodix" "${active_fw_version}"
+  report_initial_version "${FLAGS_dev_path}" "Goodix" "${active_fw_version}"
 
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
   log_update_type "${update_type}"
@@ -193,7 +199,7 @@ main() {
     update_firmware "${touch_device_path}" "${fw_path}" "${active_product_id}" \
       "${fw_version}"
 
-    rebind_driver "${FLAGS_dev_i2c_path}"
+    rebind_driver "${FLAGS_dev_path}"
     sleep 0.3
     # Confirm that the FW was updated by checking the current FW version again.
     active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
@@ -201,12 +207,12 @@ main() {
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
 
     if [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
-      report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_FAILURE}" \
+      report_update_result "${FLAGS_dev_path}" "${REPORT_RESULT_FAILURE}" \
         "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeeded. Current Firmware: ${active_fw_version}"
-    report_update_result "${FLAGS_dev_i2c_path}" "${REPORT_RESULT_SUCCESS}" \
+    report_update_result "${FLAGS_dev_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_version}"
   fi
   exit 0
