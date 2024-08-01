@@ -49,6 +49,7 @@ rseq: 1
 arch_prctl: 1
 execve: 1
 clone: 1
+clone3: 1
 pipe2: 1
 wait4: 1
 restart_syscall: 1
