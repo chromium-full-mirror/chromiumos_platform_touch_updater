@@ -34,3 +34,5 @@ set_tid_address: 1
 uname: 1
 set_robust_list: 1
 gettid: 1
+dup: 1
+fcntl: 1
