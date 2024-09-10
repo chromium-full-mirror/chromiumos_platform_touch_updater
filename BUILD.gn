@@ -28,6 +28,11 @@ group("all") {
     deps += [ ":eps2pstiap_scripts" ]
   }
 
+  if (use.input_devices_focaltech) {
+    # Script and policy for FocalTech touch controller firmware updater.
+    deps += [ ":focaltech_scripts" ]
+  }
+
   if (use.input_devices_g2touch) {
     # Script and policy for G2Touch controller firmware updater.
     deps += [ ":g2touch_scripts" ]
@@ -150,6 +155,13 @@ install_config("eps2pstiap_scripts") {
   type = "executable"
 }
 
+install_config("focaltech_scripts") {
+  sources = [ "scripts/chromeos-focal-hid-touch-firmware-update-legacy.sh" ]
+  deps = [ ":focaltech_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
 install_config("g2touch_scripts") {
   sources = [ "scripts/chromeos-g2touch-touch-firmware-update-legacy.sh" ]
   deps = [ ":g2touch_policy" ]
@@ -256,6 +268,7 @@ touch_updaters = [
   "elani2chid",
   "emrightupdate",
   "eps2pstiap",
+  "focaltech",
   "g2touch",
   "gdixupdate",
   "hx_util",
