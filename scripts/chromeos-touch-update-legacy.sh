@@ -24,6 +24,7 @@ EMRIGHT_VENDOR_ID="2C68"
 ZINITIX_VENDOR_ID="14E5"
 HIMAX_VENDOR_ID="4858"
 NVT_VENDOR_ID="0603"
+FOCALTECH_VENDOR_ID="2808"
 PARADETECH_VENDOR_ID="1DA0"
 
 log_updater_run() {
@@ -238,6 +239,12 @@ check_update() {
     "${ILITEK_VENDOR_ID}")
       logger -t "${LOGGER_TAG}" "${device_name}: ${driver_name} device with"\
                 "pid ${product_id} should be supported as an i2c-hid device."
+      ;;
+    "${FOCALTECH_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+      /opt/google/touch/scripts/chromeos-focal-hid-touch-firmware-update-legacy.sh \
+        -d "${hidpath}" -p "${product_id}" -r \
+        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${hidname}: ${driver_name} device with "\
