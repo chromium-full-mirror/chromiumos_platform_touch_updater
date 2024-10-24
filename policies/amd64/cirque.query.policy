@@ -1,0 +1,40 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# rseq should be first due to frequency and purpose to decrease nptl latency
+rseq: 1
+
+# Dangerous syscalls.
+# ioctl:
+#   HIDIOCSFEATURE(8): 0xFFFFFFFFC0084806
+#   HIDIOCGFEATURE(531): 0xFFFFFFFFC2134807
+ioctl: arg1 == 0xFFFFFFFFC0084806 || arg1 == 0xFFFFFFFFC2134807
+
+# Safe dangerous syscalls.
+mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+getrandom: arg2 in ~GRND_RANDOM
+
+openat: 1
+newfstatat: 1
+close: 1
+fstatfs: 1
+read: 1
+gettid: 1
+brk: 1
+pread64: 1
+access: 1
+arch_prctl: 1
+set_tid_address: 1
+set_robust_list: 1
+prlimit64: 1
+munmap: 1
+chmod: 1
+dup: 1
+dup2: 1
+write: 1
+exit_group: 1
+restart_syscall: 1
+exit: 1
+rt_sigreturn: 1

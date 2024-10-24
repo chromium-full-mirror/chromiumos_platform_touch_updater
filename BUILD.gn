@@ -13,6 +13,11 @@ group("all") {
     ":install_sysfs_scripts",
   ]
 
+  if (use.input_devices_cirque) {
+    # Script and policy for Cirque touch controller firmware updater.
+    deps += [ ":cirque_scripts" ]
+  }
+
   if (use.input_devices_elan_i2chid) {
     # Script and policy for Elan i2chid touch controller firmware updater.
     deps += [ ":elani2chid_scripts" ]
@@ -134,6 +139,13 @@ install_config("install_sysfs_scripts") {
 }
 
 # Install update scripts and policies that are enabled by a use flag.
+install_config("cirque_scripts") {
+  sources = [ "scripts/chromeos-cirque-touch-firmware-update-legacy.sh" ]
+  deps = [ ":cirque_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
 install_config("elani2chid_scripts") {
   sources = [ "scripts/chromeos-elan-hid-touch-firmware-update-legacy.sh" ]
   deps = [ ":elani2chid_policy" ]
@@ -265,6 +277,7 @@ install_config("zinitix_scripts") {
 }
 
 touch_updaters = [
+  "cirque",
   "elani2chid",
   "emrightupdate",
   "eps2pstiap",

@@ -30,6 +30,7 @@ NVT_VENDOR_ID="0603"
 ILITEK_VENDOR_ID="222A"
 FOCALTECH_VENDOR_ID="2808"
 PARADETECH_VENDOR_ID="1DA0"
+CIRQUE_VENDOR_ID="0488"
 
 log_updater_run() {
   local vendor_id="$1"
@@ -262,7 +263,13 @@ check_update() {
     hid_link_path="${hid_link_path%/*}"
 
     case "${vendor_id}" in
-    "${SIS_VENDOR_ID}")
+    "${CIRQUE_VENDOR_ID}")
+     log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+     /opt/google/touch/scripts/chromeos-cirque-touch-firmware-update-legacy.sh \
+       -p "${hidpath}"  -i "${product_id}" -r \
+       || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+     ;;
+     "${SIS_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-sis-touch-firmware-update-legacy.sh \
         -p "${hid_link_path}" -r \
