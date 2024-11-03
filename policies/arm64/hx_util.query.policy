@@ -15,6 +15,7 @@ getdents64: 1
 fstat: 1
 close: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 # ioctl:
 #   I2C_FUNCS: 0x705
 #   I2C_RDWR: 0x707

@@ -20,6 +20,7 @@ nanosleep: 1
 ppoll: 1
 read: 1
 mmap: 1
+mseal: 1
 lseek: 1
 munmap: 1
 faccessat: 1

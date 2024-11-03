@@ -29,6 +29,7 @@ access: 1
 faccessat: 1
 faccessat2: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 stat: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 rt_sigaction: 1

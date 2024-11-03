@@ -37,6 +37,7 @@ exit: 1
 rt_sigreturn: 1
 uname: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 munmap: 1
 arch_prctl: 1
 fstat: 1

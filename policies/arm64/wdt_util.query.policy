@@ -14,6 +14,7 @@ ioctl: arg1 == 0x705 || arg1 == 0x707
 openat: 1
 close: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 mprotect: arg2 == PROT_READ || arg2 == PROT_NONE
 newfstatat: 1
 getdents64: 1

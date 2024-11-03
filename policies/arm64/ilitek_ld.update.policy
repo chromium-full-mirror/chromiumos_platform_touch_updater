@@ -22,6 +22,7 @@ ioctl: arg1 == 0xc0404806 || arg1 == 0xc4074806 || \
     arg1 == 0x81004804 || arg1 == 0x80084803
 lseek: 1
 mmap: 1
+mseal: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 munmap: 1
 nanosleep: 1

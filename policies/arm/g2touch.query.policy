@@ -21,6 +21,7 @@ getrandom: 1
 statx: 1
 openat: 1
 mmap2: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 munmap: 1
 exit_group: 1
 restart_syscall: 1

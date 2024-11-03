@@ -19,6 +19,7 @@ close: 1
 newfstatat: 1
 getdents64: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 mprotect: arg2 == PROT_READ || arg2 == PROT_NONE
 read: 1
 munmap: 1

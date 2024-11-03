@@ -20,6 +20,7 @@ restart_syscall: 1
 exit: 1
 exit_group: 1
 mmap2: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+mseal: 1
 munmap: 1
 uname: 1
 readlink: 1
