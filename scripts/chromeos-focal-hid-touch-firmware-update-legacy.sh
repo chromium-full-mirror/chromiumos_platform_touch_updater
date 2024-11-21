@@ -120,7 +120,6 @@ main() {
   local fw_path=
   local update_type=
   local update_needed="${FLAGS_FALSE}"
-  local reboot_needed="${FLAGS_FALSE}"
   local ret=
 
   # Determine the product ID of the device we're considering updating.
@@ -163,7 +162,6 @@ main() {
      [ "$((0x${active_fw_ver}))" -eq "$((0x0104))" ]; then
     log_msg "Stuck in Bootload mode, firmware update is required!"
     update_type="${UPDATE_NEEDED_RECOVERY}"
-    reboot_needed="${FLAGS_TRUE}"
   else
     update_type="$(compare_multipart_version "$((0x${active_fw_ver}))" "$((0x${fw_ver}))")"
   fi
@@ -184,8 +182,9 @@ main() {
       die "Firmware update failed, error_code: ${ret}"
     fi
 
-    # Reset the touch for re-enumeration.
+    # Reset touch with 50 ms for re-enumeration.
     rebind_driver "${FLAGS_device_path}"
+    sleep 0.05
 
     # Confirm that the FW was updated by checking the current FW version again.
     active_fw_ver="$(get_active_fw_ver "${active_product_id}")"
@@ -199,12 +198,6 @@ main() {
     log_msg "Firmware update succeeded. Current Firmware: ${active_fw_ver}"
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_SUCCESS}" \
       "${active_fw_ver}"
-
-    # Enable a system reboot to re-enumerate the device.
-    if [ "${reboot_needed}" -eq "${FLAGS_TRUE}" ]; then
-      log_msg "Reboot will occur after the firmware update succeeds in recovery mode"
-      touch /tmp/force_reboot_after_fw_update
-    fi
   fi
 }
 

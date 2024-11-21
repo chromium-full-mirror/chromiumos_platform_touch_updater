@@ -234,6 +234,12 @@ check_update() {
         -d "${hidname}" -p "${i2c_path}" -i "${product_id}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
+      "${FOCALTECH_VENDOR_ID}")
+      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
+      /opt/google/touch/scripts/chromeos-focal-hid-touch-firmware-update-legacy.sh \
+        -d "${i2c_path}" -p "${product_id}" -r \
+        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
                 "unknown vid '${vendor_id}'"
@@ -277,12 +283,6 @@ check_update() {
     "${ILITEK_VENDOR_ID}")
       logger -t "${LOGGER_TAG}" "${device_name}: ${driver_name} device with"\
                 "pid ${product_id} should be supported as an i2c-hid device."
-      ;;
-    "${FOCALTECH_VENDOR_ID}")
-      log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
-      /opt/google/touch/scripts/chromeos-focal-hid-touch-firmware-update-legacy.sh \
-        -d "${hidpath}" -p "${product_id}" -r \
-        || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     "${GOODIX_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
