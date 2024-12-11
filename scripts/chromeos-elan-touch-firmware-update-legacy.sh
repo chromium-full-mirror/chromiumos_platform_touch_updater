@@ -194,8 +194,6 @@ main() {
   # Check the touch device's FW version and report it.
   active_fw_version="$(get_active_firmware_version_from_sysfs \
     "${FW_VERSION_SYSFS}" "${touch_device_path}")"
-  log_msg "Current Firmware: ${active_fw_version}"
-  log_msg "Updater Firmware: ${fw_version}"
 
   report_initial_version "${touch_device_path}" "Elan" "${active_fw_version}" \
     "\"elan_product_id\": \"$(make_json_safe "${product_id}")\""
@@ -237,6 +235,9 @@ main() {
   fi
 
   # Compare the touch device's FW version to the updater's.
+  log_msg "Current Firmware: ${active_fw_version}"
+  log_msg "Updater Firmware: ${fw_version}"
+
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
