@@ -1,10 +1,13 @@
 #!/bin/bash
 
-# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
+
+# shellcheck source=../common/scripts/chromeos-touch-common.sh
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 DEFINE_string 'dev_name' '' 'device name' 'd'
@@ -38,7 +41,7 @@ create_nvt_ts_hidraw() {
   fi
 
   hidraw_path="$(find_i2c_hid_device "${FLAGS_dev_name##*-}")"
-  if [ -e  "$hidraw_path" ]; then
+  if [ -e  "${hidraw_path}" ]; then
     dev_t_major="$(stat -c "%t" "${hidraw_path}")"
     dev_t_minor="$(stat -c "%T" "${hidraw_path}")"
     if ! mknod "${NVT_TOUCHSCREEN_HIDRAW}" \
@@ -49,7 +52,7 @@ create_nvt_ts_hidraw() {
         "${NVT_TOUCHSCREEN_HIDRAW}"; then
       die "Failed change owner of node: ${NVT_TOUCHSCREEN_HIDRAW}."
     fi
-    if ! chmod 0660 ${NVT_TOUCHSCREEN_HIDRAW}; then
+    if ! chmod 0660 "${NVT_TOUCHSCREEN_HIDRAW}"; then
       die "Failed change mode of node: ${NVT_TOUCHSCREEN_HIDRAW}."
     fi
   else
@@ -62,28 +65,28 @@ bridge_interrupt_handle() {
   minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
       -S /opt/google/touch/policies/nvt_bridge_interrupt_handle.policy \
-      ${BRIDGE_TOOL} ${NVT_TOUCHSCREEN_HIDRAW} "-z" "$1"
+      "${BRIDGE_TOOL}" "${NVT_TOUCHSCREEN_HIDRAW}" "-z" "$1"
 }
 
 get_bridge_fw_ver() {
   minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
       -S /opt/google/touch/policies/nvt_bridge_update.query.policy \
-      ${BRIDGE_TOOL} ${NVT_TOUCHSCREEN_HIDRAW} "-vs"
+      "${BRIDGE_TOOL}" "${NVT_TOUCHSCREEN_HIDRAW}" "-vs"
 }
 
 get_ts_fw_ver() {
   minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
       -S /opt/google/touch/policies/nvt_ts_update.query.policy \
-      ${TS_TOOL} ${NVT_TOUCHSCREEN_HIDRAW} "-vs"
+      "${TS_TOOL}" "${NVT_TOUCHSCREEN_HIDRAW}" "-vs"
 }
 
 update_bridge_fw() {
   if minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
       -S /opt/google/touch/policies/nvt_bridge_update.update.policy \
-      ${BRIDGE_TOOL} ${NVT_TOUCHSCREEN_HIDRAW} "-u" "$1" "$2"; then
+      "${BRIDGE_TOOL}" "${NVT_TOUCHSCREEN_HIDRAW}" "-u" "$1" "$2"; then
     log_msg 'Bridge fw update pass'
   else
     die 'Bridge fw update fail'
@@ -95,7 +98,7 @@ update_ts_fw() {
   if minijail0 -u "${NVT_TS_FW_UPDATE_USER}" -g "${NVT_TS_FW_UPDATE_GROUP}" \
       -n -N -l --uts -e \
       -S /opt/google/touch/policies/nvt_ts_update.update.policy \
-      ${TS_TOOL} ${NVT_TOUCHSCREEN_HIDRAW} "-u" "$1"; then
+      "${TS_TOOL}" "${NVT_TOUCHSCREEN_HIDRAW}" "-u" "$1"; then
     log_msg 'Touchscreen fw update pass'
   else
     die 'Touchscreen fw update fail'
@@ -118,20 +121,20 @@ main() {
 
   # Get PID
   for node_path in "${PANEL_NODE_TABLE[@]}"; do
-    panel=$(cat "$node_path")
-    case $panel in
+    panel=$(cat "${node_path}")
+    case ${panel} in
       'boe,tv110c9m-ll3')
         device_pid='604A'
-        log_msg "Panel boe,tv110c9m-ll3 detected, PID=$device_pid"
+        log_msg "Panel boe,tv110c9m-ll3 detected, PID=${device_pid}"
         ;;
       'innolux,hj110iz-01a')
         device_pid='604C'
-        log_msg "Panel innolux,hj110iz-01a detected, PID=$device_pid"
+        log_msg "Panel innolux,hj110iz-01a detected, PID=${device_pid}"
         ;;
       *)
-        device_pid=$FLAGS_dev_pid
+        device_pid=${FLAGS_dev_pid}
         with_bridge='0'
-        log_msg "No special panel detected, PID=$device_pid"
+        log_msg "No special panel detected, PID=${device_pid}"
         ;;
     esac
   done
@@ -140,13 +143,13 @@ main() {
   create_nvt_ts_hidraw
 
   # If bridge exist, check bridge version and update if needed
-  if $with_bridge; then
-    bridge_fw_link_path=$NVT_BRIDGE_FW_PATH_BASE'_'$NVT_BRIDGE_PID'.bin'
-    bridge_fw_path=$(readlink -f "$bridge_fw_link_path")
-    log_msg "bridge_fw_link_path=$bridge_fw_link_path"
-    log_msg "bridge_fw_path=$bridge_fw_path"
-    if [ ! -e $bridge_fw_link_path ] || [ ! -e "$bridge_fw_path" ]; then
-      die "No valid bridge firmware for $FLAGS_dev_i2c_path"
+  if ${with_bridge}; then
+    bridge_fw_link_path=${NVT_BRIDGE_FW_PATH_BASE}'_'${NVT_BRIDGE_PID}'.bin'
+    bridge_fw_path=$(readlink -f "${bridge_fw_link_path}")
+    log_msg "bridge_fw_link_path=${bridge_fw_link_path}"
+    log_msg "bridge_fw_path=${bridge_fw_path}"
+    if [ ! -e "${bridge_fw_link_path}" ] || [ ! -e "${bridge_fw_path}" ]; then
+      die "No valid bridge firmware for ${FLAGS_dev_i2c_path}"
     fi
     bridge_bin_fw_ver=$(echo "${bridge_fw_path#*"${NVT_BRIDGE_PID}_"}" \
       | cut -d '.' -f 1)
@@ -154,25 +157,25 @@ main() {
     if ! bridge_interrupt_handle 0; then
       die "Can not disable bridge interrupt handling"
     fi
-    log_msg "bridge_bin_fw_ver=$bridge_bin_fw_ver"
-    log_msg "Before update bridge_dev_fw_ver=$bridge_dev_fw_ver"
-    log_msg "Before update bridge PID=$FLAGS_dev_pid"
-    if [ "$bridge_dev_fw_ver" != "$bridge_bin_fw_ver" ] || \
-        ! [ "$device_pid" == "$FLAGS_dev_pid" ]; then
+    log_msg "bridge_bin_fw_ver=${bridge_bin_fw_ver}"
+    log_msg "Before update bridge_dev_fw_ver=${bridge_dev_fw_ver}"
+    log_msg "Before update bridge PID=${FLAGS_dev_pid}"
+    if [ "${bridge_dev_fw_ver}" != "${bridge_bin_fw_ver}" ] || \
+        ! [ "${device_pid}" == "${FLAGS_dev_pid}" ]; then
       # Update bin and PID for bridge, it will also try to keep lock INT
-      if ! update_bridge_fw "$bridge_fw_path" "$device_pid"; then
+      if ! update_bridge_fw "${bridge_fw_path}" "${device_pid}"; then
         die "Update failed or failed to lock bridge INT"
       fi
       sleep 0.5
       bridge_dev_fw_ver=$(get_bridge_fw_ver)
-      if [ "$bridge_dev_fw_ver" != "$bridge_bin_fw_ver" ]; then
-        log_msg "After update bridge_dev_fw_ver=$bridge_dev_fw_ver"
+      if [ "${bridge_dev_fw_ver}" != "${bridge_bin_fw_ver}" ]; then
+        log_msg "After update bridge_dev_fw_ver=${bridge_dev_fw_ver}"
         report_update_result "${FLAGS_dev_i2c_path}" \
-          "${REPORT_RESULT_FAILURE}" "$bridge_bin_fw_ver"
+          "${REPORT_RESULT_FAILURE}" "${bridge_bin_fw_ver}"
         die "Bridge fw update failed for ${FLAGS_dev_i2c_path}"
       else
-        log_msg "Bridge fw update to $bridge_dev_fw_ver, " \
-          "PID update to $device_pid"
+        log_msg "Bridge fw update to ${bridge_dev_fw_ver}, " \
+          "PID update to ${device_pid}"
       fi
       rebind_driver "${FLAGS_dev_i2c_path}"
     else
@@ -181,39 +184,39 @@ main() {
   fi
 
   # Check touchscreen version and update if needed
-  ts_fw_link_path=$NVT_TS_FW_PATH_BASE'_'$device_pid'.bin'
-  ts_fw_path=$(readlink -f "$ts_fw_link_path")
-  log_msg "ts_fw_link_path=$ts_fw_link_path"
-  log_msg "ts_fw_path=$ts_fw_path"
+  ts_fw_link_path=${NVT_TS_FW_PATH_BASE}'_'${device_pid}'.bin'
+  ts_fw_path=$(readlink -f "${ts_fw_link_path}")
+  log_msg "ts_fw_link_path=${ts_fw_link_path}"
+  log_msg "ts_fw_path=${ts_fw_path}"
   if [ ! -e "${ts_fw_link_path}" ] || [ ! -e "${ts_fw_path}" ]; then
     die "No valid touchscreen firmware for ${FLAGS_dev_i2c_path}."
   fi
   ts_bin_fw_ver=$(echo "${ts_fw_path#*"${device_pid}_"}" | cut -d '.' -f 1)
   ts_dev_fw_ver=$(get_ts_fw_ver)
-  log_msg "ts_bin_fw_ver=$ts_bin_fw_ver"
-  log_msg "Before update ts_dev_fw_ver=$ts_dev_fw_ver"
+  log_msg "ts_bin_fw_ver=${ts_bin_fw_ver}"
+  log_msg "Before update ts_dev_fw_ver=${ts_dev_fw_ver}"
   report_initial_version "${FLAGS_dev_i2c_path}" "nvt_ts" "${ts_dev_fw_ver}"
-  if [ "$ts_dev_fw_ver" != "$ts_bin_fw_ver" ]; then
-    update_ts_fw "$ts_fw_path"
+  if [ "${ts_dev_fw_ver}" != "${ts_bin_fw_ver}" ]; then
+    update_ts_fw "${ts_fw_path}"
     sleep 0.5
     ts_dev_fw_ver=$(get_ts_fw_ver)
-    log_msg "After update ts_dev_fw_ver=$ts_dev_fw_ver"
-    if [ "$ts_dev_fw_ver" != "$ts_bin_fw_ver" ]; then
+    log_msg "After update ts_dev_fw_ver=${ts_dev_fw_ver}"
+    if [ "${ts_dev_fw_ver}" != "${ts_bin_fw_ver}" ]; then
       report_update_result "${FLAGS_dev_i2c_path}" \
-        "${REPORT_RESULT_FAILURE}" "$ts_bin_fw_ver"
+        "${REPORT_RESULT_FAILURE}" "${ts_bin_fw_ver}"
       die "Touchscreen fw update failed "\
         "for ${FLAGS_dev_i2c_path}"
     else
       report_update_result "${FLAGS_dev_i2c_path}" \
-        "${REPORT_RESULT_SUCCESS}" "$ts_bin_fw_ver"
-      log_msg "Touchscreen fw update to $ts_dev_fw_ver"
+        "${REPORT_RESULT_SUCCESS}" "${ts_bin_fw_ver}"
+      log_msg "Touchscreen fw update to ${ts_dev_fw_ver}"
       rebind_driver "${FLAGS_dev_i2c_path}"
     fi
   else
     log_msg "No need to update touchscreen fw."
   fi
 
-  if $with_bridge; then
+  if ${with_bridge}; then
     if ! bridge_interrupt_handle 1; then
       die "Can not enable bridge interrupt handling"
     fi
