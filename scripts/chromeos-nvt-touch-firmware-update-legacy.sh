@@ -133,7 +133,7 @@ main() {
         ;;
       *)
         device_pid=${FLAGS_dev_pid}
-        with_bridge='0'
+        with_bridge=false
         log_msg "No special panel detected, PID=${device_pid}"
         ;;
     esac
