@@ -25,7 +25,8 @@ G2TOUCH_VENDOR_ID="2A94"
 ST_VENDOR_ID="0483"
 EMRIGHT_VENDOR_ID="2C68"
 ZINITIX_VENDOR_ID="14E5"
-HIMAX_VENDOR_ID="4858"
+HIMAX_VENDOR_ID_1="3558"
+HIMAX_VENDOR_ID_2="4858"
 NVT_VENDOR_ID="0603"
 ILITEK_VENDOR_ID="222A"
 FOCALTECH_VENDOR_ID="2808"
@@ -202,7 +203,7 @@ check_update() {
         -d "${hidname}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
-    "${HIMAX_VENDOR_ID}")
+    "${HIMAX_VENDOR_ID_1}"|"${HIMAX_VENDOR_ID_2}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-himax-touch-firmware-update-legacy.sh \
         -d "${i2c_device}" -p "${i2c_path}" -i "${product_id}" -r \
