@@ -24,14 +24,15 @@ FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
 fw_update() {
-  local turn="$1"
-  local bus_type="$2"
-  local fw_path="$3"
+  local bus_type="$1"
+  local fw_path="$2"
+  local force_flag="$3"
   local log=""
   local i2c_flash_opt="-u"
   local i2c_dev_opt="-d"
   local hid_flash_opt="-A"
   local hid_flash_log="-l"
+  local hid_flash_force="-F"
 
   if [ "${bus_type}" = "i2c" ]; then
     log=$(minijail0 -u fwupdate-i2c -g fwupdate-i2c \
@@ -39,6 +40,13 @@ fw_update() {
     -S /opt/google/touch/policies/hx_util.update.policy \
     "${HX_UTIL}" "${i2c_flash_opt}" "${fw_path}" "${i2c_dev_opt}" \
     "${FLAGS_device}")
+  elif [ "${force_flag}" -eq "${FLAGS_TRUE}" ]; then
+    log_msg "with force flag..."
+    log=$(minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+    -G -I -N -n -p -v --uts -e \
+    -S /opt/google/touch/policies/hx_util.update.policy \
+    "${HX_UTIL}" "${hid_flash_opt}" "${fw_path}" "${hid_flash_force}" \
+    "${hid_flash_log}")
   else
     log=$(minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
     -G -I -N -n -p -v --uts -e \
@@ -59,11 +67,12 @@ update_firmware() {
   local fw_path="$1"
   local fw_param_ver="$2"
   local bus_type="$3"
+  local force_flag="$4"
   local i
   local ret
 
   for i in $(seq 3); do
-    fw_update "${i}" "${bus_type}" "${fw_path}"
+    fw_update "${bus_type}" "${fw_path}" "${force_flag}"
 
     ret="$?"
     if [ "${ret}" -eq 0 ]; then
@@ -124,6 +133,7 @@ main() {
   local fw_param_ver=""
   local bus_type=""
   local i2c_pid="121A"
+  local force_update="${FLAGS_FALSE}"
 
   if [ "${FLAGS_product_id}" != "${i2c_pid}" ]; then
     bus_type="hidraw"
@@ -172,9 +182,14 @@ main() {
     "$((0x${fw_param_ver}))")"
   log_update_type "${update_type}"
   update_needed="$(is_update_needed "${update_type}")"
+  if [ "${update_type}" -eq "${UPDATE_NEEDED_RECOVERY}" ]; then
+    log_msg "Recovery mode. Forcing update..."
+    force_update="${FLAGS_TRUE}"
+  fi
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Updating FW to ${fw_filename}..."
-    update_firmware "${fw_path}" "${fw_param_ver}" "${bus_type}"
+    update_firmware "${fw_path}" "${fw_param_ver}" "${bus_type}" \
+      "${force_update}"
 
     active_fw_param_ver="$(get_active_fw_param_ver "${bus_type}")"
     log_msg "Current Firmware (after update attempt): ${active_fw_param_ver}"
