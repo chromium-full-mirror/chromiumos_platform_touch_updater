@@ -133,25 +133,30 @@ main() {
     die "Please specify a device path using -p"
   fi
 
+  # Find the active fw version and the product ID currently in use.
+  active_product_id="${touch_device_name##*_}"
+
   # Find the device path if it exists "/dev/hidrawX".
-  touch_device_path="$(echo "${FLAGS_dev_path}"/*:${GOODIX_TOUCH_VID}:*.*/hidraw/hidraw*)"
+  touch_device_path="$(
+    echo "${FLAGS_dev_path}"/*:"${GOODIX_TOUCH_VID}":*.*/hidraw/hidraw*
+  )"
   touch_device_path="/dev/${touch_device_path##*/}"
   if [ -z "${touch_device_path}" ]; then
     die "${touch_device_name} not found on system. Aborting update."
   fi
-
   create_goodix_hidraw "${touch_device_path}"
   touch_device_path="${GOODIX_NODE_NAME}"
-  log_msg "Touch device path: '${touch_device_path}'"
-
-  # Find the active fw version and the product ID currently in use.
-  active_product_id="${touch_device_name##*_}"
 
   # Wait 500ms to allow firmware to get ready to provide version number.
   # TODO(teravest): Remove this once firmware no longer needs this delay.
   sleep 0.5
   active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
       "${active_product_id}")"
+  log_msg "Product ID: ${active_product_id}"
+  log_msg "Current Firmware: ${active_fw_version}"
+  report_initial_version "${FLAGS_dev_path}" "Goodix" "${active_fw_version}"
+
+  log_msg "Touch device path: '${touch_device_path}'"
 
   if [ -x "${GET_BOARD_SPECIFIC_PID}" ]; then
     customize_product_id="$(${GET_BOARD_SPECIFIC_PID} -d "${FLAGS_device}")"
@@ -184,11 +189,7 @@ main() {
   fi
 
   # Compare the two versions, and see if an update is needed.
-  log_msg "Product ID: ${active_product_id}"
-  log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
-
-  report_initial_version "${FLAGS_dev_path}" "Goodix" "${active_fw_version}"
 
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
   log_update_type "${update_type}"
