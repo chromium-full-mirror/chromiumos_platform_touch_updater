@@ -15,12 +15,16 @@ exit_group: 1
 close: 1
 read: 1
 write: 1
+pselect6: 1
 # IOCTL Information:
 #  ftphid_ezupg_ap:
 #   HIDIOSCFEATURE: 0xc0404806
 #   HIDIOGCFEATURE: 0xc0404807
 #   HIDIOCGRAWINFO: 0x80084803
-ioctl: arg1 == 0xc0404806 || arg1 == 0xc0404807 || arg1 == 0x80084803
+#   HIDIOCSOUTPUT: 0xC0404808
+#   HIDIOCGOUTPUT: 0x8040480B
+ioctl: arg1 == 0xc0404806 || arg1 == 0xc0404807 || arg1 == 0x80084803 || \
+       arg1 == 0xC0404808 || arg1 == 0x8040480B
 fstat: 1
 lseek: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
