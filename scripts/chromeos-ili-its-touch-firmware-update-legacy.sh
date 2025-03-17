@@ -32,112 +32,53 @@ minijail_tool() {
             -G -I -N -n -p -v -e --uts -S "$@"
 }
 
-get_ilitek_protocol() {
-  local protocol_version="$1"
-  local protocol_version_major=""
-  local protocol_version_minor=""
-
-  protocol_version_major=${protocol_version%.*}
-  protocol_version_minor=${protocol_version#*.}
-  if [ "${protocol_version_major}" -eq "1" ]; then
-    if [ "${protocol_version_minor}" -eq "8" ]; then
-      echo "V6"
-    elif [ "${protocol_version_minor}" -eq "6" ] || \
-         [ "${protocol_version_minor}" -eq "7" ]; then
-      echo "V3"
-    else
-      echo "Unknown"
-    fi
-  elif [ "${protocol_version_major}" -eq "3" ]; then
-    echo "V3"
-  elif [ "${protocol_version_major}" -eq "6" ]; then
-    echo "V6"
-  else
-    echo "Unknown"
-  fi
-}
-
 get_active_controller_info() {
   local ilitek_log=""
-  local protocol_version=""
-  local protocol_version_string=""
+  local product_id=""
   local fw_mode=""
   local fw_version=""
   local ret=""
 
   ilitek_log="$(minijail_tool \
               "${ILITEK_ITS_QUERY_POLICY_PATH}" \
-              "${ILITEK_ITS_TOOL_PATH}" "PanelInfor" "I2C-HID" \
-              "V6" "null" "null")"
+              "${ILITEK_ITS_TOOL_PATH}" "PanelInfor" \
+              "-i" "${ILITEK_ITS_FWID_MAPPING_FILE}")"
   ret="$?"
-
   if [ "${ret}" -eq "0" ]; then
-    # Parse protocol version in format "protocol version: [%02X.%02X]".
-    protocol_version="$(echo "${ilitek_log}" \
-      | grep "protocol-version-tag:" | head -1)"
-    protocol_version="${protocol_version##*[}"
-    protocol_version="${protocol_version%]}"
-    protocol_version_string="$(get_ilitek_protocol "${protocol_version}")"
+    # Parse active product id in format "fwid-tag: [%s]".
+    product_id="$(echo "${ilitek_log}" | grep "fwid-tag:" | head -1)"
+    product_id="${product_id##*[}"
+    product_id="${product_id%%]*}"
 
-    if [ "${protocol_version_string}" != "V6" ] && \
-       [ "${protocol_version_string}" != "V3" ]; then
-      die "unrecognized protocol version: ${protocol_version}"
-    fi
-
-    # Parse fw mode in format "fw mode: [%s]".
+    # Parse fw mode in format "fw-mode-tag: [%s]".
     fw_mode="$(echo "${ilitek_log}" | grep "fw-mode-tag:" | head -1)"
     fw_mode="${fw_mode##*[}"
-    fw_mode="${fw_mode%]}"
+    fw_mode="${fw_mode%%]}"
 
+    # Parse fw mode in format "fw-version-tag: [%s]".
     fw_version="$(echo "${ilitek_log}" \
       | grep "fw-version-tag:" | head -1)"
     fw_version="${fw_version##*[}"
-    fw_version="${fw_version%]}"
+    fw_version="${fw_version%%]}"
 
-    echo "${protocol_version_string}:${fw_mode}:${fw_version}"
-    return 0
-  fi
-
-  # Some error occurred when executing "get_active_protocol_version".
-  die "'get_active_protocol_info' failed, ret:${ret}"
-}
-
-get_active_product_id() {
-  local ilitek_protocol="$1"
-  local ilitek_log=""
-  local product_id=""
-  local ret=""
-
-  ilitek_log="$(minijail_tool \
-              "${ILITEK_ITS_QUERY_POLICY_PATH}" \
-              "${ILITEK_ITS_TOOL_PATH}" "FWID" "I2C-HID" \
-              "${ilitek_protocol}" "null" "null" \
-              --fwid-map-file="${ILITEK_ITS_FWID_MAPPING_FILE}")"
-  ret="$?"
-  if [ "${ret}" -eq "0" ]; then
-    # Parse active product id.
-    product_id="$(echo "${ilitek_log}" \
-      | grep "fwid-tag:" | head -1)"
-    product_id="${product_id#*[}"
-    product_id="${product_id%%]*}"
-    echo "${product_id}"
+    echo "${product_id}:${fw_mode}:${fw_version}"
     exit 0
   else
-    # Some error occurred when executing "get_active_product_id".
-    die "'get_active_product_id' failed, ret=${ret}"
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${fw_version}"
+    # Some error occurred when executing "get_active_controller_info".
+    die "'get_active_controller_info' failed, ret=${ret}"
   fi
 }
 
 get_active_firmware_version() {
-  local ilitek_protocol="$1"
   local ilitek_log=""
   local ret=""
   local firmware_version=""
 
   ilitek_log="$(minijail_tool  \
               "${ILITEK_ITS_QUERY_POLICY_PATH}" \
-              "${ILITEK_ITS_TOOL_PATH}" "Chrome" "I2C-HID" \
-              "${ilitek_protocol}" "null" "null")"
+              "${ILITEK_ITS_TOOL_PATH}" "Chrome")"
 
   ret="$?"
   if [ "${ret}" -eq "0" ]; then
@@ -155,15 +96,14 @@ get_active_firmware_version() {
 }
 
 update_firmware() {
-  local ilitek_protocol="$1"
-  local fw_path="$2"
-  local fw_version="$3"
+  local fw_path="$1"
+  local fw_version="$2"
   local ilitek_log=""
 
   ilitek_log="$(minijail_tool \
               "${ILITEK_ITS_UPDATE_POLICY_PATH}" \
-              "${ILITEK_ITS_TOOL_PATH}" "FWUpgrade" "I2C-HID" \
-              "${ilitek_protocol}" "null" "null" "${fw_path}")"
+              "${ILITEK_ITS_TOOL_PATH}" "FWUpgrade" \
+              "-i" "${fw_path}")"
 
   # Show info for the exit-value of executing "update_firmware".
   if [ "$?" -eq "0" ]; then
@@ -222,26 +162,35 @@ main() {
   local update_type=""
   local update_needed="${FLAGS_FALSE}"
   local ilitek_controller_info=""
-  local ilitek_protocol=""
   local fw_mode=""
   local fw_path=""
   local ret=""
 
-  # Get controller info in format <V6 or V3>:<AP or BL>:<FW version>.
+  # Get controller info in format <product id>:<AP or BL>:<FW version>.
   ilitek_controller_info="$(get_active_controller_info)"
-  ilitek_protocol="${ilitek_controller_info%%:*}"
-  fw_mode="${ilitek_controller_info#*:}"
-  fw_mode="${fw_mode%%:*}"
-  active_fw_version="${ilitek_controller_info##*:}"
-  log_msg "Ilitek IC protocol: '${ilitek_protocol}', mode: '${fw_mode}'."
-
-  # Get active product id.
-  active_product_id="$(get_active_product_id "${ilitek_protocol}")"
   ret="$?"
   if [ "${ret}" -ne "0" ]; then
     log_msg "Unable to determine active product id, ret=${ret}"
     die "Aborting. Can not continue safely without knowing active product id"
-  elif [ -z "${active_product_id}" ]; then
+  fi
+
+  active_product_id="${ilitek_controller_info%%:*}"
+  fw_mode="${ilitek_controller_info#*:}"
+  fw_mode="${fw_mode%%:*}"
+  active_fw_version="${ilitek_controller_info##*:}"
+
+  log_msg "Ilitek(its) IC mode: '${fw_mode}'"
+  if [ "${fw_mode}" = "AP" ]; then
+    report_initial_version "${FLAGS_device_path}" "Ilitek(its)" \
+      "${active_fw_version}"
+  else
+    report_initial_version "${FLAGS_device_path}" "Ilitek(its)" \
+      "${REPORT_VERSION_RECOVERY}"
+  fi
+
+  if [ -z "${active_product_id}" ]; then
+    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+      "${active_fw_version}"
     log_msg "Got empty active product id"
     die "Aborting.  Can not continue safely without knowing active product id"
   fi
@@ -277,14 +226,10 @@ main() {
     fi
 
     # Compare the two versions, and see if an update is needed.
-    report_initial_version "${FLAGS_device_path}" "Ilitek" \
-      "${active_fw_version}"
     log_msg "Current Firmware: ${active_fw_version}"
     log_msg "Updater Firmware: ${fw_version}"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
   else
-    report_initial_version "${FLAGS_device_path}" "Ilitek" \
-      "${REPORT_VERSION_RECOVERY}"
     log_msg "In bootloader mode, should fw upgrade forcely"
     update_type="${UPDATE_NEEDED_RECOVERY}"
   fi
@@ -295,10 +240,10 @@ main() {
   # If an update is needed, start it now and confirm it worked.
   if [ "${update_needed}" -eq "${FLAGS_TRUE}" ]; then
     log_msg "Update FW to ${fw_filename}"
-    update_firmware "${ilitek_protocol}" "${fw_path}" "${fw_version}"
+    update_firmware "${fw_path}" "${fw_version}"
 
     # Confirm that the fw was updated by checking the current fw version again.
-    active_fw_version="$(get_active_firmware_version "${ilitek_protocol}")"
+    active_fw_version="$(get_active_firmware_version)"
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
       report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
