@@ -200,7 +200,7 @@ check_update() {
     "${ZINITIX_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}"
       /opt/google/touch/scripts/chromeos-zinitix-tp-firmware-update-legacy.sh \
-        -d "${hidname}" -p "${i2c_path}" -r \
+        -d "${hidname}" -p "${i2c_path}" -i "${product_id}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
       ;;
     "${HIMAX_VENDOR_ID_1}"|"${HIMAX_VENDOR_ID_2}")

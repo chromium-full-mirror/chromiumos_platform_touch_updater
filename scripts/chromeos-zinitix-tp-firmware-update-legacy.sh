@@ -7,6 +7,7 @@
 DEFINE_string 'device' '' "device name" 'd'
 DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
 DEFINE_string 'dev_i2c_path' '' "device i2c path" 'p'
+DEFINE_string 'product_id' '' "product id" 'i'
 
 FW_LINK_BASE="zinitix_firmware.bin"
 ZINITIXUPDATE="/usr/sbin/Zinitix_FWupdate"
@@ -77,6 +78,10 @@ main() {
     die "Please specify a device using -d"
   fi
 
+  if [ -z "${FLAGS_product_id}" ]; then
+    die "Please provide a product id using -i"
+  fi
+
   # Find the device path if it exists "/dev/hidrawX".
   touch_dev_path="$(find_i2c_hid_device "${touch_dev_name##*-}")"
   log_msg "touch_dev_path:${touch_dev_path}"
@@ -93,7 +98,8 @@ main() {
 
   report_initial_version "${FLAGS_dev_i2c_path}" "Zinitix" "${active_fw_ver}"
 
-  fw_link_path="$(find_fw_link_path "${FW_LINK_BASE}" "${hardware_id}")"
+  fw_link_path="$(find_fw_link_path "${FW_LINK_BASE}" "${FLAGS_product_id}"\
+               "$(echo "${FLAGS_product_id}" | tr '[:upper:]' '[:lower:]')")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink -f "${fw_link_path}")"
 
@@ -131,7 +137,7 @@ main() {
     update_needed="$(is_update_needed "${update_type}")"
   fi
 
-  if [ "${active_major_ver}" = "33" ]; then
+  if [ "${active_major_ver}" = "33" ] || [ "${active_major_ver}" = "2C" ]; then
     update_option_ver="33"
   else
     update_option_ver="32"
