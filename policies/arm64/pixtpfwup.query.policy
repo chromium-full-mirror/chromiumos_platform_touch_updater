@@ -36,3 +36,5 @@ rt_sigprocmask: 1
 exit: 1
 fstatfs: 1
 gettid: 1
+dup: 1
+fcntl: 1
