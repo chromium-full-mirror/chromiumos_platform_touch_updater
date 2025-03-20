@@ -472,3 +472,23 @@ report_config_result() {
   add_report_entry "${sysfs_path}" "\"flashed_config\": \"${flashed_config}\"" \
     "${extra_fields}"
 }
+
+# Adds a report entry stating the tool name being run and its version.
+# This could be executed at the beginning of a firmware updating script
+# or a config updating script.
+# Parameters:
+#   sysfs_path: a path to the device in sysfs (see add_report_entry).
+#   tool_name: the name of the tool being run (executable name).
+#   tool_version: the tool version being run.
+report_tool_version() {
+  local sysfs_path="$1"
+  local tool_name
+  local tool_version
+
+  tool_name="$(make_json_safe "$2")"
+  tool_version="$(make_json_safe "$3")"
+
+  local json_fields="\"tool\": \"${tool_name}\","
+  json_fields="${json_fields} \"version\": \"${tool_version}\""
+  add_report_entry "${sysfs_path}" "${json_fields}"
+}

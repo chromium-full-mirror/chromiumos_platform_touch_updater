@@ -110,6 +110,25 @@ get_active_fw_ver() {
   fi
 }
 
+get_tool_version() {
+  # Get updater tool version.
+  # Args:
+  #  $1: hid_pid of touch device.
+  # Outputs:
+  #  ${tool_version}: Updater tool version, e.g.: 2.4_2025-02-25
+  local tool_version
+  local pid="$1"
+
+  tool_version="$(
+    minijail0 -u fwupdate-hidraw -g fwupdate-hidraw \
+      -G -v -P /mnt/empty -b / -b /dev,,1 \
+      -t --uts -e -l -p -N -n \
+      -S /opt/google/touch/policies/focaltech.query.policy -- \
+      "${FOCALTECH_TOOL}" -v -P "${pid}"  2>&1
+  )"
+  echo -n "${tool_version}" | tr -d '\n\r '
+}
+
 main() {
 
   local active_product_id=
@@ -125,6 +144,9 @@ main() {
   # Determine the product ID of the device we're considering updating.
   active_product_id="${FLAGS_hid_pid}"
   log_msg "active_product_id: ${active_product_id}"
+
+  report_tool_version "${FLAGS_device_path}" "$(basename "${FOCALTECH_TOOL}")" \
+    "$(get_tool_version "${active_product_id}")"
 
 
   # Find the firmware that the updater is considering flashing
