@@ -98,8 +98,21 @@ main() {
 
   report_initial_version "${FLAGS_dev_i2c_path}" "Zinitix" "${active_fw_ver}"
 
-  fw_link_path="$(find_fw_link_path "${FW_LINK_BASE}" "${FLAGS_product_id}"\
-               "$(echo "${FLAGS_product_id}" | tr '[:upper:]' '[:lower:]')")"
+  # Boxster/chromeos-config does not enforce a case for hexadecimal values.
+  # The product id in boxster is manually entered by a human. Unfortunately
+  # boxster/chromeos-config does not enforce a case for hexadecimal values.
+  # The values entered in the config are used directly to generate firmware
+  # file names. Since there is no case requirement, the product id and
+  # associated filenames might be in lower case.
+  # Kernel standardized on upper case. We create a lowercase version of the
+  # product id from the kernel and pass it as the third optional argument to
+  # `find_fw_link_path`; This allows for `find_fw_link_path` to find firmware
+  # files for the product id, irrespective of the case used by device/project.
+  product_id_lowercase="$(echo "${FLAGS_product_id}" | tr '[:upper:]' \
+    '[:lower:]')"
+
+  fw_link_path="$(find_fw_link_path "${FW_LINK_BASE}" "${FLAGS_product_id}" \
+    "${product_id_lowercase}")"
   log_msg "Attempting to load FW: '${fw_link_path}'"
   fw_path="$(readlink -f "${fw_link_path}")"
 
