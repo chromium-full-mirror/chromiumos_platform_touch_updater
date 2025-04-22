@@ -154,6 +154,7 @@ main() {
   if [ ! -c "${dev_path}" ]; then
     die "Unable to find Cirque device file."
   fi
+  log_msg "Updating Cirque device with product ID ${FLAGS_device_pid}"
 
   active_fw_ver="$(get_active_fw_version "${dev_path}")"
   report_initial_version "${FLAGS_device_path}" "Cirque" "${active_fw_ver}"
