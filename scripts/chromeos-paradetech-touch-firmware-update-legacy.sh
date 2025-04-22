@@ -40,29 +40,6 @@ check_applicability() {
   exit 0
 }
 
-get_target_product_id() {
-  local fw_path="$1"
-
-  local ptupdater_log=""
-  ptupdater_log="$(minijail_tool \
-                /opt/google/touch/policies/paradetech.query.policy \
-                "${PARADE_UPDATER_TOOL}" \
-                "--check-target=${fw_path}" "--verbose=5")"
-  local ret="$?"
-
-  if [ "${ret}" -eq 0 ]; then
-    # Parse product ID from target bin file.
-    local product_id_text
-    product_id_text="$(echo "${ptupdater_log}" \
-       | grep "INFO: Target PID: " | head -1)"
-
-    echo "${product_id_text##*"INFO: Target PID: "}"
-    exit 0
-  else
-    die "ptupdater get target product ID failed, code=${ret}"
-  fi
-}
-
 get_active_fw_version() {
   local hidraw_path="$1"
 
@@ -82,29 +59,6 @@ get_active_fw_version() {
     exit 0
   else
     die "ptupdater get active version failed, code=${ret}"
-  fi
-}
-
-get_target_fw_version() {
-  local fw_path="$1"
-
-  local ptupdater_log=""
-  ptupdater_log="$(minijail_tool \
-                /opt/google/touch/policies/paradetech.query.policy \
-                "${PARADE_UPDATER_TOOL}" \
-                "--check-target=${fw_path}" "--verbose=5")"
-  local ret="$?"
-
-  if [ "${ret}" -eq 0 ]; then
-    # Parse firmware version from target bin file.
-    local version_text
-    version_text="$(echo "${ptupdater_log}" \
-       | grep "INFO: Target Version: " | head -1)"
-
-    echo "${version_text##*"INFO: Target Version: "}"
-    exit 0
-  else
-    die "ptupdater get target version failed, code=${ret}"
   fi
 }
 
@@ -165,8 +119,6 @@ main() {
   local fw_link_path=""
   local active_fw_version=""
   local target_fw_version=""
-  local pid_from_filename=""
-  local fw_ver_from_filename=""
   local update_type=""
   local update_needed="${FLAGS_FALSE}"
   local ret=""
@@ -216,25 +168,14 @@ main() {
     die "No valid firmware found for Paradetech device."
   fi
 
-  # Get PID from firmware file.
-  target_pid="$(get_target_product_id "${fw_path}")"
-  log_msg "Target product ID: ${target_pid}"
-
-  # Get fw_version from firmware file.
-  target_fw_version="$(get_target_fw_version "${fw_path}")"
-  log_msg "Target firmware version: ${target_fw_version}"
-
   # Get PID,fw_version from file name.
   fw_name="$(basename "${fw_path}" | sed "s/.bin$//")"
-  pid_from_filename=${fw_name%_*}
-  fw_ver_from_filename=${fw_name#"${pid_from_filename}_"}
+  target_pid=${fw_name%_*}
+  target_fw_version=${fw_name#"${target_pid}_"}
+
   # Check PID,fw_version from firmware file.
-  if [ "${target_pid}" != "${pid_from_filename}" ]; then
-    log_msg "warn: PID from filename: ${pid_from_filename} mismatch!"
-  fi
-  if [ "${target_fw_version}" != "${fw_ver_from_filename}" ]; then
-    log_msg "warn: fw ver from filename: ${fw_ver_from_filename} mismatch!"
-  fi
+  log_msg "Target product ID: ${target_pid}"
+  log_msg "Target firmware version: ${target_fw_version}"
 
   # Compare the two pids.
   if [ "${target_pid}" != "${active_pid}" ]; then
