@@ -275,6 +275,9 @@ main() {
     die "No valid firmware for Elan i2chid ${active_product_id} found."
   fi
 
+  # Log "Product ID: <Product ID>" to /var/log/messages for test case parsing
+  log_msg "Product ID: ${active_product_id}"
+
   # Parse out the file name and firmware version from the fw_path.
   fw_version="$(get_fw_version_from_filename "${fw_path}")"
   log_msg "FW version of file: ${fw_version}"
