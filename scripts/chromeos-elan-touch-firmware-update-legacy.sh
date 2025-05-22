@@ -234,6 +234,9 @@ main() {
     die "Touch firmware updater: Product ID mismatch!"
   fi
 
+  # Log "Product ID: <Product ID>" to /var/log/messages for test case parsing.
+  log_msg "Product ID: ${active_product_id}"
+
   # Compare the touch device's FW version to the updater's.
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
