@@ -22,6 +22,7 @@ file taking precedence. For example, take this report file:
 /sys/devices/platform/AMD0010:00/i2c-1/i2c-ATML0001:01 {"update_status": "SUCCESS", "flashed_version": "1.1.BB"}
 /sys/devices/platform/AMD0010:00/i2c-1/i2c-ATML0001:01 {"initial_config": "7c2fb6"}
 /sys/devices/platform/AMD0010:00/i2c-1/i2c-ATML0001:01 {"update_status": "FAILURE", "flashed_config": "12abf4"}
+/sys/devices/pci0000:00/0000:00:15.0/i2c_designware.0/i2c-0/i2c-FTCS0038:00 {"tool": "ftphid_ezupg_ap", "tool_version": "2.4_2025-02-25"}
 ```
 
 For the Elan device (`/sys/devices/platform/AMD0010:00/i2c-0/i2c-ELAN0000:0`),
@@ -72,7 +73,8 @@ The JSON objects may contain any of these fields:
 *   `name`: a name for the device as reported by the kernel driver
 *   `vendor_id`: the 16-bit HID vendor id for the device in hexadecimal format
 *   `product_id`: the 16-bit HID product id for the device in hexadecimal format
-
+*   `tool`: a name for the tool used by the updater
+*   `tool_version`: the version of the tool used by the updater
 
 Version numbers are strings, but readers of the file can assume that versions
 are lexically ordered (e.g. version "1.2.3" is later than "1.2.0", and version
@@ -85,7 +87,7 @@ touch device found in more detail than the evdev product ID does.
 
 ## Creating the report from an update script
 
-`chromeos-touch-common.sh` provides four utility functions for writing to the
+`chromeos-touch-common.sh` provides five utility functions for writing to the
 report:
 
 *   `report_initial_version` should be called by every firmware updater on every
@@ -96,6 +98,10 @@ report:
     config updaters.
 *   `report_updater_run` should be called by every firmware updater on every
     run. Will usually be called before updater specific script is invoked.
+*   `report_tool_version` should be called by every firmware updater on every
+    run.
+
+(Note that `report_tool_version` is not fully used in every firmware updater yet.)
 
 See the comments in [the source file](../common/scripts/chromeos-touch-common.sh)
 for the details of each call.

@@ -490,7 +490,7 @@ report_tool_version() {
   tool_version="$(make_json_safe "$3")"
 
   local json_fields="\"tool\": \"${tool_name}\","
-  json_fields="${json_fields} \"version\": \"${tool_version}\""
+  json_fields="${json_fields} \"tool_version\": \"${tool_version}\""
   add_report_entry "${sysfs_path}" "${json_fields}"
 }
 
