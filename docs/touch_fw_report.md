@@ -69,6 +69,10 @@ The JSON objects may contain any of these fields:
     represented by its checksum
 *   `flashed_config`: if an update or downgrade was *attempted* (whether
     successful or not), the new config, typically represented by its checksum
+*   `name`: a name for the device as reported by the kernel driver
+*   `vendor_id`: the 16-bit HID vendor id for the device in hexadecimal format
+*   `product_id`: the 16-bit HID product id for the device in hexadecimal format
+
 
 Version numbers are strings, but readers of the file can assume that versions
 are lexically ordered (e.g. version "1.2.3" is later than "1.2.0", and version
@@ -90,6 +94,8 @@ report:
     attempted, giving the status and the version of the new firmware.
 *   `report_initial_config` and `report_config_result` are the equivalents for
     config updaters.
+*   `report_updater_run` should be called by every firmware updater on every
+    run. Will usually be called before updater specific script is invoked.
 
 See the comments in [the source file](../common/scripts/chromeos-touch-common.sh)
 for the details of each call.

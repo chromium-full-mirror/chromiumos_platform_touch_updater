@@ -492,3 +492,33 @@ report_tool_version() {
   json_fields="${json_fields} \"version\": \"${tool_version}\""
   add_report_entry "${sysfs_path}" "${json_fields}"
 }
+
+# Adds a report entry indicating that the updater has run.
+# Parameters:
+#   sysfs_path: a path to the device in sysfs (see add_report_entry).
+#   updater: a name identifying the updater in use.
+#   name: the device name as reported by the device driver in sysfs.
+#   vendor_id: the 16-bit vendor id for the HID device in hexadecimal format.
+#   product_id: the 16-bit product id for the HID device in hexadecimal format.
+report_updater_run() {
+  local sysfs_path="${1}"
+  local updater
+  local name
+  local vendor_id=""
+  local product_id=""
+
+  updater="$(make_json_safe "${2}")"
+  name="$(make_json_safe "${3}")"
+  if [ -n "${4}" ]; then
+    vendor_id="$(make_json_safe "${4}")"
+  fi
+  if [ -n "${5}" ]; then
+    product_id="$(make_json_safe "${5}")"
+  fi
+
+  local json_fields="\"updater\": \"${updater}\","
+  json_fields="${json_fields} \"name\": \"${name}\","
+  json_fields="${json_fields} \"vendor_id\": \"${vendor_id}\","
+  json_fields="${json_fields} \"product_id\": \"${product_id}\""
+  add_report_entry "${sysfs_path}" "${json_fields}"
+}
