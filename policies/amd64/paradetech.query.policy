@@ -13,6 +13,7 @@ clock_nanosleep: 1
 # pthread_create() function is used to capture data of hidraw node,
 # it's necessary for basic comminication
 clone: 1
+clone3: 1
 close: 1
 dup: 1
 dup2: 1

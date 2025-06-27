@@ -42,6 +42,7 @@ prctl: arg0 == PR_SET_NAME || arg0 == PR_SET_KEEPCAPS
 getdents64: 1
 pipe2: 1
 clone: 1
+clone3: 1
 dup3: 1
 fcntl: 1
 getpid: 1

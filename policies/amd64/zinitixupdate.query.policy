@@ -36,6 +36,7 @@ set_robust_list: 1
 gettid: 1
 readlinkat: 1
 clone: 1
+clone3: 1
 prlimit64: 1
 prctl: arg0 == PR_SET_KEEPCAPS || arg0 == PR_SET_NAME
 rt_sigaction: 1
