@@ -196,7 +196,7 @@ main() {
     "${FW_VERSION_SYSFS}" "${touch_device_path}")"
 
   report_initial_version "${touch_device_path}" "Elan" "${active_fw_version}" \
-    "\"elan_product_id\": \"$(make_json_safe "${product_id}")\""
+    "\"elan_product_id\": \"$(make_json_safe "${active_product_id}")\""
 
   # Find the FW that the updater is considering flashing on the touch device.
   fw_link_path="$(find_fw_link_path "${FW_NAME}.bin" "${active_product_id}")"
