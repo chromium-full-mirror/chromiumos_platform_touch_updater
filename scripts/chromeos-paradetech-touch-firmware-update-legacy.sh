@@ -42,8 +42,16 @@ check_applicability() {
 
 get_active_fw_version() {
   local hidraw_path="$1"
-
   local ptupdater_log=""
+
+  # Sometimes touchscreens may be probed after boot-update-firmware.conf
+  # being executed. To ensure that the touchscreen's firmware is updated,
+  # the updater can be run via udev. For this situation, udev rules are
+  # loaded later than the updater. So here gives /dev/hidraw* nodes group
+  # r/w access manually.
+  chgrp hidraw "${hidraw_path}"
+  chmod 0660 "${hidraw_path}"
+
   ptupdater_log="$(minijail_tool \
                 /opt/google/touch/policies/paradetech.query.policy \
                 "${PARADE_UPDATER_TOOL}" "${hidraw_path}" \
@@ -96,8 +104,16 @@ compare_fw_versions() {
 update_firmware() {
   local hidraw_path="$1"
   local fw_filepath="$2"
-
   local ptupdater_log=""
+
+  # Sometimes touchscreens may be probed after boot-update-firmware.conf
+  # being executed. To ensure that the touchscreen's firmware is updated,
+  # the updater can be run via udev. For this situation, udev rules are
+  # loaded later than the updater. So here gives /dev/hidraw* nodes group
+  # r/w access manually.
+  chgrp hidraw "${hidraw_path}"
+  chmod 0660 "${hidraw_path}"
+
   ptupdater_log="$(minijail_tool \
                 /opt/google/touch/policies/paradetech.update.policy \
                 "${PARADE_UPDATER_TOOL}" "${hidraw_path}" \
