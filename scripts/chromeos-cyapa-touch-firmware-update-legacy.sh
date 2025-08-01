@@ -21,6 +21,7 @@ CYAPA_FW_VERSION_SYSFS="firmware_version"
 CYAPA_PRODUCT_ID_SYSFS="product_id"
 CYAPA_REQUIRED_SYSFS="${CYAPA_FW_VERSION_SYSFS} ${CYAPA_PRODUCT_ID_SYSFS} \
                       update_fw"
+CYAPA_VENDOR_ID="04B4"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -75,6 +76,9 @@ main() {
     log_msg "Unable to determine active product id"
     die "Aborting.  Can not continue safely without knowing active product ID"
   fi
+
+  log_updater_run "${CYAPA_VENDOR_ID}" "${active_product_id}" \
+   "${device_name}" "${device_path}" "Cypress"
 
   # Find the FW that the updater is considering flashing on the touch device.
   fw_link_path="$(find_fw_link_path "${CYAPA_FIRMWARE_NAME}" \
