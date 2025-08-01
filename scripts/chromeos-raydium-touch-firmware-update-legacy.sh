@@ -29,6 +29,7 @@ RAYDIUM_FW_UPDATE_SYSFS="update_fw"
 RAYDIUM_FW_BOOTMODE_SYSFS="boot_mode"
 RAYDIUM_REQUIRED_SYSFS="${RAYDIUM_FW_BOOTMODE_SYSFS} ${RAYDIUM_FW_VERSION_SYSFS} \
                       ${RAYDIUM_FW_UPDATE_SYSFS} ${RAYDIUM_HW_VERSION_SYSFS}"
+RAYDIUM_VENDOR_ID="2386"
 
 get_active_firmware_version() {
   local touch_device_path="$1"
@@ -95,6 +96,10 @@ main() {
 
   # Read the device's HW version
   active_hw_version="$(cat ${touch_device_path}/${RAYDIUM_HW_VERSION_SYSFS})"
+
+  log_updater_run "${RAYDIUM_VENDOR_ID}" "${active_hw_version}" \
+   "${touch_device_name}" "${touch_device_path}" "Raydium"
+
   active_boot_mode="$(cat ${touch_device_path}/${RAYDIUM_FW_BOOTMODE_SYSFS})"
   if [ -z "${active_hw_version}" ]; then
     die "No hw version found in ${touch_device_path}."
