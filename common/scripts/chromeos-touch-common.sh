@@ -5,6 +5,7 @@
 # found in the LICENSE file.
 
 # Touch firmware vendor ids.
+ELAN_VENDOR_ID="04F3"
 PIXART_VENDOR_ID="093A"
 
 I2C_DEVICES_PATH="/sys/bus/i2c/devices"

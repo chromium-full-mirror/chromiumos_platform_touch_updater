@@ -183,6 +183,11 @@ main() {
   log_msg "Touch controller reported Product ID: ${reported_product_id}"
   active_product_id="$(correct_reported_product_id "${reported_product_id}" \
     "${board}")"
+
+  local product_id_for_logging="${active_product_id:-${reported_product_id}}"
+  log_updater_run "${ELAN_VENDOR_ID}" "${product_id_for_logging}" \
+    "${touch_device_name}" "${touch_device_path}" "Elan"
+
   if [ -z "${active_product_id}" ]; then
     log_msg "Unable to determine active product id"
     die "Aborting.  Can not continue safely without knowing active product ID"
