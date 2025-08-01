@@ -33,22 +33,6 @@ FOCALTECH_VENDOR_ID="2808"
 PARADETECH_VENDOR_ID="1DA0"
 CIRQUE_VENDOR_ID="0488"
 
-log_updater_run() {
-  local vendor_id="$1"
-  local product_id="$2"
-  local device_name="$3"
-  local device_path="${4}"
-  local updater_name="${5}"
-
-  # This log message is load-bearing, in that the touch_UpdateErrors test
-  # checks for this exact message to confirm that the updater has run.
-  logger -t "${LOGGER_TAG}" \
-    "Running updater for ${device_name} (${vendor_id}:${product_id})"
-  # Add a report entry that will persist even if log is rotated.
-  report_updater_run "${device_path}" "${updater_name}" "${device_name}" \
-    "${vendor_id}" "${product_id}"
-}
-
 # Determines if a device is a touch device based on the driver name. It matches
 # the driver name against all the supported cases in `check_update`. This means
 # that any additional drivers to `check_update` will also need to be included
