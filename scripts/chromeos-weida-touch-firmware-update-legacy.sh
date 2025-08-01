@@ -13,6 +13,7 @@ FW_DIR="/lib/firmware"
 FW_LINK_NAME="wdt87xx_fw.bin"
 FW_LINK_PATH="${FW_DIR}/${FW_LINK_NAME}"
 WEIDA_FW_VERSION_SYSFS="fw_version"
+WEIDA_VENDOR_ID="2575"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -72,6 +73,9 @@ main() {
 
   # Determine the product ID of the device we're considering updating
   active_product_id="$(get_active_product_id "${touch_device_path}")"
+
+  log_updater_run "${WEIDA_VENDOR_ID}" "${active_product_id}" \
+   "${trackpad_device_name}" "${touch_device_path}" "Weida"
 
   # Make sure there is a FW that looks like it's for the same product ID
   log_msg "Attempting to load FW: '${FW_LINK_PATH}'"
