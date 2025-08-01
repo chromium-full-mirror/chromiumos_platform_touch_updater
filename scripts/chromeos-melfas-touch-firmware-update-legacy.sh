@@ -13,6 +13,7 @@ FW_DIR="/lib/firmware"
 FW_LINK_NAME_BASE="melfas_mip4.fw"
 FW_VERSION_SYSFS="fw_version"
 PRODUCT_ID_SYSFS="product_id"
+MELFAS_VENDOR_ID="13C5"
 
 # Parse command line
 FLAGS "$@" || exit 1
@@ -64,6 +65,9 @@ main() {
 
   # Determine the product ID of the device we're considering updating
   active_product_id="$(cat ${touch_device_path}/${PRODUCT_ID_SYSFS})"
+
+  log_updater_run "${MELFAS_VENDOR_ID}" "${active_product_id}" \
+   "${trackpad_device_name}" "${touch_device_path}" "Melfas"
 
   # Make sure there is a FW that looks like it's for the same product ID
   fw_link_path="$(find_fw_link_path "${FW_LINK_NAME_BASE}" \
