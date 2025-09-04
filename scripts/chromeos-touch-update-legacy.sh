@@ -60,6 +60,78 @@ is_touch_device() {
   false
 }
 
+# Determines if a device is a panel follower.
+# A panel follower is a device that is powered on and off with the screen.
+# Typically these are touchscreens that are embedded in the display panel.
+# This function checks if the device is a panel follower by checking if
+# the device tree node has a "panel" property.
+is_panel_follower() {
+  local dev="$1"
+  local device_tree_path
+  local driver_name
+
+  device_tree_path="$(readlink -f "${dev}/of_node")"
+  driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+
+  case "${driver_name}" in
+    i2c_hid*)
+      if [ -e "${device_tree_path}/panel" ]; then
+        true
+      else
+        false
+      fi
+      ;;
+    *)
+      false
+      ;;
+  esac
+}
+
+# Wait up to 1 second for the HID driver to bind to the device.
+# This is needed for devices that are powered on only when the screen is on
+# The HID driver should bind to the device when the panel is powered on. If
+# the HID driver is not bound to the device, the firmware update will likely
+# fail.
+wait_hid_driver_ready() {
+  local dev="$1"
+  local timeout=10 # in 1/10 second
+  local elapsed=0 # in 1/10 second
+  local hid_path
+  local hidraw_sysfs_path
+
+  hidpath="$(echo "${dev}"/*:[0-9A-F][0-9A-F][0-9A-F][0-9A-F]:*.*)"
+
+  # If the HID driver is already bound to the device, return immediately.
+  if [ -d "${hidpath}" ]; then
+    hidraw_sysfs_path="$(echo "${hidpath}"/hidraw/hidraw*)"
+    if [ -e "${hidraw_sysfs_path}" ]; then
+      return
+    fi
+  fi
+
+  # Wait up to `timeout` for the HID driver to bind to the device.
+  # The HID driver should bind to the device when the panel is powered on.
+  # The wait interval is 100ms.
+  while [ "${elapsed}" -lt "${timeout}" ]; do
+    sleep 0.1
+    elapsed=$((elapsed + 1))
+    hidpath="$(echo "${dev}"/*:[0-9A-F][0-9A-F][0-9A-F][0-9A-F]:*.*)"
+    if [ -d "${hidpath}" ]; then
+      hidraw_sysfs_path="$(echo "${hidpath}"/hidraw/hidraw*)"
+      if [ -e "${hidraw_sysfs_path}" ]; then
+        break
+      fi
+    fi
+  done
+
+  logger -t "${LOGGER_TAG}" "waited ${elapsed}00ms for hid driver ready."
+
+  # Make sure the HID driver successfully bound to the device.
+  if [ ! -d "${hidpath}" ] || [ ! -e "${hidraw_sysfs_path}" ]; then
+    logger -t "${LOGGER_TAG}" "HID driver is not ready and update might fail."
+  fi
+}
+
 # **NOTE**: Make sure to also add any new drivers to `is_touch_device`.
 check_update() {
   local dev="$1"
@@ -392,7 +464,14 @@ main() {
   local dev
   local driver_name
   local power_path
+
   for dev in $(get_dev_list); do
+    # TODO(b/429327583): Add support for x86 devices.
+    # The following code assumes the existence of of_node, which is not
+    # supported on x86.
+    if [ -e "${dev}/of_node" ] && is_panel_follower "${dev}"; then
+      wait_hid_driver_ready "${dev}"
+    fi
     driver_name="$(basename "$(readlink -f "${dev}/driver")")"
     # For devices supported runtime power managment, the "auto" mode would have
     # chance to let device go into runtime_suspend state. Which will prevent
