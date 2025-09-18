@@ -384,36 +384,15 @@ check_update() {
 }
 
 main() {
-  if [ $# -gt 1 ]; then
-    logger -t "${LOGGER_TAG}" "This script shouldn't have more than 1 argument."
+  if [ $# -ne 0 ]; then
+    logger -t "${LOGGER_TAG}" "This script should not have any argument."
     exit 1
   fi
-  exec 9>/var/lock/touch-firmware-updater.lock
-  flock 9
-  local dev_list
+
   local dev
   local driver_name
   local power_path
-  if [ $# -eq 1 ]; then
-    local vendor_id
-    vendor_id="$(echo "${1##*/}" | awk -F'[:.]' '{ print $2 }')"
-    case "${vendor_id}" in
-      # These vendor's updater use i2c device as parameter instead of hid device
-      "${WACOM_VENDOR_ID_1}"|"${WACOM_VENDOR_ID_2}"|"${ELAN_VENDOR_ID}"| \
-      "${SYNAPTICS_VENDOR_ID}"|"${GOOGLE_VENDOR_ID}"|"${PIXART_VENDOR_ID}"| \
-      "${ST_VENDOR_ID}"|"${EMRIGHT_VENDOR_ID}"|"${ZINITIX_VENDOR_ID}"| \
-      "${HIMAX_VENDOR_ID_1}"|"${HIMAX_VENDOR_ID_2}"|"${NVT_VENDOR_ID}"| \
-      "${ILITEK_VENDOR_ID}"|"${PARADETECH_VENDOR_ID}"|"${FOCALTECH_VENDOR_ID}")
-      # Get the i2c device
-      dev="$(dirname "$1")"
-      ;;
-    esac
-    dev_list="${dev}"
-  else
-    dev_list="$(get_dev_list)"
-  fi
-
-  for dev in ${dev_list}; do
+  for dev in $(get_dev_list); do
     driver_name="$(basename "$(readlink -f "${dev}/driver")")"
     # For devices supported runtime power managment, the "auto" mode would have
     # chance to let device go into runtime_suspend state. Which will prevent
@@ -435,7 +414,7 @@ main() {
   # changed by this script in the begining.
   # Since rebinding a device to i2c_hid driver makes a new i2chid device created and the original one terminated,
   # thus get_dev_list is needed to get existed devices after firmware update process.
-  for dev in ${dev_list}; do
+  for dev in $(get_dev_list); do
     driver_name="$(basename "$(readlink -f "${dev}/driver")")"
     power_path="${dev}/power/control"
     if is_touch_device "${driver_name}" && [ -e "${power_path}" ] && \
