@@ -20,6 +20,7 @@ DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
+PARADETECH_VENDOR_ID="1DA0"
 PARADE_FW_UPDATE_USER="fwupdate-hidraw"
 PARADE_FW_UPDATE_GROUP="fwupdate-hidraw"
 PARADE_FIRMWARE_NAME="paradetech.bin"
@@ -113,6 +114,7 @@ update_firmware() {
 main() {
   local preferred_search_path="${FLAGS_i2c_path}"
   local touch_device_name="${FLAGS_device_name}"
+  local i2c_dev_name=""
   local hidraw_path=""
   local active_pid=""
   local target_pid=""
@@ -145,6 +147,21 @@ main() {
   log_msg "HIDRAW sysfs node path: '${hidraw_path}'"
 
   active_pid="${touch_device_name##*_}"
+
+  # For the legacy module (PID 3001), it may report a default PID (3406)
+  # when the touch firmware is wiped. It was initially assumed that the
+  # bootloader would only respond with basic ACKs, which led to the adoption
+  # of a default PID (3406). While the issue has been resolved, earlier
+  # shipped products retain the default setting. Additionally, touch device
+  # will recover its finger report function after system reboot again.
+  if [ "${active_pid}" = "3406" ]; then
+    log_msg "Correct PID from 3406 to 3001"
+    log_msg "You may need to reboot the computer to reload touch driver."
+    active_pid="3001"
+    i2c_dev_name="$(cat "${FLAGS_i2c_path}/name")"
+    report_updater_run "${FLAGS_i2c_path}" "Paradetech" \
+      "${i2c_dev_name}" "${PARADETECH_VENDOR_ID}" "${active_pid}"
+  fi
 
   # Make sure the product ID is what the updater expects.
   log_msg "Active product ID: ${active_pid}"
