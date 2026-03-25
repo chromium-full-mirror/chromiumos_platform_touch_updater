@@ -50,3 +50,4 @@ clock_nanosleep: 1
 clock_nanosleep_time64: 1
 rt_sigreturn: 1
 gettid: 1
+dup: 1

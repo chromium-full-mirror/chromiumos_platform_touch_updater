@@ -50,3 +50,4 @@ prlimit64: arg2 == 0 && arg3 != 0
 fstatfs: 1
 getxattr: 1
 clock_nanosleep:1
+dup: 1

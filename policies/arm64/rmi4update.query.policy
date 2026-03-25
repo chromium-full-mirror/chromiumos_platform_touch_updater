@@ -42,3 +42,4 @@ prlimit64: 1
 getdents64: 1
 gettid: 1
 clock_nanosleep: 1
+dup: 1
