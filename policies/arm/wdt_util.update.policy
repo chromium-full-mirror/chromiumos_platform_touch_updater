@@ -46,3 +46,4 @@ uname: 1
 munmap: 1
 set_robust_list: 1
 gettid: 1
+writev: 1
