@@ -30,3 +30,5 @@ exit: 1
 rt_sigreturn: 1
 fstatfs: 1
 gettid: 1
+nanosleep: 1
+clock_nanosleep: 1
