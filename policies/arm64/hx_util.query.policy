@@ -42,3 +42,4 @@ exit: 1
 rt_sigreturn: 1
 uname: 1
 gettid: 1
+writev: 1
