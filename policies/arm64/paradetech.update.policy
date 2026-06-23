@@ -24,9 +24,10 @@ futex: 1
 getrandom: arg2 in ~GRND_RANDOM
 # ioctl:
 #   TCGETS: 0x5401
+#   TCGETS2: 0x802c542a
 #   HIDIOCGRDESCSIZE: 0x80044801
 #   HIDIOCGRAWINFO: 0x80084803
-ioctl: arg1 == 0x5401 || arg1 == 0x80084803 || arg1 == 0x80044801
+ioctl: arg1 == 0x5401 || arg1 == 0x802c542a || arg1 == 0x80084803 || arg1 == 0x80044801
 lseek: 1
 madvise: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE

@@ -12,7 +12,7 @@ read: 1
 nanosleep: 1
 clock_nanosleep: 1
 brk: 1
-ioctl: arg1 == 0x5401 || arg1 == 0x80084803 || arg1 == 0x5413 || arg1 == 0x81004804
+ioctl: arg1 == 0x5401 || arg1 == 0x802c542a || arg1 == 0x80084803 || arg1 == 0x5413 || arg1 == 0x81004804
 close: 1
 openat: 1
 lseek: 1

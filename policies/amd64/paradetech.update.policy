@@ -24,11 +24,12 @@ futex: 1
 getrandom: arg2 in ~GRND_RANDOM
 # ioctl:
 #   TCGETS: 0x5401
+#   TCGETS2: 0x802c542a
 #   HIDIOCGRDESCSIZE: 0x80044801
 #   HIDIOCGRAWINFO: 0x80084803
 #   I2C_FUNCS: 0x705
 #   I2C_SLAVE_FORCE: 0x706
-ioctl: arg1 == 0x5401 || arg1 == 0x80044801 || arg1 == 0x80084803 || \
+ioctl: arg1 == 0x5401 || arg1 == 0x802c542a || arg1 == 0x80044801 || arg1 == 0x80084803 || \
         arg1 == 0x705 ||  arg1 == 0x706
 lseek: 1
 madvise: 1

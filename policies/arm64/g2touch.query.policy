@@ -30,7 +30,7 @@ set_robust_list: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 prlimit64: 1
 faccessat: 1
-ioctl: arg1 == 0x5401 || arg1 == 0x5413 || arg1 == 0x81004804 || arg1 == 0x80084803
+ioctl: arg1 == 0x5401 || arg1 == 0x802c542a || arg1 == 0x5413 || arg1 == 0x81004804 || arg1 == 0x80084803
 execve: 1
 gettid: 1
 statfs: 1
