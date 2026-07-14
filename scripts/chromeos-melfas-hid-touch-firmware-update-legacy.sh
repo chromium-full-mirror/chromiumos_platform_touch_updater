@@ -3,7 +3,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
+# shellcheck source=../common/scripts/chromeos-touch-common.sh
 . /opt/google/touch/scripts/chromeos-touch-common.sh
 
 # shellcheck disable=SC2034
@@ -205,6 +207,7 @@ main() {
   log_msg "Product ID: ${product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
   log_msg "Updater Firmware: ${fw_version}"
+  report_initial_version "${hidraw_node}" "Melfas_HID" "${active_fw_version}"
 
   # Determine if an update is needed, and if we do, trigger it now.
   update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
@@ -233,9 +236,13 @@ main() {
     update_type="$(compare_fw_versions "${active_fw_version}" "${fw_version}")"
     # shellcheck disable=SC2154
     if  [ "${update_type}" -ne "${UPDATE_NOT_NEEDED_UP_TO_DATE}" ]; then
+      report_update_result "${hidraw_node}" "${REPORT_RESULT_FAILURE}" "${fw_version}"
       die "Firmware update failed. Current Firmware: ${active_fw_version}"
     fi
     log_msg "Update FW succeeded. Current Firmware: ${active_fw_version}"
+    # shellcheck disable=SC2154
+    # Report SUCCESS only if update is completed
+    report_update_result "${hidraw_node}" "${REPORT_RESULT_SUCCESS}" "${active_fw_version}"
   fi
 
   exit 0
