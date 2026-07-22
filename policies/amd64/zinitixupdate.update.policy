@@ -31,6 +31,7 @@ prlimit64: 1
 readlinkat: 1
 getrandom: arg2 in ~GRND_RANDOM
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+madvise: arg2 == MADV_DONTNEED || arg2 == MADV_GUARD_INSTALL
 access: 1
 lseek: 1
 read: 1

@@ -32,6 +32,7 @@ rt_sigreturn: 1
 fstatfs: 1
 set_tid_address: 1
 munmap: 1
+madvise: arg2 == MADV_DONTNEED || arg2 == MADV_GUARD_INSTALL
 set_robust_list: 1
 gettid: 1
 readlinkat: 1

@@ -19,6 +19,8 @@ lseek: 1
 rt_sigaction: 1
 rt_sigprocmask: 1
 munmap: 1
+madvise: arg2 == MADV_DONTNEED || arg2 == MADV_GUARD_INSTALL || \
+         arg2 == MADV_HUGEPAGE
 exit_group: 1
 restart_syscall: 1
 exit: 1
