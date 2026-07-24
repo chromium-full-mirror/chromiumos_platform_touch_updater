@@ -1,7 +1,9 @@
-bleung@chromium.org
+bleung@google.com
 hbarnor@chromium.org
 jingyliang@chromium.org
 jora@google.com
 kenalba@google.com
 seobrien@chromium.org
 wmahon@google.com
+
+per-file .../*.policy = file:chromiumos/owners:v1:/security/OWNERS.seccomp
