@@ -135,6 +135,7 @@ install_config("install_sysfs_scripts") {
     "scripts/chromeos-cyapa-touch-firmware-update-legacy.sh",
     "scripts/chromeos-elan-touch-firmware-update-legacy.sh",
     "scripts/chromeos-melfas-touch-firmware-update-legacy.sh",
+    "scripts/chromeos-native-touch-firmware-update-legacy.sh",
     "scripts/chromeos-raydium-touch-firmware-update-legacy.sh",
     "scripts/chromeos-weida-touch-config-update-legacy.sh",
     "scripts/chromeos-weida-touch-firmware-update-legacy.sh",

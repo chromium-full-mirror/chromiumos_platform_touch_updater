@@ -394,8 +394,19 @@ check_update() {
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
     "${ILITEK_VENDOR_ID}")
-      logger -t "${LOGGER_TAG}" "${device_name}: ${driver_name} device with"\
-                "pid ${product_id} should be supported as an i2c-hid device."
+      # Ilitek SPI controllers are flashed natively by the spi_hid_of_ilitek
+      # kernel driver. Verify and report the version on the parent SPI device.
+      if [ "$(basename "$(readlink -f "${hid_link_path}/driver")")" = \
+          "spi_hid_of_ilitek" ]; then
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}" \
+          "${hid_link_path}" "Ilitek"
+        /opt/google/touch/scripts/chromeos-native-touch-firmware-update-legacy.sh \
+          -p "${hid_link_path}" -n "Ilitek" -f "ilitek.bin" -i "${product_id}" \
+          || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
+      else
+        logger -t "${LOGGER_TAG}" "${device_name}: ${driver_name} device with"\
+                  "pid ${product_id} should be supported as an i2c-hid device."
+      fi
       ;;
     "${GOODIX_VENDOR_ID}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}" \
