@@ -173,7 +173,7 @@ check_update() {
     case "${vendor_id}" in
     "${WACOM_VENDOR_ID_1}"|"${WACOM_VENDOR_ID_2}")
       log_updater_run "${vendor_id}" "${product_id}" "${device_name}" \
-        "${i2c_device}" "Wacom"
+        "${i2c_path}" "Wacom"
       /opt/google/touch/scripts/chromeos-wacom-touch-firmware-update-legacy.sh \
         -d "${i2c_device}" -p "${i2c_path}" -r \
         || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
