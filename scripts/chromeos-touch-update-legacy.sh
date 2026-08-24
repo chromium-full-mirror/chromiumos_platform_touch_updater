@@ -208,7 +208,7 @@ check_update() {
       case "${elan_device}" in
       "touchpad")
         log_updater_run "${vendor_id}" "${product_id}" "${device_name}" \
-          "${i2c_device}" "Elan Touchpad EEPROM I2C HID"
+          "${i2c_path}" "Elan Touchpad EEPROM I2C HID"
         /opt/google/touch/scripts/chromeos-etphidiap-touch-firmware-update-legacy.sh \
           -d "${i2c_device}" -p "${i2c_path}" -r \
           || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
