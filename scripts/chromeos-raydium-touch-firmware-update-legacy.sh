@@ -15,6 +15,7 @@
 
 DEFINE_boolean 'recovery' ${FLAGS_FALSE} "Recovery. Allows for rollback" 'r'
 DEFINE_string 'device' '' "device name" 'd'
+DEFINE_string 'i2c_path' '' "I2C device path" 'p'
 
 RAYDIUM_NUM_RETRIES=3
 RAYDIUM_FW_BOOT_MODE="Recovery"
@@ -146,7 +147,7 @@ main() {
     echo "Unable to determine active FW version."
   fi
 
-  report_initial_version "${touch_device_path}" "Raydium" "${active_fw_version}"
+  report_initial_version "${FLAGS_i2c_path}" "Raydium" "${active_fw_version}"
 
   # Parse the firmware versions to see if the firmware should be updated
   log_msg "Device boot mode : ${active_boot_mode}"

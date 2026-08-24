@@ -395,7 +395,7 @@ check_update() {
   case "${driver_name}" in
   raydium_ts)
     /opt/google/touch/scripts/chromeos-raydium-touch-firmware-update-legacy.sh \
-      -d "${device_name}" -r \
+      -d "${device_name}" -p "${dev}" -r \
       || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
     ;;
   cyapa)
