@@ -8,6 +8,7 @@ rseq: 1
 # ioctl: arg1 == I2C_SLAVE || arg1 == I2C_SLAVE_FORCE
 ioctl: arg1 == 0x703 || arg1 == 0x706
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+madvise: arg2 == MADV_DONTNEED || arg2 == MADV_GUARD_INSTALL || arg2 == MADV_HUGEPAGE
 openat: 1
 fstat: 1
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE

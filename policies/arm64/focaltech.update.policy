@@ -27,6 +27,7 @@ ioctl: arg1 == 0xc0404806 || arg1 == 0xc0404807 || arg1 == 0x80084803 || \
 fstat: 1
 lseek: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+madvise: arg2 == MADV_DONTNEED || arg2 == MADV_GUARD_INSTALL || arg2 == MADV_HUGEPAGE
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 getrandom: arg2 in ~GRND_RANDOM
 # ftphid_ezupg_ap : it's necessary for basic comminication

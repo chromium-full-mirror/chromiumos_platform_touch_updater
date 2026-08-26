@@ -13,6 +13,7 @@ ioctl: arg1 == 0xFFFFFFFFC0084806 || arg1 == 0xFFFFFFFFC2134807
 
 # Safe dangerous syscalls.
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
+madvise: arg2 == MADV_DONTNEED || arg2 == MADV_GUARD_INSTALL || arg2 == MADV_HUGEPAGE
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 getrandom: arg2 in ~GRND_RANDOM
 
