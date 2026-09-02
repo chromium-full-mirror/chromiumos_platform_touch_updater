@@ -58,6 +58,11 @@ group("all") {
     deps += [ ":ilitek_tddi_scripts" ]
   }
 
+  if (use.input_devices_lxs) {
+    # Script and policy for LXS touch controller firmware updater.
+    deps += [ ":lxs_scripts" ]
+  }
+
   if (use.input_devices_melfas) {
     # Script and policy for Melfas touch controller firmware updater.
     deps += [ ":melfas_scripts" ]
@@ -197,6 +202,13 @@ install_config("ilitek_tddi_scripts") {
   type = "executable"
 }
 
+install_config("lxs_scripts") {
+  sources = [ "scripts/chromeos-lxs-touch-firmware-update-legacy.sh" ]
+  deps = [ ":lxs_policy" ]
+  install_path = "${_touch_updater_scripts_dir}"
+  type = "executable"
+}
+
 install_config("melfas_scripts") {
   sources = [ "scripts/chromeos-melfas-hid-touch-firmware-update-legacy.sh" ]
   deps = [ ":mfsupdate_policy" ]
@@ -274,6 +286,7 @@ touch_updaters = [
   "hx_util",
   "ilitek_ld",
   "ilitek_tddi",
+  "lxs",
   "mfsupdate",
   "nvt_bridge_update",
   "nvt_ts_update",
