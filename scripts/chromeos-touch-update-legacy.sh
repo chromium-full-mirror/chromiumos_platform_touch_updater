@@ -31,7 +31,9 @@ NVT_VENDOR_ID="0603"
 ILITEK_VENDOR_ID="222A"
 FOCALTECH_VENDOR_ID="2808"
 PARADETECH_VENDOR_ID="1DA0"
-LXS_VENDOR_ID="1FD2"
+# 1FD2 is the official LG Display VID and is shared by multiple touch
+# controllers. LXS devices are selected by their supported product IDs below.
+LG_VENDOR_ID="1FD2"
 CIRQUE_VENDOR_ID="0488"
 
 # Determines if a device is a touch device based on the driver name. It matches
@@ -320,12 +322,23 @@ check_update() {
         -d "${i2c_path}" -p "${product_id}" -r \
         || logger -t "${LOGGER_TAG}" "${hidname} firmware update failed."
       ;;
-    "${LXS_VENDOR_ID}")
-      log_updater_run "${vendor_id}" "${product_id}" "${device_name}" \
-        "${i2c_path}" "LXS"
-      /opt/google/touch/scripts/chromeos-lxs-touch-firmware-update-legacy.sh \
-        -p "${i2c_path}" -r \
-        || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+    "${LG_VENDOR_ID}")
+      # Filter the shared LG VID by PID before invoking the LXS-specific
+      # updater. This dispatch belongs here because this top-level script
+      # already has both the vendor ID and product ID.
+      case "${product_id}" in
+      5008|5007)
+        log_updater_run "${vendor_id}" "${product_id}" "${device_name}" \
+          "${i2c_path}" "LXS"
+        /opt/google/touch/scripts/chromeos-lxs-touch-firmware-update-legacy.sh \
+          -p "${i2c_path}" -i "${product_id}" -r \
+          || logger -t "${LOGGER_TAG}" "${device_name} firmware update failed."
+        ;;
+      *)
+        logger -t "${LOGGER_TAG}" \
+          "${device_name}: unsupported LG VID product '${product_id}'"
+        ;;
+      esac
       ;;
     *)
       logger -t "${LOGGER_TAG}" "${device_name}: i2c_hid device with "\
