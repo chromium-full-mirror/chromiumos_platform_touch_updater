@@ -13,12 +13,13 @@ rseq: 1
 #   HIDIOCGRAWINFO:    0x80084803
 #   HIDIOCGRDESCSIZE:  0x80044801
 #   HIDIOCGRDESC:      0x90044802
-#   HIDIOCGRAWNAME(128): 0x80804804
-#   HIDIOCGRAWPHYS(64):  0x80404805
+#   HIDIOCGRAWNAME(256): 0x81004804
+#   HIDIOCGRAWPHYS(256):  0x81004805
 #  termios:
 #   TCGETS: 0x00005401
 
-access: 1
+faccessat: 1
+faccessat2: 1
 brk: 1
 close: 1
 exit: 1
@@ -30,7 +31,7 @@ futex: 1
 getrandom: arg2 in ~GRND_RANDOM
 getdents64: 1
 gettid: 1
-ioctl: arg1 == 0x80084803 || arg1 == 0x80044801 || arg1 == 0x90044802 || arg1 == 0x80804804 || arg1 == 0x80404805 || arg1 == 0x00005401
+ioctl: arg1 == 0x80084803 || arg1 == 0x80044801 || arg1 == 0x90044802 || arg1 == 0x81004804 || arg1 == 0x81004805 || arg1 == 0x00005401
 lseek: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
@@ -42,12 +43,11 @@ openat: 1
 pread64: 1
 prlimit64: 1
 read: 1
-readlink: 1
 readlinkat: 1
 restart_syscall: 1
 rt_sigreturn: 1
 set_robust_list: 1
 set_tid_address: 1
-stat: 1
 uname: 1
 write: 1
+pselect6: 1

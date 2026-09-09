@@ -13,12 +13,14 @@
 
 DEFINE_string 'device_path' '' "device path in /sys" 'p'
 DEFINE_boolean 'recovery' "${FLAGS_FALSE}" "Recovery. Allows for rollback" 'r'
+DEFINE_string 'product_id' '' "Touch product ID" 'i'
+
 
 # Parse command line.
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-LXS_UPDATER="/usr/sbin/lxs_touch_updater"
+LXS_UPDATER="/usr/bin/lxs_touch_updater"
 LXS_FW_LINK_BASE="lxs_touch.img"
 LXS_USER="fwupdate-hidraw"
 LXS_GROUP="fwupdate-hidraw"
@@ -81,7 +83,6 @@ get_active_fw_version() {
 
   echo "C_${core_ver}_A_${app_ver}_P_${para_ver}"
 }
-
 # Perform the firmware update.
 update_firmware() {
   local fw_path="$1"
@@ -93,7 +94,6 @@ update_firmware() {
     return 1
   fi
 }
-
 main() {
   local active_fw_ver=""
   local target_fw_ver=""
@@ -107,6 +107,21 @@ main() {
   local update_type=""
   local update_needed=""
 
+  local active_core_major=""
+  local active_core_minor=""
+  local target_core_major=""
+  local target_core_minor=""
+
+  local active_app_major=""
+  local active_app_minor=""
+  local target_app_major=""
+  local target_app_minor=""
+
+  local active_para_major=""
+  local active_para_minor=""
+  local target_para_major=""
+  local target_para_minor=""
+
   # Always read and report the active firmware version before looking for the
   # upgrade firmware.
   active_fw_ver="$(get_active_fw_version)"
@@ -119,7 +134,7 @@ main() {
   log_msg "Active firmware version: ${active_fw_ver}"
 
   # Find the firmware file via the standard symlink mechanism.
-  fw_link="$(find_fw_link_path "${LXS_FW_LINK_BASE}")"
+  fw_link="$(find_fw_link_path "${LXS_FW_LINK_BASE}" "${FLAGS_product_id}")"
   if [ ! -e "${fw_link}" ]; then
     die "No LXS firmware file found at ${fw_link}"
   fi
@@ -136,12 +151,28 @@ main() {
   target_core_ver="$(echo "${target_fw_ver}" | sed -n 's/^C_\([^_]*\)_\([^_]*\)_A_.*/0x\1 0x\2/p')"
   target_app_ver="$(echo "${target_fw_ver}" | sed -n 's/^C_[^_]*_[^_]*_A_\([^_]*\)_\([^_]*\)_P_.*/0x\1 0x\2/p')"
   target_para_ver="$(echo "${target_fw_ver}" | sed -n 's/^C_[^_]*_[^_]*_A_[^_]*_[^_]*_P_\([^_]*\)_\([^_]*\)$/0x\1 0x\2/p')"
+  active_core_major=$(echo ${active_core_ver} | cut -d" " -f1)
+  active_core_minor=$(echo ${active_core_ver} | cut -d" " -f2)
+  target_core_major=$(echo ${target_core_ver} | cut -d" " -f1)
+  target_core_minor=$(echo ${target_core_ver} | cut -d" " -f2)
+  active_app_major=$(echo ${active_app_ver} | cut -d" " -f1)
+  active_app_minor=$(echo ${active_app_ver} | cut -d" " -f2)
+  target_app_major=$(echo ${target_app_ver} | cut -d" " -f1)
+  target_app_minor=$(echo ${target_app_ver} | cut -d" " -f2)
+  active_para_major=$(echo ${active_para_ver} | cut -d" " -f1)
+  active_para_minor=$(echo ${active_para_ver} | cut -d" " -f2)
+  target_para_major=$(echo ${target_para_ver} | cut -d" " -f1)
+  target_para_minor=$(echo ${target_para_ver} | cut -d" " -f2)
 
   update_type="$(compare_multipart_version \
-    ${active_core_ver} ${target_core_ver} \
-    ${active_app_ver} ${target_app_ver} \
-    ${active_para_ver} ${target_para_ver})"
+    ${active_core_major} ${target_core_major} \
+    ${active_core_minor} ${target_core_minor} \
+    ${active_app_major} ${target_app_major} \
+    ${active_app_minor} ${target_app_minor} \
+    ${active_para_major} ${target_para_major} \
+    ${active_para_minor} ${target_para_minor})"
   log_update_type "${update_type}"
+
   update_needed="$(is_update_needed "${update_type}")"
 
   if [ "${update_needed}" -ne "${FLAGS_TRUE}" ]; then
@@ -157,12 +188,22 @@ main() {
   fi
 
   # Verify the update succeeded.
-  active_fw_ver="$(get_active_fw_version)"
+  active_fw_ver=""
+  for i in $(seq 10); do
+    active_fw_ver="$(get_active_fw_version)"
+    if [ "${active_fw_ver}" != "C_FF_FF_A_FF_FF_P_FF_FF" ]; then
+      break
+    fi
+    sleep 1
+  done
+
   if [ -z "${active_fw_ver}" ]; then
-    report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
+    report_update_result "${FLAGS_device_path}" \
+      "${REPORT_RESULT_FAILURE}" \
       "${target_fw_ver}"
     die "Unable to determine active LXS touch firmware version after update."
   fi
+
   if [ "${active_fw_ver}" != "${target_fw_ver}" ]; then
     report_update_result "${FLAGS_device_path}" "${REPORT_RESULT_FAILURE}" \
       "${target_fw_ver}"
