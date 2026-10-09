@@ -483,6 +483,7 @@ main() {
   fi
 
   local dev
+  local description
   local driver_name
   local power_path
 
@@ -493,7 +494,20 @@ main() {
     if [ -e "${dev}/of_node" ] && is_panel_follower "${dev}"; then
       wait_hid_driver_ready "${dev}"
     fi
-    driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+    driver_name=""
+    if [ -e "${dev}/driver" ]; then
+      driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+    fi
+    description=""
+    if [ -e "${dev}/description" ]; then
+      description="$(cat "${dev}/description")"
+    fi
+    # Skip non-touch devices. Also keep "i8042 AUX port" (PS/2 trackpoint)
+    # as check_update() handles it even when no driver is bound.
+    if ! is_touch_device "${driver_name}" && \
+        [ "${description}" != "i8042 AUX port" ]; then
+      continue
+    fi
     # For devices supported runtime power managment, the "auto" mode would have
     # chance to let device go into runtime_suspend state. Which will prevent
     # touch updater from accessing that device. Here tries to move i2c devices's
@@ -515,6 +529,10 @@ main() {
   # Since rebinding a device to i2c_hid driver makes a new i2chid device created and the original one terminated,
   # thus get_dev_list is needed to get existed devices after firmware update process.
   for dev in $(get_dev_list); do
+    # Skip entries without a bound driver.
+    if [ ! -e "${dev}/driver" ]; then
+      continue
+    fi
     driver_name="$(basename "$(readlink -f "${dev}/driver")")"
     power_path="${dev}/power/control"
     if is_touch_device "${driver_name}" && [ -e "${power_path}" ] && \
