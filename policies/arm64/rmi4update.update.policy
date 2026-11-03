@@ -47,3 +47,4 @@ inotify_init1: 1
 inotify_add_watch: 1
 gettid: 1
 clock_gettime: 1
+nanosleep: 1

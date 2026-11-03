@@ -35,3 +35,4 @@ openat: 1
 newfstatat: 1
 getdents: 1
 getdents64: 1
+nanosleep: 1

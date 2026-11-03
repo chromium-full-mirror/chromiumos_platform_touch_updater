@@ -37,3 +37,5 @@ set_robust_list: 1
 gettid: 1
 dup: 1
 fcntl: 1
+nanosleep: 1
+clock_nanosleep: 1

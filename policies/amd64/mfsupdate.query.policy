@@ -60,3 +60,5 @@ set_tid_address: 1
 getsockname: 1
 rt_sigreturn: 1
 fstatfs: 1
+nanosleep: 1
+clock_nanosleep: 1

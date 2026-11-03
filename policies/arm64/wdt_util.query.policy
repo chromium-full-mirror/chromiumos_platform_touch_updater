@@ -38,3 +38,4 @@ rt_sigreturn: 1
 clock_gettime: 1
 clock_nanosleep: 1
 writev: 1
+nanosleep: 1

@@ -45,3 +45,5 @@ mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 wait4: 1
 dup : 1
 fcntl : 1
+nanosleep: 1
+clock_nanosleep: 1

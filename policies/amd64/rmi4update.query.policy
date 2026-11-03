@@ -51,3 +51,4 @@ fstatfs: 1
 getxattr: 1
 clock_nanosleep:1
 dup: 1
+nanosleep: 1

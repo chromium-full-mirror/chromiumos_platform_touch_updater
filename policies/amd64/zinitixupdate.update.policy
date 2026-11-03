@@ -46,3 +46,4 @@ prctl: arg0 == PR_SET_KEEPCAPS || arg0 == PR_SET_NAME
 rt_sigaction: 1
 dup : 1
 fcntl : 1
+nanosleep: 1
