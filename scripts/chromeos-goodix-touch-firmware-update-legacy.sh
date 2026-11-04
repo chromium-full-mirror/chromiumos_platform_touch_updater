@@ -123,6 +123,7 @@ main() {
   local fw_link_path=""
   local fw_path=""
   local fw_name=""
+  local expected_fw_version=""
   local customize_product_id=""
 
   if [ -z "${FLAGS_device}" ]; then
@@ -147,11 +148,43 @@ main() {
   create_goodix_hidraw "${touch_device_path}"
   touch_device_path="${GOODIX_NODE_NAME}"
 
-  # Wait 500ms to allow firmware to get ready to provide version number.
-  # TODO(teravest): Remove this once firmware no longer needs this delay.
-  sleep 0.5
-  active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
-      "${active_product_id}")"
+  # Find the expected firmware version on disk so we can check whether an
+  # immediate version read succeeded without sleeping 500ms.
+  # Only do this when ${GET_BOARD_SPECIFIC_PID} is not installed, because that
+  # script may change active_product_id later before the firmware file lookup.
+  if [ ! -x "${GET_BOARD_SPECIFIC_PID}" ]; then
+    # Resolve the symlink (e.g. /lib/firmware/goodix_firmware_0E01.bin ->
+    # /opt/google/touch/firmware/0E01_0.72101.bin).
+    fw_link_path="$(find_fw_link_path "${FW_LINK_NAME}" "${active_product_id}")"
+    fw_path="$(readlink -f "${fw_link_path}")"
+    # If the target firmware file exists on disk:
+    if [ -n "${fw_path}" ] && [ -e "${fw_path}" ]; then
+      # Strip directory and ".bin" (e.g. "0E01_0.72101").
+      fw_name="$(basename "${fw_path}" ".bin")"
+      # Strip the "<product_id>_" prefix (e.g. "0.72101").
+      expected_fw_version="${fw_name#*_}"
+    fi
+  fi
+
+  # Before the controller finishes initializing, get_active_firmware_version
+  # can return a bogus non-empty string (e.g. "243.15226534" in b/144002425).
+  # Only try an immediate read without sleeping when expected_fw_version is
+  # non-empty so we can verify the result.
+  if [ -n "${expected_fw_version}" ]; then
+    active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
+        "${active_product_id}")"
+  fi
+
+  # Fall back to waiting 500ms and reading the version when expected_fw_version
+  # is empty (so we cannot verify an immediate read) or when the immediate read
+  # did not match expected_fw_version (controller still initializing or an
+  # update is needed).
+  if [ -z "${expected_fw_version}" ] || \
+      [ "${active_fw_version}" != "${expected_fw_version}" ]; then
+    sleep 0.5
+    active_fw_version="$(get_active_firmware_version "${touch_device_path}" \
+        "${active_product_id}")"
+  fi
   log_msg "Product ID: ${active_product_id}"
   log_msg "Current Firmware: ${active_fw_version}"
   report_initial_version "${FLAGS_dev_path}" "Goodix" "${active_fw_version}"
