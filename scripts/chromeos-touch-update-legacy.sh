@@ -36,10 +36,13 @@ PARADETECH_VENDOR_ID="1DA0"
 LG_VENDOR_ID="1FD2"
 CIRQUE_VENDOR_ID="0488"
 
-# Determines if a device is a touch device based on the driver name. It matches
-# the driver name against all the supported cases in `check_update`. This means
-# that any additional drivers to `check_update` will also need to be included
-# here.
+# Sysfs serio description for PS/2 trackpoint ports.
+I8042_AUX_PORT_DESC="i8042 AUX port"
+
+# Determines if a device is a touch device based on the driver name. main()
+# skips check_update for any device not matched here (except the
+# I8042_AUX_PORT_DESC special case), so any driver handled in check_update must
+# also be listed here.
 is_touch_device() {
   local driver_name="$1"
   case "${driver_name}" in
@@ -135,17 +138,18 @@ wait_hid_driver_ready() {
   fi
 }
 
-# **NOTE**: Make sure to also add any new drivers to `is_touch_device`.
+# **NOTE**: main() skips devices not matched by is_touch_device (except
+# I8042_AUX_PORT_DESC), so any new driver or non-driver match added here must
+# also be added in main() / is_touch_device.
 check_update() {
   local dev="$1"
   local driver_name="$2"
+  local device_description="$3"
   local device_name
   device_name="$(cat "${dev}/name")"
-  local device_description
-  device_description="$(cat "${dev}/description")"
 
   if [ "${driver_name}" = "psmouse" ] || \
-    [ "${device_description}" = "i8042 AUX port" ]; then
+    [ "${device_description}" = "${I8042_AUX_PORT_DESC}" ]; then
     /opt/google/touch/scripts/chromeos-eps2pstiap-touch-firmware-update-legacy.sh \
     -r \
     || logger -t "${LOGGER_TAG}" "elan trackpoint firmware update failed.";
@@ -496,16 +500,19 @@ main() {
     fi
     driver_name=""
     if [ -e "${dev}/driver" ]; then
-      driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+      driver_name="$(readlink -f "${dev}/driver")"
+      # Strip leading path without using basename.
+      driver_name="${driver_name##*/}"
     fi
     description=""
     if [ -e "${dev}/description" ]; then
-      description="$(cat "${dev}/description")"
+      # Read with shell builtin without using cat.
+      read -r description < "${dev}/description"
     fi
-    # Skip non-touch devices. Also keep "i8042 AUX port" (PS/2 trackpoint)
+    # Skip non-touch devices. Also keep I8042_AUX_PORT_DESC (PS/2 trackpoint)
     # as check_update() handles it even when no driver is bound.
     if ! is_touch_device "${driver_name}" && \
-        [ "${description}" != "i8042 AUX port" ]; then
+        [ "${description}" != "${I8042_AUX_PORT_DESC}" ]; then
       continue
     fi
     # For devices supported runtime power managment, the "auto" mode would have
@@ -519,7 +526,7 @@ main() {
       echo on > "${power_path}"
     fi
 
-    ( check_update "${dev}" "${driver_name}" ) &
+    ( check_update "${dev}" "${driver_name}" "${description}" ) &
   done
 
   wait
@@ -533,7 +540,9 @@ main() {
     if [ ! -e "${dev}/driver" ]; then
       continue
     fi
-    driver_name="$(basename "$(readlink -f "${dev}/driver")")"
+    driver_name="$(readlink -f "${dev}/driver")"
+    # Strip leading path without using basename.
+    driver_name="${driver_name##*/}"
     power_path="${dev}/power/control"
     if is_touch_device "${driver_name}" && [ -e "${power_path}" ] && \
         [ "on" = "$(cat "${power_path}")" ]; then
