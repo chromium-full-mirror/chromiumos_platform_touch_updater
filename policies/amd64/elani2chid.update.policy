@@ -13,6 +13,7 @@ rseq: 1
 #   futex: 202
 #  termios
 #   TCGETS: 0x00005401
+#   TCGETS2: 0x802C542A
 # syscall Information from jouralctrl:
 #  dup2: 33
 #  openat: 257
@@ -32,7 +33,7 @@ open: 1
 close: 1
 read: 1
 write: 1
-ioctl: arg1 == 0x80084803 || arg1 == 0x00005401
+ioctl: arg1 == 0x80084803 || arg1 == 0x00005401 || arg1 == 0x802C542A
 stat: 1
 fstat: 1
 newfstatat: 1

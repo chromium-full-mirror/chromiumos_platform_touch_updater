@@ -12,6 +12,7 @@ rseq: 1
 #   HIDIOCGRAWINFO: 0x80084803
 #  termios
 #   TCGETS: 0x00005401
+#   TCGETS2: 0x802C542A
 # syscall Information from jouralctrl:
 #  elani2chid_tools:
 #   mprotect: 125
@@ -33,7 +34,7 @@ open: 1
 close: 1
 read: 1
 write: 1
-ioctl: arg1 == 0x80084803 || arg1 == 0x00005401
+ioctl: arg1 == 0x80084803 || arg1 == 0x00005401 || arg1 == 0x802C542A
 stat64: 1
 fstat64: 1
 fstatat64: 1
