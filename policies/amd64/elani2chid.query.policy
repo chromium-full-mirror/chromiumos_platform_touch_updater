@@ -79,6 +79,7 @@ getdents: 1
 getdents64: 1
 time: 1
 gettimeofday: 1
+clock_gettime: 1
 openat: 1
 dup2: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
