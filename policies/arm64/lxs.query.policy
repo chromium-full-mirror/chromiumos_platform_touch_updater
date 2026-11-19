@@ -27,13 +27,12 @@ fstat: 1
 newfstatat: 1
 fstatfs: 1
 futex: 1
-getrandom: arg2 in ~GRND_RANDOM
+getrandom: 1
 gettid: 1
 ioctl: arg1 == 0x80084803 || arg1 == 0x80044801 || arg1 == 0x90044802 || arg1 == 0x80804804 || arg1 == 0x80404805 || arg1 == 0x00005401
 lseek: 1
 mmap: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
 mprotect: arg2 in ~PROT_EXEC || arg2 in ~PROT_WRITE
-mseal: 1
 munmap: 1
 nanosleep: 1
 clock_nanosleep: 1
